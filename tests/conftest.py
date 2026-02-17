@@ -359,3 +359,167 @@ def tmp_catalog_with_gps(tmp_path: Path) -> Path:
     """Create a temporary test catalog with GPS EXIF data."""
     db_path = tmp_path / "test_gps.lrcat"
     return create_test_catalog(db_path, gps_test_data())
+
+
+def diverse_folder_test_data() -> dict:
+    """Test data with ISO-date, French-date, year-in-root, and topical folders."""
+    # Root path contains a year: /tmp/test_photos/2021/
+    root_path = "/tmp/test_photos/2021/"
+    return {
+        "roots": [
+            (1, "ROOT-UUID-1", root_path, "2021", "../test_photos/2021"),
+        ],
+        "folders": [
+            # ISO date folder: 2023-12-24
+            (10, "FOLD-UUID-10", "2023-12-24/", 1),
+            # French date folder: 1 avril 2016
+            (11, "FOLD-UUID-11", "1 avril 2016/", 1),
+            # Bare month under year-in-root: 06/
+            (12, "FOLD-UUID-12", "06/", 1),
+            # Topical folder (no date)
+            (13, "FOLD-UUID-13", "Vacances/", 1),
+            # Standard YYYY/MM folder
+            (14, "FOLD-UUID-14", "2022/03/", 1),
+        ],
+        "files": [
+            # file_id 10: ISO date folder, correctly placed (same year+month)
+            (
+                10,
+                "FILE-UUID-10",
+                "IMG_2010",
+                "JPG",
+                10,
+                "IMG_2010",
+                None,
+                None,
+                "IMG_2010.JPG",
+                None,
+            ),
+            # file_id 11: French date folder, correctly placed
+            (
+                11,
+                "FILE-UUID-11",
+                "IMG_2011",
+                "JPG",
+                11,
+                "IMG_2011",
+                None,
+                None,
+                "IMG_2011.JPG",
+                None,
+            ),
+            # file_id 12: year-in-root + month folder, correctly placed
+            (
+                12,
+                "FILE-UUID-12",
+                "IMG_2012",
+                "CR2",
+                12,
+                "IMG_2012",
+                None,
+                None,
+                "IMG_2012.CR2",
+                None,
+            ),
+            # file_id 13: topical folder, no date detectable
+            (
+                13,
+                "FILE-UUID-13",
+                "IMG_2013",
+                "DNG",
+                13,
+                "IMG_2013",
+                None,
+                None,
+                "IMG_2013.DNG",
+                None,
+            ),
+            # file_id 14: standard YYYY/MM, misplaced (03 != 05)
+            (
+                14,
+                "FILE-UUID-14",
+                "IMG_2014",
+                "JPG",
+                14,
+                "IMG_2014",
+                None,
+                None,
+                "IMG_2014.JPG",
+                None,
+            ),
+        ],
+        "images": [
+            # 10: captured 2023-12-15, in 2023-12-24/ → same year+month
+            (
+                10,
+                "IMG-UUID-10",
+                "2023-12-15T10:00:00",
+                10,
+                "JPG",
+                0,
+                3,
+                "AB",
+                None,
+                None,
+            ),
+            # 11: captured 2016-04-01, in "1 avril 2016/" → correct
+            (
+                11,
+                "IMG-UUID-11",
+                "2016-04-01T12:00:00",
+                11,
+                "JPG",
+                0,
+                4,
+                "AB",
+                None,
+                None,
+            ),
+            # 12: captured 2021-06-10, root=2021/, path=06/ → correct
+            (
+                12,
+                "IMG-UUID-12",
+                "2021-06-10T08:00:00",
+                12,
+                "RAW",
+                0,
+                5,
+                "AB",
+                None,
+                None,
+            ),
+            # 13: captured 2020-08-15, in Vacances/ → no date → skipped
+            (
+                13,
+                "IMG-UUID-13",
+                "2020-08-15T14:00:00",
+                13,
+                "DNG",
+                0,
+                2,
+                "AB",
+                None,
+                None,
+            ),
+            # 14: captured 2022-05-20, in 2022/03/ → misplaced (03 != 05)
+            (
+                14,
+                "IMG-UUID-14",
+                "2022-05-20T09:00:00",
+                14,
+                "JPG",
+                0,
+                1,
+                "AB",
+                None,
+                None,
+            ),
+        ],
+    }
+
+
+@pytest.fixture
+def diverse_folder_catalog(tmp_path: Path) -> Path:
+    """Create a test catalog with diverse folder naming patterns."""
+    db_path = tmp_path / "test_diverse.lrcat"
+    return create_test_catalog(db_path, diverse_folder_test_data())

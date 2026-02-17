@@ -30,6 +30,40 @@ def layout_to_regex(layout: str) -> re.Pattern[str]:
     return re.compile(f"^{pattern}$")
 
 
+# ISO date folder pattern: YYYY-MM-DD
+FOLDER_ISO_DATE_PATTERN = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
+
+# French date folder pattern: D month YYYY (e.g. "1 avril 2016")
+FOLDER_FRENCH_DATE_PATTERN = re.compile(
+    r"^(\d{1,2})\s+"
+    r"(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|"
+    r"septembre|octobre|novembre|d[eé]cembre)"
+    r"\s+(\d{4})$",
+    re.IGNORECASE,
+)
+
+# Bare year folder pattern: YYYY
+FOLDER_BARE_YEAR_PATTERN = re.compile(r"^(\d{4})$")
+
+# French month name to integer mapping
+FRENCH_MONTH_MAP: dict[str, int] = {
+    "janvier": 1,
+    "fevrier": 2,
+    "février": 2,
+    "mars": 3,
+    "avril": 4,
+    "mai": 5,
+    "juin": 6,
+    "juillet": 7,
+    "aout": 8,
+    "août": 8,
+    "septembre": 9,
+    "octobre": 10,
+    "novembre": 11,
+    "decembre": 12,
+    "décembre": 12,
+}
+
 # Duplicate date prefix patterns
 # Matches: DDMMYYYY-DDMMYYYY-rest (e.g. 29122012-29122012-IMG_20121229_131334)
 DUPLICATE_PREFIX_PATTERN = re.compile(r"^(\d{8})-\1-(.+)$")

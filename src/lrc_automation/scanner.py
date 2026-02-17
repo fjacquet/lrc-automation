@@ -10,7 +10,11 @@ from .constants import (
     QUERY_ROOT_FOLDERS,
 )
 from .models import Folder, PhotoRecord, RootFolder
-from .utils import clean_duplicate_prefix, extract_yyyy_mm, parse_capture_time
+from .utils import (
+    clean_duplicate_prefix,
+    extract_date_from_path,
+    parse_capture_time,
+)
 
 
 class CatalogScanner:
@@ -109,8 +113,9 @@ class CatalogScanner:
             if expected is None:
                 continue
 
-            # Extract YYYY/MM from actual folder path
-            actual_ym = extract_yyyy_mm(photo.current_folder_path, self.target_layout)
+            # Extract year/month from full folder path (root + pathFromRoot)
+            full_folder = photo.root_absolute_path + photo.current_folder_path
+            actual_ym = extract_date_from_path(full_folder)
             expected_ym = (photo.capture_time.year, photo.capture_time.month)
 
             if actual_ym is None:
