@@ -6,9 +6,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-### Known Issues
-- Scanner only detects `YYYY/MM/` in `pathFromRoot`; real catalogs also use `YYYY-MM-DD` subfolders, French date folders, and dates in root folder paths
-- No duplicate-prefix filenames found in real catalog (pattern may need broadening)
+## [0.2.0] - 2026-02-17
+
+### Added
+- Configurable target folder layout via `LRC_TARGET_LAYOUT` env var or `--target-layout` CLI option
+- `layout_to_regex()` helper to convert strftime layouts to regex patterns
+- `PhotoRecord.get_expected_folder_path(layout)` method for layout-aware path computation
+- 10 new tests covering custom layouts, regex generation, and backward compatibility
+- Documentation for target layout configuration in `docs/usage.md`
+
+### Changed
+- `CatalogScanner`, `ChangePlanner` now accept `target_layout` parameter (default `%Y/%m/`)
+- `extract_yyyy_mm()` accepts optional `layout` parameter for pattern matching
+- `Reporter.print_scan_summary()` displays configured target layout
 
 ## [0.1.0] - 2026-02-17
 
