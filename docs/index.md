@@ -8,7 +8,7 @@ Lightroom Classic organizes photos in date-based folders, but sometimes files en
 
 ## Features
 
-- **Scan** (read-only): Identify misplaced photos and files with duplicate date prefixes
+- **Scan** (read-only): Identify misplaced photos and files with duplicate date prefixes. Detects dates in `YYYY/MM/`, `YYYY-MM-DD`, and French date folder patterns (e.g. `1 avril 2016`)
 - **Plan** (read-only): Generate a change plan, exportable to JSON or CSV for review
 - **Apply** (write): Move files on disk and update the catalog, with mandatory backup and rollback on error
 - **Validate**: Run integrity checks on the catalog

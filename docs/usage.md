@@ -12,6 +12,7 @@ cp .env.example .env
 LRC_CATALOG_PATH=/path/to/your/Lightroom Catalog.lrcat
 LRC_BACKUP_DIR=                # optional, defaults to catalog directory
 LRC_TARGET_LAYOUT=%Y/%m/       # optional, strftime format for target folders
+LRC_LOCATION_FOLDERS=false     # optional, enable GPS-based Country/City subfolders
 ```
 
 ### Target folder layout
@@ -109,12 +110,26 @@ The feature uses the `reverse_geocoder` library for fast, offline lookups (no in
 
 ## Supported folder structures
 
-The scanner detects dates in folder paths using multiple patterns:
+The scanner detects dates in folder paths using multiple patterns. It scans the **full path** (root folder + pathFromRoot) **right-to-left**, so the deepest (most specific) date segment wins.
 
-| Pattern | Example | Source |
-|---------|---------|--------|
-| `YYYY-MM-DD` | `/Volumes/photo/Weekends/2023/2023-12-24/` | ISO date folders |
-| French dates | `/Volumes/photo/iphone/1 avril 2016/` | Apple Photos / iPhoto exports |
+| Pattern | Example | Detection |
+|---------|---------|-----------|
 | `YYYY/MM/` | `2023/06/` | Classic date hierarchy |
+| `YYYY-MM-DD` | `2023-12-24/` | ISO date folders (day is ignored, year+month extracted) |
+| French dates | `1 avril 2016/` | Apple Photos / iPhoto exports. Supports accented forms (`février`, `août`, `décembre`) and is case-insensitive |
+| Year in root + month | Root `/photos/2021/` + path `06/` | Year detected from root path, month from immediate subfolder |
 
-Dates are extracted from both the root folder path and the `pathFromRoot` in the catalog.
+### Filtering
+
+- **Lightroom epoch (1904)**: Year 1904 is the default "no date" value in Lightroom. Folders with this year are skipped.
+- **Topical folders**: Folders without any recognizable date pattern (e.g. `Vacances/`, `Family/`) are silently skipped — they will not appear as misplaced.
+- **Year range**: Only years between 1900 and 2100 are accepted (excluding 1904).
+
+### Examples from real catalogs
+
+```
+/Volumes/photo/Weekends/2023/2023-12-24/IMG_1234.CR2  → detected as 2023/12
+/Volumes/photo/iphone/1 avril 2016/IMG_5678.JPG       → detected as 2016/04
+/Volumes/photo/2021/06/DSC_9012.NEF                   → detected as 2021/06
+/Volumes/photo/Vacances/Summer/IMG_3456.JPG            → skipped (no date)
+```

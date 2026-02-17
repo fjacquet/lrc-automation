@@ -18,16 +18,19 @@ scan (read-only) → plan (read-only) → apply (writes) → validate
 | `validators.py` | Pre/post-flight integrity checks (PRAGMA integrity_check, orphan detection) |
 | `reporter.py` | Rich terminal output + JSON/CSV export |
 | `models.py` | Dataclasses: `PhotoRecord`, `FileChange`, `ChangePlan`, `ExecutionReport` |
-| `utils.py` | Date parsing (captureTime formats), path helpers, UUID generation |
-| `constants.py` | Regex patterns, SQL queries, table names |
+| `geocoder.py` | `LocationResolver`: offline reverse geocoding (GPS to Country/City), optional `[geo]` extra |
+| `utils.py` | Date parsing (captureTime formats), folder date extraction, path helpers, UUID generation |
+| `constants.py` | Regex patterns (including ISO/French date folders), SQL queries, table names |
 
 ## Key data flow
 
 1. `CatalogScanner._fetch_all_photos()` joins `Adobe_images` + `AgLibraryFile` + `AgLibraryFolder` + `AgLibraryRootFolder` to build a `PhotoRecord` list
 2. Full file path = `AgLibraryRootFolder.absolutePath` + `AgLibraryFolder.pathFromRoot` + `AgLibraryFile.baseName` + `.` + `extension`
-3. **Target layout is `YYYY/MM/`** — photos are moved to match their `captureTime`
-4. Moving a photo in the catalog = `UPDATE AgLibraryFile SET folder = :new_folder_id`
-5. The executor moves the physical file + sidecars on disk to match
+3. **Target layout is configurable** via `LRC_TARGET_LAYOUT` (default `%Y/%m/`) — photos are moved to match their `captureTime`
+4. **Date detection** uses `extract_date_from_path()` which scans the full path (root + pathFromRoot) right-to-left, recognizing `YYYY/MM/`, `YYYY-MM-DD`, French dates (`1 avril 2016`), and year-in-root patterns. The Lightroom epoch year 1904 is filtered as bogus.
+5. **Optional location folders**: when `--location-folders` is enabled, GPS coordinates are reverse-geocoded to `Country/City/` subfolders appended to the date path
+6. Moving a photo in the catalog = `UPDATE AgLibraryFile SET folder = :new_folder_id`
+7. The executor moves the physical file + sidecars on disk to match
 
 ## Database tables
 
@@ -37,6 +40,7 @@ The Lightroom Classic `.lrcat` catalog is a SQLite database. Key tables:
 - `AgLibraryFolder` — subfolder paths relative to root (e.g. `2023/2023-12-24/`)
 - `AgLibraryFile` — filenames with a foreign key to their folder
 - `Adobe_images` — image metadata including `captureTime`
+- `AgHarvestedExifMetadata` — EXIF data including GPS coordinates (`gpsLatitude`, `gpsLongitude`, `hasGPS`)
 
 ## Safety invariants
 
