@@ -6,6 +6,7 @@ from .constants import (
     DEFAULT_TARGET_LAYOUT,
     QUERY_ALL_FOLDERS,
     QUERY_ALL_PHOTOS,
+    QUERY_ALL_PHOTOS_WITH_GPS,
     QUERY_ROOT_FOLDERS,
 )
 from .models import Folder, PhotoRecord, RootFolder
@@ -16,10 +17,14 @@ class CatalogScanner:
     """Scans a Lightroom Classic catalog for problems."""
 
     def __init__(
-        self, conn: sqlite3.Connection, target_layout: str = DEFAULT_TARGET_LAYOUT
+        self,
+        conn: sqlite3.Connection,
+        target_layout: str = DEFAULT_TARGET_LAYOUT,
+        location_folders: bool = False,
     ) -> None:
         self.conn = conn
         self.target_layout = target_layout
+        self.location_folders = location_folders
 
     def get_root_folders(self) -> list[RootFolder]:
         """Return all root folders."""
@@ -44,6 +49,8 @@ class CatalogScanner:
 
     def _fetch_all_photos(self) -> list[PhotoRecord]:
         """Fetch all non-virtual-copy photos from the catalog."""
+        if self.location_folders:
+            return self._fetch_all_photos_with_gps()
         cursor = self.conn.execute(QUERY_ALL_PHOTOS)
         photos = []
         for row in cursor:
@@ -59,6 +66,34 @@ class CatalogScanner:
                     capture_time=parse_capture_time(row["captureTime"]),
                     current_folder_path=row["pathFromRoot"],
                     root_absolute_path=row["absolutePath"],
+                )
+            )
+        return photos
+
+    def _fetch_all_photos_with_gps(self) -> list[PhotoRecord]:
+        """Fetch all photos with GPS data from LEFT JOIN."""
+        cursor = self.conn.execute(QUERY_ALL_PHOTOS_WITH_GPS)
+        photos = []
+        for row in cursor:
+            has_gps = row["hasGPS"] == 1 if row["hasGPS"] is not None else False
+            photos.append(
+                PhotoRecord(
+                    image_id=row["image_id"],
+                    file_id=row["file_id"],
+                    folder_id=row["folder_id"],
+                    root_folder_id=row["root_folder_id"],
+                    base_name=row["baseName"],
+                    extension=row["extension"],
+                    sidecar_extensions=row["sidecarExtensions"],
+                    capture_time=parse_capture_time(row["captureTime"]),
+                    current_folder_path=row["pathFromRoot"],
+                    root_absolute_path=row["absolutePath"],
+                    gps_latitude=float(row["gpsLatitude"])
+                    if has_gps and row["gpsLatitude"] is not None
+                    else None,
+                    gps_longitude=float(row["gpsLongitude"])
+                    if has_gps and row["gpsLongitude"] is not None
+                    else None,
                 )
             )
         return photos

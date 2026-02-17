@@ -23,11 +23,16 @@ class Reporter:
         misplaced: list[PhotoRecord],
         duplicates: list[tuple[PhotoRecord, str]],
         target_layout: str = "%Y/%m/",
+        location_folders: bool = False,
     ) -> None:
         """Print a summary of scan results."""
         self.console.print("\n[bold]Catalog Scan Results[/bold]")
         self.console.print(f"Total photos: {total_photos}")
         self.console.print(f"Target layout: {target_layout}")
+        if location_folders:
+            self.console.print("Location folders: [green]enabled[/green]")
+            gps_count = sum(1 for p in misplaced if p.gps_latitude is not None)
+            self.console.print(f"Misplaced photos with GPS: [cyan]{gps_count}[/cyan]")
         self.console.print(f"Misplaced photos: [yellow]{len(misplaced)}[/yellow]")
         self.console.print(f"Duplicate prefixes: [yellow]{len(duplicates)}[/yellow]")
 
@@ -41,6 +46,8 @@ class Reporter:
             table.add_column("Current Folder")
             table.add_column("Expected Folder")
             table.add_column("Capture Date")
+            if location_folders:
+                table.add_column("GPS")
 
             for i, photo in enumerate(misplaced[:50], 1):
                 expected = photo.get_expected_folder_path(target_layout) or "?"
@@ -49,13 +56,23 @@ class Reporter:
                     if photo.capture_time
                     else "?"
                 )
-                table.add_row(
+                row = [
                     str(i),
                     f"{photo.base_name}.{photo.extension}",
                     photo.current_folder_path,
                     expected,
                     capture,
-                )
+                ]
+                if location_folders:
+                    if photo.gps_latitude is not None:
+                        row.append(
+                            f"{photo.gps_latitude:.2f}, {photo.gps_longitude:.2f}"
+                            if photo.gps_longitude is not None
+                            else "?"
+                        )
+                    else:
+                        row.append("-")
+                table.add_row(*row)
 
             self.console.print(table)
             if len(misplaced) > 50:

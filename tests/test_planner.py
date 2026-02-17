@@ -70,3 +70,73 @@ class TestChangePlanner:
         ]
         assert 1 not in move_file_ids
         conn.close()
+
+    def test_plan_moves_without_location(self, tmp_catalog_with_gps: Path) -> None:
+        """Default behavior: no location subfolder in target paths."""
+        conn = sqlite3.connect(str(tmp_catalog_with_gps))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=False)
+        planner = ChangePlanner(conn, scanner, location_folders=False)
+        plan = planner.build_plan(include_moves=True, include_renames=False)
+        for change in plan.changes:
+            if change.change_type == ChangeType.MOVE_PHOTO:
+                # Target should be date-only: "2023/06/"
+                assert change.target_folder_path == "2023/06/"
+        conn.close()
+
+    def test_plan_moves_with_location(self, tmp_catalog_with_gps: Path) -> None:
+        """With location_folders, GPS photos get Country/City subfolder."""
+        conn = sqlite3.connect(str(tmp_catalog_with_gps))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        planner = ChangePlanner(conn, scanner, location_folders=True)
+        plan = planner.build_plan(include_moves=True, include_renames=False)
+        moves = [c for c in plan.changes if c.change_type == ChangeType.MOVE_PHOTO]
+        # GPS photos should have location subfolder
+        gps_moves = [c for c in moves if c.photo.gps_latitude is not None]
+        assert len(gps_moves) >= 2
+        for move in gps_moves:
+            # Target path should include country/city: "2023/06/XX/CityName/"
+            path = move.target_folder_path or ""
+            parts = path.strip("/").split("/")
+            assert len(parts) == 4, f"Expected 4 parts, got {parts}"
+        conn.close()
+
+    def test_plan_moves_mixed_gps(self, tmp_catalog_with_gps: Path) -> None:
+        """Photos without GPS get date-only path even when location is enabled."""
+        conn = sqlite3.connect(str(tmp_catalog_with_gps))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        planner = ChangePlanner(conn, scanner, location_folders=True)
+        plan = planner.build_plan(include_moves=True, include_renames=False)
+        moves = [c for c in plan.changes if c.change_type == ChangeType.MOVE_PHOTO]
+        nogps_moves = [c for c in moves if c.photo.gps_latitude is None]
+        for move in nogps_moves:
+            # Should be date-only: "2023/06/"
+            assert move.target_folder_path == "2023/06/"
+        conn.close()
+
+    def test_folders_to_create_with_location(self, tmp_catalog_with_gps: Path) -> None:
+        """Folder chain includes Country and City folders."""
+        conn = sqlite3.connect(str(tmp_catalog_with_gps))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        planner = ChangePlanner(conn, scanner, location_folders=True)
+        plan = planner.build_plan(include_moves=True, include_renames=False)
+        new_paths = [p for _, p in plan.folders_to_create]
+        # Should have location-based subfolders
+        location_paths = [p for p in new_paths if p.count("/") >= 3]
+        assert len(location_paths) > 0
+        conn.close()
+
+    def test_plan_no_duplicate_folders(self, tmp_catalog_with_gps: Path) -> None:
+        """Two photos in same location should not create duplicate folders."""
+        conn = sqlite3.connect(str(tmp_catalog_with_gps))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        planner = ChangePlanner(conn, scanner, location_folders=True)
+        plan = planner.build_plan(include_moves=True, include_renames=False)
+        # No duplicate folder paths
+        folder_set = set(plan.folders_to_create)
+        assert len(folder_set) == len(plan.folders_to_create)
+        conn.close()

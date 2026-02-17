@@ -48,11 +48,15 @@ CREATE TABLE Adobe_images (
 );
 
 CREATE TABLE AgHarvestedExifMetadata (
+    id_local INTEGER PRIMARY KEY,
     image INTEGER,
     dateTimeOriginal TEXT,
     focalLength REAL,
     aperture REAL,
-    isoSpeedRating INTEGER
+    isoSpeedRating INTEGER,
+    gpsLatitude REAL,
+    gpsLongitude REAL,
+    hasGPS INTEGER DEFAULT 0
 );
 
 CREATE TABLE Adobe_variablesTable (
@@ -93,6 +97,11 @@ def create_test_catalog(db_path: Path, data: dict | None = None) -> Path:
         conn.execute(
             "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             image,
+        )
+    for exif in data.get("exif", []):
+        conn.execute(
+            "INSERT INTO AgHarvestedExifMetadata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            exif,
         )
 
     conn.commit()
@@ -259,3 +268,94 @@ def tmp_catalog_with_files(tmp_path: Path) -> tuple[Path, Path]:
     )
 
     return db_path, root_dir
+
+
+def gps_test_data() -> dict:
+    """Test data with GPS coordinates on some photos."""
+    root_path = "/tmp/test_photos/"
+    return {
+        "roots": [
+            (1, "ROOT-UUID-1", root_path, "test_photos", "../test_photos"),
+        ],
+        "folders": [
+            (1, "FOLD-UUID-1", "2023/06/", 1),
+            (2, "FOLD-UUID-2", "2023/07/", 1),
+        ],
+        "files": [
+            # Photo 1: has GPS (Zurich), misplaced in 2023/07/
+            (
+                1,
+                "FILE-UUID-1",
+                "IMG_GPS_1",
+                "JPG",
+                2,
+                "IMG_GPS_1",
+                None,
+                None,
+                "IMG_GPS_1.JPG",
+                None,
+            ),
+            # Photo 2: has GPS (Paris), misplaced in 2023/07/
+            (
+                2,
+                "FILE-UUID-2",
+                "IMG_GPS_2",
+                "JPG",
+                2,
+                "IMG_GPS_2",
+                None,
+                None,
+                "IMG_GPS_2.JPG",
+                None,
+            ),
+            # Photo 3: no GPS, correctly placed
+            (
+                3,
+                "FILE-UUID-3",
+                "IMG_NOGPS_1",
+                "JPG",
+                1,
+                "IMG_NOGPS_1",
+                None,
+                None,
+                "IMG_NOGPS_1.JPG",
+                None,
+            ),
+            # Photo 4: no GPS, misplaced in 2023/07/
+            (
+                4,
+                "FILE-UUID-4",
+                "IMG_NOGPS_2",
+                "DNG",
+                2,
+                "IMG_NOGPS_2",
+                None,
+                None,
+                "IMG_NOGPS_2.DNG",
+                None,
+            ),
+        ],
+        "images": [
+            (1, "IMG-UUID-1", "2023-06-15T14:30:00", 1, "JPG", 0, 3, "AB", None, None),
+            (2, "IMG-UUID-2", "2023-06-20T10:00:00", 2, "JPG", 0, 4, "AB", None, None),
+            (3, "IMG-UUID-3", "2023-06-10T08:00:00", 3, "JPG", 0, 5, "AB", None, None),
+            (4, "IMG-UUID-4", "2023-06-25T12:00:00", 4, "DNG", 0, 2, "AB", None, None),
+        ],
+        "exif": [
+            # Photo 1: Zurich GPS
+            (1, 1, "2023-06-15T14:30:00", None, None, None, 47.3769, 8.5417, 1),
+            # Photo 2: Paris GPS
+            (2, 2, "2023-06-20T10:00:00", None, None, None, 48.8566, 2.3522, 1),
+            # Photo 3: no GPS
+            (3, 3, "2023-06-10T08:00:00", None, None, None, None, None, 0),
+            # Photo 4: no GPS
+            (4, 4, "2023-06-25T12:00:00", None, None, None, None, None, 0),
+        ],
+    }
+
+
+@pytest.fixture
+def tmp_catalog_with_gps(tmp_path: Path) -> Path:
+    """Create a temporary test catalog with GPS EXIF data."""
+    db_path = tmp_path / "test_gps.lrcat"
+    return create_test_catalog(db_path, gps_test_data())

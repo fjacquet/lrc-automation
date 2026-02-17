@@ -1,5 +1,7 @@
 """Change planner - builds execution plans from scan results."""
 
+from __future__ import annotations
+
 import sqlite3
 
 from .constants import (
@@ -19,10 +21,12 @@ class ChangePlanner:
         conn: sqlite3.Connection,
         scanner: CatalogScanner,
         target_layout: str = DEFAULT_TARGET_LAYOUT,
+        location_folders: bool = False,
     ) -> None:
         self.conn = conn
         self.scanner = scanner
         self.target_layout = target_layout
+        self.location_folders = location_folders
         self.existing_folders = scanner.get_all_folders()
 
     def build_plan(
@@ -43,8 +47,39 @@ class ChangePlanner:
         """Plan moves for misplaced photos."""
         misplaced = self.scanner.scan_misplaced_photos()
 
+        # Batch-resolve GPS coordinates if location folders enabled
+        location_map: dict[tuple[float, float], tuple[str, str]] = {}
+        if self.location_folders:
+            from .geocoder import LocationResolver
+
+            resolver = LocationResolver()
+            coords = [
+                (p.gps_latitude, p.gps_longitude)
+                for p in misplaced
+                if p.gps_latitude is not None and p.gps_longitude is not None
+            ]
+            if coords:
+                location_map = resolver.resolve_batch(coords)
+
         for photo in misplaced:
-            target_path = photo.get_expected_folder_path(self.target_layout)
+            # Determine target path with optional location subfolder
+            country: str | None = None
+            city: str | None = None
+            if (
+                self.location_folders
+                and photo.gps_latitude is not None
+                and photo.gps_longitude is not None
+            ):
+                loc = location_map.get((photo.gps_latitude, photo.gps_longitude))
+                if loc:
+                    country, city = loc
+
+            if self.location_folders and (country and city):
+                target_path = photo.get_expected_folder_path_with_location(
+                    self.target_layout, country, city
+                )
+            else:
+                target_path = photo.get_expected_folder_path(self.target_layout)
             if target_path is None:
                 continue
 

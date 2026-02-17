@@ -83,6 +83,30 @@ lrc-auto -c "/path/to/catalog.lrcat" validate
 lrc-auto -c "/path/to/catalog.lrcat" restore --backup-path /path/to/backup.lrcat.bak-20260217
 ```
 
+### Location-based subfolders (optional)
+
+If your photos have GPS coordinates, you can organize them into `Country/City/` subfolders within the date hierarchy.
+
+**Install the geo extra:**
+
+```bash
+pip install lrc-automation[geo]
+```
+
+**Enable via CLI flag or environment variable:**
+
+```bash
+# CLI flag
+lrc-auto --location-folders -c catalog.lrcat scan
+
+# Environment variable
+LRC_LOCATION_FOLDERS=true lrc-auto -c catalog.lrcat scan
+```
+
+When enabled, photos with GPS data are placed in folders like `2023/06/CH/Zurich/` instead of just `2023/06/`. Photos without GPS coordinates fall back to the date-only path.
+
+The feature uses the `reverse_geocoder` library for fast, offline lookups (no internet required). Country codes follow ISO 3166-1 alpha-2 (e.g. `CH`, `FR`, `NZ`).
+
 ## Supported folder structures
 
 The scanner detects dates in folder paths using multiple patterns:

@@ -37,6 +37,8 @@ class PhotoRecord:
     capture_time: datetime | None
     current_folder_path: str
     root_absolute_path: str
+    gps_latitude: float | None = None
+    gps_longitude: float | None = None
 
     @property
     def full_path(self) -> Path:
@@ -61,6 +63,24 @@ class PhotoRecord:
                 path += "/"
             return path
         return None
+
+    def get_expected_folder_path_with_location(
+        self,
+        layout: str,
+        country: str | None,
+        city: str | None,
+    ) -> str | None:
+        """Derive target folder with optional Country/City subfolder.
+
+        Returns date path + Country/City/ when both are available,
+        otherwise falls back to date-only path.
+        """
+        base = self.get_expected_folder_path(layout)
+        if base is None:
+            return None
+        if country and city:
+            return f"{base}{country}/{city}/"
+        return base
 
 
 @dataclass
