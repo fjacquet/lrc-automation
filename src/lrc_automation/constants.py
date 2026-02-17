@@ -2,8 +2,33 @@
 
 import re
 
+# Default target layout (strftime format)
+DEFAULT_TARGET_LAYOUT = "%Y/%m/"
+
 # Folder structure pattern: YYYY/MM/
 FOLDER_YYYY_MM_PATTERN = re.compile(r"^(\d{4})/(\d{2})/$")
+
+# Mapping of strftime directives to regex fragments
+_STRFTIME_TO_REGEX: dict[str, str] = {
+    "%Y": r"\d{4}",
+    "%m": r"\d{2}",
+    "%d": r"\d{2}",
+    "%H": r"\d{2}",
+    "%M": r"\d{2}",
+    "%S": r"\d{2}",
+}
+
+
+def layout_to_regex(layout: str) -> re.Pattern[str]:
+    """Convert a strftime layout string to a compiled regex pattern.
+
+    Example: "%Y/%m/" → re.compile(r"^\\d{4}/\\d{2}/$")
+    """
+    pattern = re.escape(layout)
+    for directive, regex_frag in _STRFTIME_TO_REGEX.items():
+        pattern = pattern.replace(re.escape(directive), regex_frag)
+    return re.compile(f"^{pattern}$")
+
 
 # Duplicate date prefix patterns
 # Matches: DDMMYYYY-DDMMYYYY-rest (e.g. 29122012-29122012-IMG_20121229_131334)

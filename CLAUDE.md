@@ -52,7 +52,7 @@ Pipeline: **scan** (read-only) -> **plan** (read-only) -> **apply** (writes) -> 
 
 1. `CatalogScanner._fetch_all_photos()` joins `Adobe_images` + `AgLibraryFile` + `AgLibraryFolder` + `AgLibraryRootFolder` to build `PhotoRecord` list
 2. Full file path = `AgLibraryRootFolder.absolutePath` + `AgLibraryFolder.pathFromRoot` + `AgLibraryFile.baseName` + `.` + `extension`
-3. **Target layout is `YYYY/MM/`** — photos are moved to match their `captureTime`
+3. **Target layout is configurable** via `LRC_TARGET_LAYOUT` env var (default `%Y/%m/` = `YYYY/MM/`). Photos are moved to match their `captureTime`
 4. Moving a photo in the catalog = `UPDATE AgLibraryFile SET folder = :new_folder_id`
 5. The executor moves the physical file + sidecars on disk to match
 

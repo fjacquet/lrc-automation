@@ -11,6 +11,24 @@ cp .env.example .env
 ```env
 LRC_CATALOG_PATH=/path/to/your/Lightroom Catalog.lrcat
 LRC_BACKUP_DIR=                # optional, defaults to catalog directory
+LRC_TARGET_LAYOUT=%Y/%m/       # optional, strftime format for target folders
+```
+
+### Target folder layout
+
+The `LRC_TARGET_LAYOUT` variable controls the target folder structure using Python `strftime` format codes. Defaults to `%Y/%m/` (e.g. `2023/06/`).
+
+| Layout | Example | Description |
+|--------|---------|-------------|
+| `%Y/%m/` | `2023/06/` | Year/Month (default) |
+| `%Y/%m/%d/` | `2023/06/15/` | Year/Month/Day |
+| `%Y-%m/` | `2023-06/` | Year-Month with dash |
+| `%Y/` | `2023/` | Flat yearly |
+
+You can also pass it as a CLI option:
+
+```bash
+lrc-auto --target-layout "%Y/%m/%d/" -c catalog.lrcat scan
 ```
 
 ## Commands

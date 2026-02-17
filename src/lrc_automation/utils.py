@@ -5,9 +5,10 @@ import uuid
 from datetime import datetime
 
 from .constants import (
+    DEFAULT_TARGET_LAYOUT,
     DUPLICATE_PREFIX_PATTERN,
-    FOLDER_YYYY_MM_PATTERN,
     IMG_DATE_PATTERN,
+    layout_to_regex,
 )
 
 
@@ -46,14 +47,19 @@ def parse_capture_time(value: str | None) -> datetime | None:
     return None
 
 
-def extract_yyyy_mm(path_from_root: str) -> tuple[int, int] | None:
-    """Extract (year, month) from a pathFromRoot like '2023/06/'."""
-    match = FOLDER_YYYY_MM_PATTERN.match(path_from_root)
+def extract_yyyy_mm(
+    path_from_root: str, layout: str = DEFAULT_TARGET_LAYOUT
+) -> tuple[int, int] | None:
+    """Extract (year, month) from a pathFromRoot like '2023/06/'.
+
+    Uses the configured layout pattern for exact matching, then falls
+    back to prefix-based extraction for longer paths.
+    """
+    pattern = layout_to_regex(layout)
+    match = pattern.match(path_from_root)
     if match:
-        year, month = int(match.group(1)), int(match.group(2))
-        if 1900 <= year <= 2100 and 1 <= month <= 12:
-            return year, month
-        return None
+        # Parse with strftime round-trip to extract year/month
+        return _extract_ym_from_path(path_from_root, layout)
 
     # Try extracting from longer paths like "2023/06/subfolder/"
     parts = path_from_root.strip("/").split("/")
@@ -67,6 +73,17 @@ def extract_yyyy_mm(path_from_root: str) -> tuple[int, int] | None:
             pass
 
     return None
+
+
+def _extract_ym_from_path(path: str, layout: str) -> tuple[int, int] | None:
+    """Extract (year, month) by parsing a path against a strftime layout."""
+    try:
+        dt = datetime.strptime(path.rstrip("/"), layout.rstrip("/"))
+        if 1900 <= dt.year <= 2100 and 1 <= dt.month <= 12:
+            return dt.year, dt.month
+        return None
+    except ValueError:
+        return None
 
 
 def clean_duplicate_prefix(base_name: str) -> str | None:

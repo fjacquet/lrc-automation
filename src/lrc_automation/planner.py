@@ -2,7 +2,11 @@
 
 import sqlite3
 
-from .constants import QUERY_FILE_EXISTS_IN_FOLDER, QUERY_MAX_FOLDER_ID
+from .constants import (
+    DEFAULT_TARGET_LAYOUT,
+    QUERY_FILE_EXISTS_IN_FOLDER,
+    QUERY_MAX_FOLDER_ID,
+)
 from .models import ChangePlan, ChangeType, FileChange
 from .scanner import CatalogScanner
 
@@ -10,9 +14,15 @@ from .scanner import CatalogScanner
 class ChangePlanner:
     """Builds a ChangePlan from scan results."""
 
-    def __init__(self, conn: sqlite3.Connection, scanner: CatalogScanner) -> None:
+    def __init__(
+        self,
+        conn: sqlite3.Connection,
+        scanner: CatalogScanner,
+        target_layout: str = DEFAULT_TARGET_LAYOUT,
+    ) -> None:
         self.conn = conn
         self.scanner = scanner
+        self.target_layout = target_layout
         self.existing_folders = scanner.get_all_folders()
 
     def build_plan(
@@ -34,7 +44,7 @@ class ChangePlanner:
         misplaced = self.scanner.scan_misplaced_photos()
 
         for photo in misplaced:
-            target_path = photo.expected_folder_path
+            target_path = photo.get_expected_folder_path(self.target_layout)
             if target_path is None:
                 continue
 

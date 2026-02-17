@@ -48,9 +48,18 @@ class PhotoRecord:
 
     @property
     def expected_folder_path(self) -> str | None:
-        """Derive YYYY/MM/ from capture_time."""
+        """Derive target folder from capture_time using default layout."""
+        from .constants import DEFAULT_TARGET_LAYOUT
+
+        return self.get_expected_folder_path(DEFAULT_TARGET_LAYOUT)
+
+    def get_expected_folder_path(self, layout: str) -> str | None:
+        """Derive target folder from capture_time using given strftime layout."""
         if self.capture_time:
-            return f"{self.capture_time.year}/{self.capture_time.month:02d}/"
+            path = self.capture_time.strftime(layout)
+            if not path.endswith("/"):
+                path += "/"
+            return path
         return None
 
 

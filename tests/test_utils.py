@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+from lrc_automation.constants import layout_to_regex
+from lrc_automation.models import PhotoRecord
 from lrc_automation.utils import (
     clean_duplicate_prefix,
     extract_yyyy_mm,
@@ -51,6 +53,15 @@ class TestExtractYyyyMm:
     def test_invalid_month(self) -> None:
         assert extract_yyyy_mm("2023/13/") is None
 
+    def test_custom_layout_day(self) -> None:
+        assert extract_yyyy_mm("2023/06/15/", layout="%Y/%m/%d/") == (2023, 6)
+
+    def test_custom_layout_dash(self) -> None:
+        assert extract_yyyy_mm("2023-06/", layout="%Y-%m/") == (2023, 6)
+
+    def test_custom_layout_no_match(self) -> None:
+        assert extract_yyyy_mm("photos/vacation/", layout="%Y/%m/%d/") is None
+
 
 class TestCleanDuplicatePrefix:
     def test_basic_duplicate(self) -> None:
@@ -68,6 +79,65 @@ class TestCleanDuplicatePrefix:
     def test_duplicate_without_img_date(self) -> None:
         result = clean_duplicate_prefix("12345678-12345678-PHOTO_001")
         assert result == "12345678-PHOTO_001"
+
+
+class TestLayoutToRegex:
+    def test_default_layout(self) -> None:
+        pattern = layout_to_regex("%Y/%m/")
+        assert pattern.match("2023/06/")
+        assert not pattern.match("photos/06/")
+
+    def test_day_layout(self) -> None:
+        pattern = layout_to_regex("%Y/%m/%d/")
+        assert pattern.match("2023/06/15/")
+        assert not pattern.match("2023/06/")
+
+    def test_dash_layout(self) -> None:
+        pattern = layout_to_regex("%Y-%m/")
+        assert pattern.match("2023-06/")
+        assert not pattern.match("2023/06/")
+
+
+class TestGetExpectedFolderPath:
+    def _make_photo(self, capture_time: datetime | None) -> PhotoRecord:
+        return PhotoRecord(
+            image_id=1,
+            file_id=1,
+            folder_id=1,
+            root_folder_id=1,
+            base_name="test",
+            extension="jpg",
+            sidecar_extensions=None,
+            capture_time=capture_time,
+            current_folder_path="2023/06/",
+            root_absolute_path="/tmp/",
+        )
+
+    def test_default_layout(self) -> None:
+        photo = self._make_photo(datetime(2023, 6, 15, 14, 30))
+        assert photo.get_expected_folder_path("%Y/%m/") == "2023/06/"
+
+    def test_day_layout(self) -> None:
+        photo = self._make_photo(datetime(2023, 6, 15, 14, 30))
+        assert photo.get_expected_folder_path("%Y/%m/%d/") == "2023/06/15/"
+
+    def test_flat_year_layout(self) -> None:
+        photo = self._make_photo(datetime(2023, 6, 15, 14, 30))
+        assert photo.get_expected_folder_path("%Y/") == "2023/"
+
+    def test_none_capture_time(self) -> None:
+        photo = self._make_photo(None)
+        assert photo.get_expected_folder_path("%Y/%m/") is None
+
+    def test_trailing_slash_ensured(self) -> None:
+        photo = self._make_photo(datetime(2023, 6, 15, 14, 30))
+        result = photo.get_expected_folder_path("%Y/%m")
+        assert result is not None
+        assert result.endswith("/")
+
+    def test_property_backward_compat(self) -> None:
+        photo = self._make_photo(datetime(2023, 6, 15, 14, 30))
+        assert photo.expected_folder_path == "2023/06/"
 
 
 class TestParseSidecarExtensions:

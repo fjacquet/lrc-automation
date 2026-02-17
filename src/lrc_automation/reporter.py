@@ -22,15 +22,19 @@ class Reporter:
         total_photos: int,
         misplaced: list[PhotoRecord],
         duplicates: list[tuple[PhotoRecord, str]],
+        target_layout: str = "%Y/%m/",
     ) -> None:
         """Print a summary of scan results."""
         self.console.print("\n[bold]Catalog Scan Results[/bold]")
         self.console.print(f"Total photos: {total_photos}")
+        self.console.print(f"Target layout: {target_layout}")
         self.console.print(f"Misplaced photos: [yellow]{len(misplaced)}[/yellow]")
         self.console.print(f"Duplicate prefixes: [yellow]{len(duplicates)}[/yellow]")
 
         if misplaced:
-            self.console.print("\n[bold]Misplaced Photos[/bold] (wrong YYYY/MM folder)")
+            self.console.print(
+                f"\n[bold]Misplaced Photos[/bold] (wrong {target_layout} folder)"
+            )
             table = Table(show_lines=False)
             table.add_column("#", style="dim", width=6)
             table.add_column("File")
@@ -39,7 +43,7 @@ class Reporter:
             table.add_column("Capture Date")
 
             for i, photo in enumerate(misplaced[:50], 1):
-                expected = photo.expected_folder_path or "?"
+                expected = photo.get_expected_folder_path(target_layout) or "?"
                 capture = (
                     photo.capture_time.strftime("%Y-%m-%d %H:%M")
                     if photo.capture_time

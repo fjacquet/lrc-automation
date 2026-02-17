@@ -23,8 +23,15 @@ console = Console()
     help="Path to .lrcat catalog file",
 )
 @click.option("--verbose", "-v", is_flag=True)
+@click.option(
+    "--target-layout",
+    envvar="LRC_TARGET_LAYOUT",
+    default="%Y/%m/",
+    show_default=True,
+    help="Target folder layout (strftime format)",
+)
 @click.pass_context
-def cli(ctx: click.Context, catalog: str, verbose: bool) -> None:
+def cli(ctx: click.Context, catalog: str, verbose: bool, target_layout: str) -> None:
     """Lightroom Classic Catalog Automation Tool."""
     ctx.ensure_object(dict)
     catalog_path = Path(catalog)
@@ -34,6 +41,7 @@ def cli(ctx: click.Context, catalog: str, verbose: bool) -> None:
         )
     ctx.obj["catalog_path"] = catalog_path
     ctx.obj["verbose"] = verbose
+    ctx.obj["target_layout"] = target_layout
 
 
 @cli.command()
@@ -50,6 +58,7 @@ def scan(ctx: click.Context, output: str | None) -> None:
     from .scanner import CatalogScanner
 
     catalog_path: Path = ctx.obj["catalog_path"]
+    target_layout: str = ctx.obj["target_layout"]
     reporter = Reporter(console)
 
     try:
@@ -61,12 +70,12 @@ def scan(ctx: click.Context, output: str | None) -> None:
             if schema_version:
                 console.print(f"Catalog schema version: {schema_version}")
 
-            scanner = CatalogScanner(conn)
+            scanner = CatalogScanner(conn, target_layout=target_layout)
             total = scanner.get_total_photo_count()
             misplaced = scanner.scan_misplaced_photos()
             duplicates = scanner.scan_duplicate_prefixes()
 
-            reporter.print_scan_summary(total, misplaced, duplicates)
+            reporter.print_scan_summary(total, misplaced, duplicates, target_layout)
 
             if output:
                 output_path = Path(output)
@@ -80,7 +89,9 @@ def scan(ctx: click.Context, output: str | None) -> None:
                             change_type=ChangeType.MOVE_PHOTO,
                             photo=photo,
                             source_folder_path=photo.current_folder_path,
-                            target_folder_path=photo.expected_folder_path,
+                            target_folder_path=photo.get_expected_folder_path(
+                                target_layout
+                            ),
                         )
                     )
                 for photo, cleaned in duplicates:
@@ -125,6 +136,7 @@ def plan(ctx: click.Context, fix: str, output: str | None) -> None:
     from .scanner import CatalogScanner
 
     catalog_path: Path = ctx.obj["catalog_path"]
+    target_layout: str = ctx.obj["target_layout"]
     reporter = Reporter(console)
 
     try:
@@ -132,8 +144,8 @@ def plan(ctx: click.Context, fix: str, output: str | None) -> None:
             cat.validate_is_lrcat()
             conn = cat.open(readonly=True)
 
-            scanner = CatalogScanner(conn)
-            planner = ChangePlanner(conn, scanner)
+            scanner = CatalogScanner(conn, target_layout=target_layout)
+            planner = ChangePlanner(conn, scanner, target_layout=target_layout)
 
             change_plan = planner.build_plan(
                 include_moves=(fix in ("moves", "all")),
@@ -183,6 +195,7 @@ def apply(
     from .validators import CatalogValidator
 
     catalog_path: Path = ctx.obj["catalog_path"]
+    target_layout: str = ctx.obj["target_layout"]
     reporter = Reporter(console)
 
     try:
@@ -199,8 +212,8 @@ def apply(
             conn = cat.open(readonly=True)
 
             # Build plan
-            scanner = CatalogScanner(conn)
-            planner = ChangePlanner(conn, scanner)
+            scanner = CatalogScanner(conn, target_layout=target_layout)
+            planner = ChangePlanner(conn, scanner, target_layout=target_layout)
             change_plan = planner.build_plan(
                 include_moves=(fix in ("moves", "all")),
                 include_renames=(fix in ("renames", "all")),

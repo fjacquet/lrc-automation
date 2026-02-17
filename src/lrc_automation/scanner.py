@@ -2,7 +2,12 @@
 
 import sqlite3
 
-from .constants import QUERY_ALL_FOLDERS, QUERY_ALL_PHOTOS, QUERY_ROOT_FOLDERS
+from .constants import (
+    DEFAULT_TARGET_LAYOUT,
+    QUERY_ALL_FOLDERS,
+    QUERY_ALL_PHOTOS,
+    QUERY_ROOT_FOLDERS,
+)
 from .models import Folder, PhotoRecord, RootFolder
 from .utils import clean_duplicate_prefix, extract_yyyy_mm, parse_capture_time
 
@@ -10,8 +15,11 @@ from .utils import clean_duplicate_prefix, extract_yyyy_mm, parse_capture_time
 class CatalogScanner:
     """Scans a Lightroom Classic catalog for problems."""
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(
+        self, conn: sqlite3.Connection, target_layout: str = DEFAULT_TARGET_LAYOUT
+    ) -> None:
         self.conn = conn
+        self.target_layout = target_layout
 
     def get_root_folders(self) -> list[RootFolder]:
         """Return all root folders."""
@@ -56,22 +64,22 @@ class CatalogScanner:
         return photos
 
     def scan_misplaced_photos(self) -> list[PhotoRecord]:
-        """Return photos whose current YYYY/MM folder doesn't match captureTime."""
+        """Return photos whose current folder doesn't match captureTime."""
         misplaced = []
         for photo in self._fetch_all_photos():
             if photo.capture_time is None:
                 continue
 
-            expected = photo.expected_folder_path
+            expected = photo.get_expected_folder_path(self.target_layout)
             if expected is None:
                 continue
 
             # Extract YYYY/MM from actual folder path
-            actual_ym = extract_yyyy_mm(photo.current_folder_path)
+            actual_ym = extract_yyyy_mm(photo.current_folder_path, self.target_layout)
             expected_ym = (photo.capture_time.year, photo.capture_time.month)
 
             if actual_ym is None:
-                # Folder doesn't follow YYYY/MM pattern, skip
+                # Folder doesn't follow target layout pattern, skip
                 continue
 
             if actual_ym != expected_ym:
