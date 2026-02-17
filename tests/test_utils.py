@@ -6,6 +6,7 @@ from lrc_automation.constants import layout_to_regex
 from lrc_automation.models import PhotoRecord
 from lrc_automation.utils import (
     clean_duplicate_prefix,
+    extract_date_from_path,
     extract_yyyy_mm,
     parse_capture_time,
     parse_sidecar_extensions,
@@ -138,6 +139,64 @@ class TestGetExpectedFolderPath:
     def test_property_backward_compat(self) -> None:
         photo = self._make_photo(datetime(2023, 6, 15, 14, 30))
         assert photo.expected_folder_path == "2023/06/"
+
+
+class TestExtractDateFromPath:
+    def test_standard_yyyy_mm(self) -> None:
+        assert extract_date_from_path("/photos/2023/06/") == (2023, 6)
+
+    def test_standard_yyyy_mm_nested(self) -> None:
+        assert extract_date_from_path("/photos/2023/06/subfolder/") == (2023, 6)
+
+    def test_iso_date_folder(self) -> None:
+        assert extract_date_from_path("/photos/2023-12-24/") == (2023, 12)
+
+    def test_iso_date_ignores_day(self) -> None:
+        assert extract_date_from_path("/photos/2023-06-01/") == (2023, 6)
+
+    def test_french_date_avril(self) -> None:
+        assert extract_date_from_path("/photos/1 avril 2016/") == (2016, 4)
+
+    def test_french_date_decembre_accent(self) -> None:
+        assert extract_date_from_path("/photos/25 décembre 2020/") == (2020, 12)
+
+    def test_french_date_fevrier_no_accent(self) -> None:
+        assert extract_date_from_path("/photos/14 fevrier 2019/") == (2019, 2)
+
+    def test_french_date_case_insensitive(self) -> None:
+        assert extract_date_from_path("/photos/1 AVRIL 2016/") == (2016, 4)
+
+    def test_year_in_root_month_in_path(self) -> None:
+        assert extract_date_from_path("/photos/2021/06/") == (2021, 6)
+
+    def test_year_in_root_topical_subfolder(self) -> None:
+        assert extract_date_from_path("/photos/2021/Vacances/") is None
+
+    def test_topical_folder_returns_none(self) -> None:
+        assert extract_date_from_path("/photos/Vacances/Summer/") is None
+
+    def test_empty_path_returns_none(self) -> None:
+        assert extract_date_from_path("") is None
+
+    def test_1904_epoch_filtered_iso(self) -> None:
+        assert extract_date_from_path("/photos/1904-01-01/") is None
+
+    def test_1904_epoch_filtered_yyyy_mm(self) -> None:
+        assert extract_date_from_path("/photos/1904/01/") is None
+
+    def test_invalid_month_13(self) -> None:
+        assert extract_date_from_path("/photos/2023-13-01/") is None
+
+    def test_deeper_iso_wins_over_shallower_year(self) -> None:
+        # Right-to-left: deeper 2023-12-24 is found before shallower 2020
+        assert extract_date_from_path("/photos/2020/2023-12-24/") == (2023, 12)
+
+    def test_real_catalog_root_with_date(self) -> None:
+        # Simulates root=/Volumes/photo/2021/ pathFromRoot=06/
+        assert extract_date_from_path("/Volumes/photo/2021/06/") == (2021, 6)
+
+    def test_french_date_aout_accent(self) -> None:
+        assert extract_date_from_path("/photos/15 août 2018/") == (2018, 8)
 
 
 class TestParseSidecarExtensions:

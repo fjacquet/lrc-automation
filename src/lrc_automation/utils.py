@@ -7,6 +7,10 @@ from datetime import datetime
 from .constants import (
     DEFAULT_TARGET_LAYOUT,
     DUPLICATE_PREFIX_PATTERN,
+    FOLDER_BARE_YEAR_PATTERN,
+    FOLDER_FRENCH_DATE_PATTERN,
+    FOLDER_ISO_DATE_PATTERN,
+    FRENCH_MONTH_MAP,
     IMG_DATE_PATTERN,
     layout_to_regex,
 )
@@ -84,6 +88,63 @@ def _extract_ym_from_path(path: str, layout: str) -> tuple[int, int] | None:
         return None
     except ValueError:
         return None
+
+
+def _validate_ym(year: int, month: int) -> tuple[int, int] | None:
+    """Validate year/month pair.
+
+    Rejects year outside [1900,2100], LR epoch 1904, month outside [1,12].
+    """
+    if 1900 <= year <= 2100 and year != 1904 and 1 <= month <= 12:
+        return year, month
+    return None
+
+
+def extract_date_from_path(full_path: str) -> tuple[int, int] | None:
+    """Extract (year, month) from the full folder path (root + pathFromRoot).
+
+    Scans path segments right-to-left (deepest first) trying:
+    1. ISO date: YYYY-MM-DD
+    2. French date: D month YYYY
+    3. Bare year YYYY with right neighbour as integer month
+    """
+    segments = [s for s in full_path.split("/") if s]
+    if not segments:
+        return None
+
+    for i in range(len(segments) - 1, -1, -1):
+        seg = segments[i]
+
+        # 1. ISO date: YYYY-MM-DD
+        m = FOLDER_ISO_DATE_PATTERN.match(seg)
+        if m:
+            result = _validate_ym(int(m.group(1)), int(m.group(2)))
+            if result:
+                return result
+
+        # 2. French date: D month YYYY
+        m = FOLDER_FRENCH_DATE_PATTERN.match(seg)
+        if m:
+            month = FRENCH_MONTH_MAP.get(m.group(2).lower())
+            if month is not None:
+                result = _validate_ym(int(m.group(3)), month)
+                if result:
+                    return result
+
+        # 3. Bare year with right neighbour as month
+        m = FOLDER_BARE_YEAR_PATTERN.match(seg)
+        if m:
+            year = int(m.group(1))
+            if i + 1 < len(segments):
+                try:
+                    month_val = int(segments[i + 1])
+                    result = _validate_ym(year, month_val)
+                    if result:
+                        return result
+                except ValueError:
+                    pass
+
+    return None
 
 
 def clean_duplicate_prefix(base_name: str) -> str | None:

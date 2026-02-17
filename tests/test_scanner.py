@@ -111,3 +111,61 @@ class TestCatalogScanner:
         # Photos 1 and 2 are misplaced (in 2023/07/ but captured 2023-06)
         assert len(gps_misplaced) == 2
         conn.close()
+
+
+class TestScannerBroadenedDetection:
+    """Tests for broadened date detection (ISO, French, year-in-root)."""
+
+    def test_iso_date_correctly_placed(self, diverse_folder_catalog: Path) -> None:
+        """Photo in 2023-12-24/ captured 2023-12 should NOT be misplaced."""
+        conn = sqlite3.connect(str(diverse_folder_catalog))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn)
+        misplaced = scanner.scan_misplaced_photos()
+        file_ids = [p.file_id for p in misplaced]
+        assert 10 not in file_ids
+        conn.close()
+
+    def test_french_date_correctly_placed(self, diverse_folder_catalog: Path) -> None:
+        """Photo in '1 avril 2016/' captured 2016-04 should NOT be misplaced."""
+        conn = sqlite3.connect(str(diverse_folder_catalog))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn)
+        misplaced = scanner.scan_misplaced_photos()
+        file_ids = [p.file_id for p in misplaced]
+        assert 11 not in file_ids
+        conn.close()
+
+    def test_topical_folder_skipped(self, diverse_folder_catalog: Path) -> None:
+        """Photo in 'Vacances/' should be skipped (no date detected)."""
+        conn = sqlite3.connect(str(diverse_folder_catalog))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn)
+        misplaced = scanner.scan_misplaced_photos()
+        file_ids = [p.file_id for p in misplaced]
+        assert 13 not in file_ids
+        conn.close()
+
+    def test_standard_yyyy_mm_mismatch_detected(
+        self, diverse_folder_catalog: Path
+    ) -> None:
+        """Photo in 2022/03/ captured 2022-05 should be detected as misplaced."""
+        conn = sqlite3.connect(str(diverse_folder_catalog))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn)
+        misplaced = scanner.scan_misplaced_photos()
+        file_ids = [p.file_id for p in misplaced]
+        assert 14 in file_ids
+        conn.close()
+
+    def test_year_in_root_month_in_path_correctly_placed(
+        self, diverse_folder_catalog: Path
+    ) -> None:
+        """Photo with root=2021/ path=06/ captured 2021-06 should NOT be misplaced."""
+        conn = sqlite3.connect(str(diverse_folder_catalog))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn)
+        misplaced = scanner.scan_misplaced_photos()
+        file_ids = [p.file_id for p in misplaced]
+        assert 12 not in file_ids
+        conn.close()
