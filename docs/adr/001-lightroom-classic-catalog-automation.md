@@ -144,6 +144,41 @@ lrc-auto restore -c ~/Pictures/MyCatalog.lrcat --backup-path ...  # Restore
 | 5 | Tests: unit + integration tests |
 | 6 | Optional: MCP server wrapper |
 
+## Real Catalog Analysis (2026-02-17)
+
+Scanned against a production catalog (schema v1400000, LR Classic v14):
+
+- **92,717 photos** across **4,180 folders** and **42 root folders**
+- **1,175 misplaced photos** detected (capture date != folder date)
+
+### Folder Structure (Not What We Expected)
+
+The initial design assumed `YYYY/MM/` subfolders. The real catalog uses:
+
+| Pattern | Count | Example |
+|---------|-------|---------|
+| `YYYY-MM-DD` in pathFromRoot | 1,663 | `2023-12-24/` |
+| French dates in pathFromRoot | 978 | `1 avril 2016/` |
+| Year only | 54 | `2017/` |
+| Other (topical) | 1,443 | `Italy/Corentin/` |
+| Empty pathFromRoot | 42 | (files directly in root) |
+
+The date is often encoded in the **root folder** path itself (e.g. `/Volumes/photo/2016/`) and the subfolder carries the day (e.g. `2016-10-30/`). This means the scanner must parse dates from the **full path** (root + pathFromRoot), not just pathFromRoot.
+
+### Misplacement Patterns
+
+- Many photos show `captureTime = 2023-10-29T18:07:xx` while sitting in folders from 2016-2018. This indicates the file modification date was imported as capture time.
+- 4 videos have bogus `1904-01-01` capture times (should be skipped).
+- Duplicate filenames like `IMG_0005.JPG` appear up to 65 times across different folders (normal camera numbering resets, not a problem).
+
+### Required Scanner Updates
+
+1. Extract dates from the **full path** (root + pathFromRoot), not just pathFromRoot
+2. Support `YYYY-MM-DD` date folders (the dominant pattern)
+3. Support French date folders (`D mois YYYY`)
+4. Filter out bogus dates (1904, far-future)
+5. Consider that topical folders (no date) should be skipped, not flagged
+
 ## Consequences
 
 **Positive:**
