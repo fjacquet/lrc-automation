@@ -6,6 +6,9 @@ on:
     paths:
       - "docs/**"
       - "mkdocs.yml"
+    tags:
+      - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write
