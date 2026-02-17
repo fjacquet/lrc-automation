@@ -6,6 +6,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-02-17
+
+### Added
+- Broadened scanner date detection: ISO `YYYY-MM-DD` folders, French date folders (`1 avril 2016`), and year-in-root + month-in-path patterns now recognized
+- New `extract_date_from_path()` function scans full path (root + pathFromRoot) right-to-left for date segments
+- `FOLDER_ISO_DATE_PATTERN`, `FOLDER_FRENCH_DATE_PATTERN`, `FOLDER_BARE_YEAR_PATTERN` regex constants
+- `FRENCH_MONTH_MAP` for French month name lookup (with and without accents)
+- Lightroom epoch year 1904 filtered as bogus date
+- 23 new tests: `extract_date_from_path` (18), scanner broadened detection (5)
+
+### Changed
+- `scan_misplaced_photos()` now uses `extract_date_from_path(root + pathFromRoot)` instead of `extract_yyyy_mm(pathFromRoot)`, detecting ~2,600 additional date folder patterns from real catalogs
+
 ## [0.3.0] - 2026-02-17
 
 ### Added
