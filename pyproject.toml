@@ -1,0 +1,37 @@
+[project]
+name = "lrc-automation"
+version = "0.1.0"
+description = "Lightroom Classic catalog automation - fix misplaced photos and duplicate filenames"
+readme = "README.md"
+authors = [
+    { name = "Frederic Jacquet", email = "fred@ljf.ch" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.3.1",
+    "python-dotenv>=1.2.1",
+    "rich>=14.3.2",
+]
+
+[project.scripts]
+lrc-auto = "lrc_automation.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.10.2,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "ruff>=0.15.1",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
