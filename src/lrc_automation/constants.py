@@ -74,6 +74,29 @@ QUERY_ALL_PHOTOS = """
     WHERE img.masterImage IS NULL
 """
 
+QUERY_ALL_PHOTOS_WITH_GPS = """
+    SELECT
+        img.id_local AS image_id,
+        f.id_local AS file_id,
+        fld.id_local AS folder_id,
+        rf.id_local AS root_folder_id,
+        f.baseName,
+        f.extension,
+        f.sidecarExtensions,
+        img.captureTime,
+        fld.pathFromRoot,
+        rf.absolutePath,
+        exif.gpsLatitude,
+        exif.gpsLongitude,
+        exif.hasGPS
+    FROM Adobe_images AS img
+    JOIN AgLibraryFile AS f ON img.rootFile = f.id_local
+    JOIN AgLibraryFolder AS fld ON f.folder = fld.id_local
+    JOIN AgLibraryRootFolder AS rf ON fld.rootFolder = rf.id_local
+    LEFT JOIN AgHarvestedExifMetadata AS exif ON exif.image = img.id_local
+    WHERE img.masterImage IS NULL
+"""
+
 QUERY_ALL_FOLDERS = """
     SELECT
         fld.id_local,

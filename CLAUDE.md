@@ -10,6 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 uv sync                              # Install deps
+uv sync --all-extras                 # Install deps + optional geo extra
 uv run pytest -v                     # Run all tests
 uv run pytest tests/test_scanner.py  # Run single test file
 uv run pytest -k "test_name"         # Run specific test
@@ -43,6 +44,7 @@ Pipeline: **scan** (read-only) -> **plan** (read-only) -> **apply** (writes) -> 
 - `planner.py` — `ChangePlanner`: builds `ChangePlan` from scan results, resolves target folders
 - `executor.py` — `ChangeExecutor`: applies plan (disk moves + SQL updates) in single transaction with rollback
 - `validators.py` — Pre/post-flight integrity checks (PRAGMA integrity_check, orphan detection)
+- `geocoder.py` — `LocationResolver`: offline reverse geocoding (GPS → Country/City), optional `[geo]` extra
 - `reporter.py` — Rich terminal output + JSON/CSV export
 - `models.py` — Dataclasses: `PhotoRecord`, `FileChange`, `ChangePlan`, `ExecutionReport`
 - `utils.py` — Date parsing (captureTime formats), path helpers, UUID generation
@@ -53,8 +55,9 @@ Pipeline: **scan** (read-only) -> **plan** (read-only) -> **apply** (writes) -> 
 1. `CatalogScanner._fetch_all_photos()` joins `Adobe_images` + `AgLibraryFile` + `AgLibraryFolder` + `AgLibraryRootFolder` to build `PhotoRecord` list
 2. Full file path = `AgLibraryRootFolder.absolutePath` + `AgLibraryFolder.pathFromRoot` + `AgLibraryFile.baseName` + `.` + `extension`
 3. **Target layout is configurable** via `LRC_TARGET_LAYOUT` env var (default `%Y/%m/` = `YYYY/MM/`). Photos are moved to match their `captureTime`
-4. Moving a photo in the catalog = `UPDATE AgLibraryFile SET folder = :new_folder_id`
-5. The executor moves the physical file + sidecars on disk to match
+4. **Optional location folders**: `--location-folders` / `LRC_LOCATION_FOLDERS` appends `Country/City/` subfolders using GPS coordinates from `AgHarvestedExifMetadata`. Requires optional `[geo]` extra (`reverse_geocoder`)
+5. Moving a photo in the catalog = `UPDATE AgLibraryFile SET folder = :new_folder_id`
+6. The executor moves the physical file + sidecars on disk to match
 
 ### Safety Invariants
 
@@ -65,7 +68,11 @@ Pipeline: **scan** (read-only) -> **plan** (read-only) -> **apply** (writes) -> 
 
 ### Test Setup
 
-Tests use in-memory SQLite catalogs via `tests/conftest.py:create_test_catalog()`. The `SCHEMA_SQL` constant defines a minimal catalog schema. Fixtures: `tmp_catalog` (DB only), `tmp_catalog_with_files` (DB + actual files on disk for executor tests).
+Tests use in-memory SQLite catalogs via `tests/conftest.py:create_test_catalog()`. The `SCHEMA_SQL` constant defines a minimal catalog schema. Fixtures: `tmp_catalog` (DB only), `tmp_catalog_with_files` (DB + actual files on disk for executor tests), `tmp_catalog_with_gps` (DB with GPS EXIF data for geocoder/location tests).
+
+## Environment
+
+Copy `.env.example` to `.env`. Key variables: `LRC_CATALOG_PATH`, `LRC_BACKUP_DIR`, `LRC_TARGET_LAYOUT`, `LRC_LOCATION_FOLDERS`.
 
 ## Code Style
 
@@ -74,6 +81,7 @@ Tests use in-memory SQLite catalogs via `tests/conftest.py:create_test_catalog()
 - snake_case functions, PascalCase classes
 - ruff config: line-length 88, select E/F/I/N/W/UP/B/SIM/RUF, target py312
 - mypy strict mode enabled
+- **Never use `unittest.mock`** — use `pytest.MonkeyPatch` (via `monkeypatch` fixture) instead
 
 ## Known Issue: Scanner Date Detection
 

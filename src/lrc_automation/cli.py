@@ -30,8 +30,21 @@ console = Console()
     show_default=True,
     help="Target folder layout (strftime format)",
 )
+@click.option(
+    "--location-folders",
+    is_flag=True,
+    default=False,
+    envvar="LRC_LOCATION_FOLDERS",
+    help="Append Country/City subfolders via GPS (requires lrc-automation[geo])",
+)
 @click.pass_context
-def cli(ctx: click.Context, catalog: str, verbose: bool, target_layout: str) -> None:
+def cli(
+    ctx: click.Context,
+    catalog: str,
+    verbose: bool,
+    target_layout: str,
+    location_folders: bool,
+) -> None:
     """Lightroom Classic Catalog Automation Tool."""
     ctx.ensure_object(dict)
     catalog_path = Path(catalog)
@@ -42,6 +55,7 @@ def cli(ctx: click.Context, catalog: str, verbose: bool, target_layout: str) -> 
     ctx.obj["catalog_path"] = catalog_path
     ctx.obj["verbose"] = verbose
     ctx.obj["target_layout"] = target_layout
+    ctx.obj["location_folders"] = location_folders
 
 
 @cli.command()
@@ -59,6 +73,7 @@ def scan(ctx: click.Context, output: str | None) -> None:
 
     catalog_path: Path = ctx.obj["catalog_path"]
     target_layout: str = ctx.obj["target_layout"]
+    location_folders: bool = ctx.obj["location_folders"]
     reporter = Reporter(console)
 
     try:
@@ -70,12 +85,18 @@ def scan(ctx: click.Context, output: str | None) -> None:
             if schema_version:
                 console.print(f"Catalog schema version: {schema_version}")
 
-            scanner = CatalogScanner(conn, target_layout=target_layout)
+            scanner = CatalogScanner(
+                conn,
+                target_layout=target_layout,
+                location_folders=location_folders,
+            )
             total = scanner.get_total_photo_count()
             misplaced = scanner.scan_misplaced_photos()
             duplicates = scanner.scan_duplicate_prefixes()
 
-            reporter.print_scan_summary(total, misplaced, duplicates, target_layout)
+            reporter.print_scan_summary(
+                total, misplaced, duplicates, target_layout, location_folders
+            )
 
             if output:
                 output_path = Path(output)
@@ -137,6 +158,7 @@ def plan(ctx: click.Context, fix: str, output: str | None) -> None:
 
     catalog_path: Path = ctx.obj["catalog_path"]
     target_layout: str = ctx.obj["target_layout"]
+    location_folders: bool = ctx.obj["location_folders"]
     reporter = Reporter(console)
 
     try:
@@ -144,8 +166,17 @@ def plan(ctx: click.Context, fix: str, output: str | None) -> None:
             cat.validate_is_lrcat()
             conn = cat.open(readonly=True)
 
-            scanner = CatalogScanner(conn, target_layout=target_layout)
-            planner = ChangePlanner(conn, scanner, target_layout=target_layout)
+            scanner = CatalogScanner(
+                conn,
+                target_layout=target_layout,
+                location_folders=location_folders,
+            )
+            planner = ChangePlanner(
+                conn,
+                scanner,
+                target_layout=target_layout,
+                location_folders=location_folders,
+            )
 
             change_plan = planner.build_plan(
                 include_moves=(fix in ("moves", "all")),
@@ -196,6 +227,7 @@ def apply(
 
     catalog_path: Path = ctx.obj["catalog_path"]
     target_layout: str = ctx.obj["target_layout"]
+    location_folders: bool = ctx.obj["location_folders"]
     reporter = Reporter(console)
 
     try:
@@ -212,8 +244,17 @@ def apply(
             conn = cat.open(readonly=True)
 
             # Build plan
-            scanner = CatalogScanner(conn, target_layout=target_layout)
-            planner = ChangePlanner(conn, scanner, target_layout=target_layout)
+            scanner = CatalogScanner(
+                conn,
+                target_layout=target_layout,
+                location_folders=location_folders,
+            )
+            planner = ChangePlanner(
+                conn,
+                scanner,
+                target_layout=target_layout,
+                location_folders=location_folders,
+            )
             change_plan = planner.build_plan(
                 include_moves=(fix in ("moves", "all")),
                 include_renames=(fix in ("renames", "all")),
