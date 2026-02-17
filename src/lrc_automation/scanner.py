@@ -96,4 +96,5 @@ class CatalogScanner:
         cursor = self.conn.execute(
             "SELECT COUNT(*) FROM Adobe_images WHERE masterImage IS NULL"
         )
-        return cursor.fetchone()[0]
+        row = cursor.fetchone()
+        return int(row[0]) if row else 0

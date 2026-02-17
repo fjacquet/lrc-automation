@@ -57,7 +57,7 @@ class TestChangeExecutor:
     def test_execute_updates_catalog(
         self, tmp_catalog_with_files: tuple[Path, Path]
     ) -> None:
-        db_path, root_dir = tmp_catalog_with_files
+        db_path, _root_dir = tmp_catalog_with_files
 
         with CatalogConnection(db_path) as cat:
             conn = cat.open(readonly=False)

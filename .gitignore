@@ -5,9 +5,33 @@ build/
 dist/
 wheels/
 *.egg-info
+*.egg
+.eggs/
 
 # Virtual environments
 .venv
 
 # Environment configuration
 .env
+
+# Type checking
+.mypy_cache/
+
+# Testing & coverage
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Linting
+.ruff_cache/
+
+# Documentation
+site/
+
+# macOS
+.DS_Store
+
+# Lightroom catalogs (never commit real catalogs)
+*.lrcat
+*.lrcat-lock

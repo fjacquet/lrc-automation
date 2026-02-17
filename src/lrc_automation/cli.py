@@ -101,7 +101,7 @@ def scan(ctx: click.Context, output: str | None) -> None:
 
     except CatalogError as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise SystemExit(1)
+        raise SystemExit(1) from e
 
 
 @cli.command()
@@ -153,7 +153,7 @@ def plan(ctx: click.Context, fix: str, output: str | None) -> None:
 
     except CatalogError as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise SystemExit(1)
+        raise SystemExit(1) from e
 
 
 @cli.command()
@@ -212,10 +212,9 @@ def apply(
 
             reporter.print_change_plan(change_plan)
 
-            if not yes:
-                if not click.confirm("\nApply these changes?"):
-                    console.print("Aborted.")
-                    return
+            if not yes and not click.confirm("\nApply these changes?"):
+                console.print("Aborted.")
+                return
 
             # Close readonly and reopen for writing
             cat.close()
@@ -240,7 +239,7 @@ def apply(
 
     except CatalogError as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise SystemExit(1)
+        raise SystemExit(1) from e
 
 
 @cli.command()
@@ -268,7 +267,7 @@ def validate(ctx: click.Context) -> None:
 
     except CatalogError as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise SystemExit(1)
+        raise SystemExit(1) from e
 
 
 @cli.command()
@@ -287,13 +286,12 @@ def restore(ctx: click.Context, backup_path: str, yes: bool) -> None:
     catalog_path: Path = ctx.obj["catalog_path"]
     backup = Path(backup_path)
 
-    if not yes:
-        if not click.confirm(
-            f"Restore {catalog_path.name} from {backup.name}? "
-            "This will overwrite the current catalog."
-        ):
-            console.print("Aborted.")
-            return
+    if not yes and not click.confirm(
+        f"Restore {catalog_path.name} from {backup.name}? "
+        "This will overwrite the current catalog."
+    ):
+        console.print("Aborted.")
+        return
 
     try:
         with CatalogConnection(catalog_path) as cat:
@@ -304,7 +302,7 @@ def restore(ctx: click.Context, backup_path: str, yes: bool) -> None:
 
     except CatalogError as e:
         console.print(f"[red]Error:[/red] {e}")
-        raise SystemExit(1)
+        raise SystemExit(1) from e
 
 
 def main() -> None:

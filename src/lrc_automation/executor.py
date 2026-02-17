@@ -1,9 +1,11 @@
 """Change executor - applies plans to disk and SQLite catalog."""
 
+import contextlib
 import os
 import shutil
 import sqlite3
 from collections.abc import Callable
+from functools import partial
 from pathlib import Path
 
 from .catalog import CatalogConnection
@@ -21,7 +23,7 @@ class ChangeExecutor:
     def __init__(self, catalog: CatalogConnection, plan: ChangePlan) -> None:
         self.catalog = catalog
         self.plan = plan
-        self._rollback_actions: list[Callable] = []
+        self._rollback_actions: list[Callable[..., object]] = []
 
     def execute(self) -> ExecutionReport:
         """Execute the full plan.
@@ -60,10 +62,8 @@ class ChangeExecutor:
             conn.commit()
 
         except Exception as e:
-            try:
+            with contextlib.suppress(sqlite3.Error):
                 conn.rollback()
-            except sqlite3.Error:
-                pass
             self._rollback_disk_changes()
             raise ExecutionError(f"Execution failed: {e}") from e
 
@@ -201,7 +201,7 @@ class ChangeExecutor:
             raise ExecutionError(f"Destination already exists: {dst}")
 
         shutil.move(str(src), str(dst))
-        self._rollback_actions.append(lambda s=str(dst), d=str(src): shutil.move(s, d))
+        self._rollback_actions.append(partial(shutil.move, str(dst), str(src)))
 
     def _rename_file(self, src: Path, dst: Path) -> None:
         """Rename a file and record rollback action."""
@@ -212,7 +212,7 @@ class ChangeExecutor:
             raise ExecutionError(f"Destination already exists: {dst}")
 
         os.rename(src, dst)
-        self._rollback_actions.append(lambda s=str(dst), d=str(src): os.rename(s, d))
+        self._rollback_actions.append(partial(os.rename, str(dst), str(src)))
 
     def _move_sidecars(
         self,
@@ -228,9 +228,7 @@ class ChangeExecutor:
             dst = dst_dir / f"{new_base}.{ext}"
             if src.exists():
                 shutil.move(str(src), str(dst))
-                self._rollback_actions.append(
-                    lambda s=str(dst), d=str(src): shutil.move(s, d)
-                )
+                self._rollback_actions.append(partial(shutil.move, str(dst), str(src)))
 
         # Also check for .xmp sidecar (may not be in sidecarExtensions)
         xmp_src = src_dir / f"{old_base}.xmp"
@@ -238,7 +236,7 @@ class ChangeExecutor:
         if xmp_src.exists() and not xmp_dst.exists():
             shutil.move(str(xmp_src), str(xmp_dst))
             self._rollback_actions.append(
-                lambda s=str(xmp_dst), d=str(xmp_src): shutil.move(s, d)
+                partial(shutil.move, str(xmp_dst), str(xmp_src))
             )
 
     def _rename_sidecars(
@@ -250,9 +248,7 @@ class ChangeExecutor:
             dst = folder / f"{new_base}.{ext}"
             if src.exists():
                 os.rename(src, dst)
-                self._rollback_actions.append(
-                    lambda s=str(dst), d=str(src): os.rename(s, d)
-                )
+                self._rollback_actions.append(partial(os.rename, str(dst), str(src)))
 
         # Also check for .xmp sidecar
         xmp_src = folder / f"{old_base}.xmp"
@@ -260,14 +256,12 @@ class ChangeExecutor:
         if xmp_src.exists() and not xmp_dst.exists():
             os.rename(xmp_src, xmp_dst)
             self._rollback_actions.append(
-                lambda s=str(xmp_dst), d=str(xmp_src): os.rename(s, d)
+                partial(os.rename, str(xmp_dst), str(xmp_src))
             )
 
     def _rollback_disk_changes(self) -> None:
         """Undo all disk changes in reverse order."""
         for undo in reversed(self._rollback_actions):
-            try:
+            with contextlib.suppress(OSError):
                 undo()
-            except OSError:
-                pass  # Best effort rollback
         self._rollback_actions.clear()

@@ -101,10 +101,11 @@ class ChangePlanner:
         for i in range(len(parts)):
             partial = "/".join(parts[: i + 1]) + "/"
             folder_key = (root_folder_id, partial)
-            if folder_key not in self.existing_folders:
-                # Check if already scheduled for creation
-                if (root_folder_id, partial) not in plan.folders_to_create:
-                    plan.folders_to_create.append((root_folder_id, partial))
+            if (
+                folder_key not in self.existing_folders
+                and (root_folder_id, partial) not in plan.folders_to_create
+            ):
+                plan.folders_to_create.append((root_folder_id, partial))
 
     def _resolve_collision(self, folder_id: int, base_name: str, extension: str) -> str:
         """Resolve filename collision by appending _1, _2, etc."""

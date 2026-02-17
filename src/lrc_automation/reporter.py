@@ -182,8 +182,8 @@ class Reporter:
         self.console.print(f"Plan exported to [bold]{output_path}[/bold]")
 
     @staticmethod
-    def _change_to_dict(change: FileChange) -> dict:
-        result: dict = {
+    def _change_to_dict(change: FileChange) -> dict[str, object]:
+        result: dict[str, object] = {
             "type": change.change_type.value,
             "file_id": change.photo.file_id,
             "base_name": change.photo.base_name,
