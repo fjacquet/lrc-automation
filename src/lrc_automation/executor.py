@@ -24,9 +24,15 @@ class SkippableError(ExecutionError):
 class ChangeExecutor:
     """Executes a ChangePlan: moves files on disk and updates SQLite catalog."""
 
-    def __init__(self, catalog: CatalogConnection, plan: ChangePlan) -> None:
+    def __init__(
+        self,
+        catalog: CatalogConnection,
+        plan: ChangePlan,
+        on_progress: Callable[[FileChange, bool], None] | None = None,
+    ) -> None:
         self.catalog = catalog
         self.plan = plan
+        self._on_progress = on_progress
         self._rollback_actions: list[Callable[..., object]] = []
 
     def execute(self) -> ExecutionReport:
@@ -56,9 +62,13 @@ class ChangeExecutor:
                     elif change.change_type == ChangeType.RENAME_FILE:
                         self._execute_rename(conn, change)
                     report.record_success(change)
+                    if self._on_progress:
+                        self._on_progress(change, True)
                 except SkippableError as e:
                     # Pre-disk-op failure: nothing was touched, safe to skip
                     report.record_error(change, str(e))
+                    if self._on_progress:
+                        self._on_progress(change, False)
                 except Exception as e:
                     # Mid-operation failure: disk partially modified, rollback all
                     report.record_error(change, str(e))

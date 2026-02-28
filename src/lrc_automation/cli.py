@@ -306,9 +306,43 @@ def apply(
                     console.print("Aborted.")
                     return
 
-            # Execute
-            executor = ChangeExecutor(cat, change_plan)
-            report = executor.execute()
+            # Execute with progress bar
+            from rich.progress import (
+                BarColumn,
+                MofNCompleteColumn,
+                Progress,
+                SpinnerColumn,
+                TaskProgressColumn,
+                TextColumn,
+                TimeElapsedColumn,
+            )
+
+            from .models import FileChange as _FileChange
+
+            total = len(change_plan.changes)
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                MofNCompleteColumn(),
+                TaskProgressColumn(),
+                TimeElapsedColumn(),
+                console=console,
+                transient=True,
+            ) as progress:
+                task_id = progress.add_task("Applying…", total=total)
+
+                def _on_progress(change: _FileChange, ok: bool) -> None:
+                    label = change.photo.base_name
+                    status = "" if ok else " [yellow](skipped)[/yellow]"
+                    progress.update(
+                        task_id,
+                        advance=1,
+                        description=f"{label}{status}",
+                    )
+
+                executor = ChangeExecutor(cat, change_plan, on_progress=_on_progress)
+                report = executor.execute()
 
             # Post-flight validation (skip disk checks if rolled back)
             post_warnings = validator.postflight_check(
