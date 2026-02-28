@@ -200,3 +200,124 @@ class TestEmptyFolderCleanup:
 
         # Cleanup counter reflects the removal
         assert report.folders_removed == 1
+
+
+class TestCleanupEmptyFolders:
+    """Tests for the standalone cleanup_empty_folders() function."""
+
+    def _make_catalog(self, tmp_path: Path, root_dir: Path, folders: list[str]) -> Path:
+        import sqlite3
+
+        from tests.conftest import SCHEMA_SQL
+
+        db_path = tmp_path / "test.lrcat"
+        root_abs = str(root_dir) + "/"
+        conn = sqlite3.connect(str(db_path))
+        conn.executescript(SCHEMA_SQL)
+        conn.execute(
+            "INSERT INTO AgLibraryRootFolder VALUES (1,'ROOT-UUID',?,'root','../root')",
+            (root_abs,),
+        )
+        for i, path_from_root in enumerate(folders, 1):
+            conn.execute(
+                "INSERT INTO AgLibraryFolder VALUES (?,?,?,1)",
+                (i, f"FOLD-UUID-{i}", path_from_root),
+            )
+        conn.commit()
+        conn.close()
+        return db_path
+
+    def test_removes_empty_dirs_recursively(self, tmp_path: Path) -> None:
+        """Nested empty directories are all removed bottom-up."""
+        import sqlite3
+
+        from lrc_automation.executor import cleanup_empty_folders
+
+        root_dir = tmp_path / "root"
+        # Create nested empty dirs: root/2016/2016/03/ and root/2016/2016/
+        (root_dir / "2016" / "2016" / "03").mkdir(parents=True)
+        (root_dir / "2016" / "06").mkdir(parents=True)
+        (root_dir / "2016" / "06" / "IMG.JPG").write_text("photo")
+
+        db = self._make_catalog(
+            tmp_path,
+            root_dir,
+            ["2016/", "2016/2016/", "2016/2016/03/", "2016/06/"],
+        )
+        conn = sqlite3.connect(str(db))
+        conn.row_factory = sqlite3.Row
+        count = cleanup_empty_folders(conn, [(1, str(root_dir) + "/")])
+        conn.close()
+
+        # Both empty dirs removed (2016/2016/03/, 2016/2016/)
+        # 2016/ has IMG.JPG so stays
+        assert count == 2
+        assert not (root_dir / "2016" / "2016").exists()
+        # Non-empty dir must survive
+        assert (root_dir / "2016" / "06" / "IMG.JPG").exists()
+
+    def test_removes_apple_double_files_before_rmdir(self, tmp_path: Path) -> None:
+        """Directories containing only ._* files are cleaned and removed."""
+        import sqlite3
+
+        from lrc_automation.executor import cleanup_empty_folders
+
+        root_dir = tmp_path / "root"
+        dir_with_apple = root_dir / "2016" / "2016" / "03"
+        dir_with_apple.mkdir(parents=True)
+        # Only AppleDouble files inside — no real content
+        (dir_with_apple / "._Switzerland").write_bytes(b"\x00\x05\x16\x07")
+        (dir_with_apple / "._CH").write_bytes(b"\x00\x05\x16\x07")
+
+        db = self._make_catalog(
+            tmp_path,
+            root_dir,
+            ["2016/", "2016/2016/", "2016/2016/03/"],
+        )
+        conn = sqlite3.connect(str(db))
+        conn.row_factory = sqlite3.Row
+        count = cleanup_empty_folders(conn, [(1, str(root_dir) + "/")])
+        conn.close()
+
+        assert count == 3
+        assert not dir_with_apple.exists()
+        assert not (root_dir / "2016" / "2016").exists()
+
+    def test_preserves_nonempty_dirs(self, tmp_path: Path) -> None:
+        """Directories with real files are left untouched."""
+        import sqlite3
+
+        from lrc_automation.executor import cleanup_empty_folders
+
+        root_dir = tmp_path / "root"
+        (root_dir / "2016" / "06").mkdir(parents=True)
+        (root_dir / "2016" / "06" / "photo.jpg").write_text("photo")
+
+        db = self._make_catalog(tmp_path, root_dir, ["2016/", "2016/06/"])
+        conn = sqlite3.connect(str(db))
+        conn.row_factory = sqlite3.Row
+        count = cleanup_empty_folders(conn, [(1, str(root_dir) + "/")])
+        conn.close()
+
+        assert count == 0
+        assert (root_dir / "2016" / "06" / "photo.jpg").exists()
+
+    def test_db_rows_removed(self, tmp_path: Path) -> None:
+        """AgLibraryFolder rows for removed dirs are deleted from the DB."""
+        import sqlite3
+
+        from lrc_automation.executor import cleanup_empty_folders
+
+        root_dir = tmp_path / "root"
+        (root_dir / "empty").mkdir(parents=True)
+
+        db = self._make_catalog(tmp_path, root_dir, ["empty/"])
+        conn = sqlite3.connect(str(db))
+        conn.row_factory = sqlite3.Row
+        before = conn.execute("SELECT COUNT(*) FROM AgLibraryFolder").fetchone()[0]
+        count = cleanup_empty_folders(conn, [(1, str(root_dir) + "/")])
+        after = conn.execute("SELECT COUNT(*) FROM AgLibraryFolder").fetchone()[0]
+        conn.close()
+
+        assert count == 1
+        assert after == before - 1

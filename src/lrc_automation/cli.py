@@ -458,6 +458,52 @@ def validate(ctx: click.Context, output: str | None) -> None:
 
 @cli.command()
 @click.pass_context
+def cleanup(ctx: click.Context) -> None:
+    """Remove empty directories (and macOS ._* metadata files) from all roots.
+
+    Walks every catalog root bottom-up and removes directories that contain no
+    real files.  macOS AppleDouble files (._*) are deleted before attempting
+    rmdir.  Orphaned AgLibraryFolder rows are removed from the catalog DB.
+
+    This command does NOT require a prior apply run and is safe to run at any
+    time.  It does NOT move or delete photo files.
+    """
+    from .executor import cleanup_empty_folders
+
+    catalog_path: Path = ctx.obj["catalog_path"]
+    log = logging.getLogger(__name__)
+
+    try:
+        with CatalogConnection(catalog_path) as cat:
+            cat.validate_is_lrcat()
+            cat.check_lightroom_not_running()
+
+            conn = cat.open(readonly=False)
+            cursor = conn.execute(
+                "SELECT id_local, absolutePath FROM AgLibraryRootFolder"
+            )
+            roots: list[tuple[int, str]] = [(row[0], row[1]) for row in cursor]
+
+            console.print(
+                f"[bold]Cleaning empty folders across {len(roots)} root(s)...[/bold]"
+            )
+            log.info("cleanup: starting on %s (%d roots)", catalog_path, len(roots))
+
+            count = cleanup_empty_folders(conn, roots)
+
+            console.print(
+                f"[green]Removed {count} empty director{'y' if count == 1 else 'ies'}."
+                "[/green]"
+            )
+            log.info("cleanup: removed %d empty directories", count)
+
+    except CatalogError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1) from e
+
+
+@cli.command()
+@click.pass_context
 def reconcile(ctx: click.Context) -> None:
     """Fix catalog pointers for files found at a different disk location.
 

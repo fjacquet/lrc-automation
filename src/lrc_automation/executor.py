@@ -288,3 +288,90 @@ class ChangeExecutor:
             except OSError:
                 pass  # non-critical
         return removed
+
+
+def _is_effectively_empty(directory: Path) -> bool:
+    """Return True if a directory contains no real files.
+
+    macOS creates ``._<name>`` AppleDouble resource-fork files alongside
+    folders on non-HFS+ volumes (ExFAT, FAT32).  A directory that contains
+    only these metadata files — and no actual photos or subdirectories with
+    content — is considered empty for cleanup purposes.
+    """
+    for entry in directory.iterdir():
+        if entry.name.startswith("._"):
+            continue  # AppleDouble metadata — not real content
+        return False  # real file or subdirectory found
+    return True
+
+
+def _delete_apple_double_files(directory: Path) -> None:
+    """Delete all ``._*`` AppleDouble files inside a directory."""
+    for entry in directory.iterdir():
+        if entry.name.startswith("._") and entry.is_file():
+            try:
+                entry.unlink()
+                logger.debug("DELETED AppleDouble: %s", entry)
+            except OSError:
+                pass
+
+
+def cleanup_empty_folders(
+    conn: sqlite3.Connection,
+    roots: list[tuple[int, str]],
+) -> int:
+    """Recursively remove empty directories under catalog roots.
+
+    Walks each root bottom-up.  A directory is removed when it contains no
+    real files (``._*`` AppleDouble metadata files are deleted first, then the
+    directory is ``rmdir``'d).  The corresponding ``AgLibraryFolder`` row is
+    deleted from the DB for each removed directory.
+
+    Args:
+        conn: Open catalog SQLite connection.
+        roots: List of ``(root_folder_id, absolute_path)`` pairs.
+
+    Returns:
+        Total number of directories removed.
+    """
+    removed = 0
+
+    for root_folder_id, root_absolute_path in roots:
+        root_path = Path(root_absolute_path)
+        if not root_path.exists():
+            logger.warning("Root path not found (volume offline?): %s", root_path)
+            continue
+
+        # Walk bottom-up so children are processed before parents
+        for dirpath, _dirnames, _filenames in os.walk(root_path, topdown=False):
+            full_dir = Path(dirpath)
+            if full_dir == root_path:
+                continue  # never remove the root itself
+
+            if not _is_effectively_empty(full_dir):
+                continue
+
+            # Delete AppleDouble files so rmdir succeeds
+            _delete_apple_double_files(full_dir)
+
+            try:
+                full_dir.rmdir()
+            except OSError:
+                continue  # not empty (race or permission) — skip silently
+
+            # Derive pathFromRoot and remove the DB row if it exists
+            try:
+                rel = full_dir.relative_to(root_path)
+            except ValueError:
+                continue
+            path_from_root = str(rel) + "/"
+
+            conn.execute(
+                "DELETE FROM AgLibraryFolder WHERE rootFolder = ? AND pathFromRoot = ?",
+                (root_folder_id, path_from_root),
+            )
+            conn.commit()
+            logger.info("REMOVED empty folder: %s", full_dir)
+            removed += 1
+
+    return removed
