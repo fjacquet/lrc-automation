@@ -8,7 +8,15 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
-from .models import ChangePlan, ChangeType, ExecutionReport, FileChange, PhotoRecord
+from .models import (
+    ChangePlan,
+    ChangeType,
+    ExecutionReport,
+    FileAuditResult,
+    FileChange,
+    PhotoRecord,
+    ReconcileReport,
+)
 
 
 class Reporter:
@@ -208,6 +216,10 @@ class Reporter:
             )
         else:
             self.console.print(f"Succeeded: [green]{len(report.succeeded)}[/green]")
+            if report.folders_removed:
+                self.console.print(
+                    f"Empty folders removed: [green]{report.folders_removed}[/green]"
+                )
 
         self.console.print(f"Failed: [red]{len(report.failed)}[/red]")
 
@@ -278,3 +290,120 @@ class Reporter:
             result["old_name"] = change.old_name
             result["new_name"] = change.new_name
         return result
+
+    def print_audit_result(self, result: FileAuditResult) -> None:
+        """Print the full disk audit result to the console."""
+        self.console.print("\n[bold]Disk Audit[/bold]")
+        self.console.print(f"  Checked:          {result.total_checked:>10,}")
+        self.console.print(
+            f"  Present:          [green]{result.present_count:>10,}[/green]"
+        )
+        if result.missing:
+            self.console.print(
+                f"  Missing:          [yellow]{len(result.missing):>10,}[/yellow]"
+            )
+            self.console.print(
+                f"    Found elsewhere: [cyan]{result.found_elsewhere_count:>9,}[/cyan]"
+                "  (reconciliation needed)"
+            )
+            self.console.print(
+                f"    Truly missing:   [red]{result.truly_missing_count:>9,}[/red]"
+                "  (no copy found)"
+            )
+
+            display = result.missing[:500]
+            table = Table(show_lines=False)
+            table.add_column("#", style="dim", width=6)
+            table.add_column("Status", width=12)
+            table.add_column("Expected Path")
+            table.add_column("Found At")
+
+            for i, mf in enumerate(display, 1):
+                if mf.found_at:
+                    status = "[cyan]found[/cyan]"
+                    found_str = str(mf.found_at[0])
+                    if len(mf.found_at) > 1:
+                        found_str += f" (+{len(mf.found_at) - 1} more)"
+                else:
+                    status = "[red]missing[/red]"
+                    found_str = ""
+                table.add_row(str(i), status, str(mf.expected_path), found_str)
+
+            self.console.print(table)
+            if len(result.missing) > 500:
+                extra = len(result.missing) - 500
+                self.console.print(
+                    f"  ... {extra} more rows — use --output to export all."
+                )
+        else:
+            self.console.print("  [green]All files present on disk.[/green]")
+
+    def export_audit_json(self, result: FileAuditResult, output_path: Path) -> None:
+        """Export audit result to JSON."""
+        data = {
+            "total_checked": result.total_checked,
+            "missing_count": len(result.missing),
+            "found_elsewhere_count": result.found_elsewhere_count,
+            "truly_missing_count": result.truly_missing_count,
+            "missing": [
+                {
+                    "status": mf.status,
+                    "expected": str(mf.expected_path),
+                    "found_at": [str(p) for p in mf.found_at],
+                    "ambiguous": len(mf.found_at) > 1,
+                }
+                for mf in result.missing
+            ],
+        }
+        output_path.write_text(json.dumps(data, indent=2))
+        self.console.print(f"Audit exported to [bold]{output_path}[/bold]")
+
+    def export_audit_csv(self, result: FileAuditResult, output_path: Path) -> None:
+        """Export audit result to CSV."""
+        buf = StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["status", "expected_path", "found_at", "ambiguous"])
+        for mf in result.missing:
+            writer.writerow(
+                [
+                    mf.status,
+                    str(mf.expected_path),
+                    str(mf.found_at[0]) if mf.found_at else "",
+                    "true" if len(mf.found_at) > 1 else "false",
+                ]
+            )
+        output_path.write_text(buf.getvalue())
+        self.console.print(f"Audit exported to [bold]{output_path}[/bold]")
+
+    def print_reconcile_report(self, report: ReconcileReport) -> None:
+        """Print a reconcile run summary to the console."""
+
+        self.console.print()
+        self.console.print("[bold]Catalog Reconciliation[/bold]")
+        self.console.print(f"  Reconciled:          {len(report.reconciled):>6}")
+        self.console.print(f"  Skipped (ambiguous): {len(report.skipped_ambiguous):>6}")
+        self.console.print(f"  Truly missing:       {len(report.truly_missing):>6}")
+
+        if report.reconciled:
+            from rich.table import Table
+
+            table = Table(show_header=True, header_style="bold cyan")
+            table.add_column("#", style="dim", width=5)
+            table.add_column("Expected path")
+            table.add_column("Actual path")
+            for i, change in enumerate(report.reconciled[:500], 1):
+                table.add_row(
+                    str(i), str(change.expected_path), str(change.actual_path)
+                )
+            self.console.print(table)
+            if len(report.reconciled) > 500:
+                extra = len(report.reconciled) - 500
+                self.console.print(f"  ... {extra} more rows not shown.")
+
+        if report.skipped_ambiguous:
+            self.console.print(
+                f"  [yellow]{len(report.skipped_ambiguous)} ambiguous entries "
+                "skipped — resolve manually.[/yellow]"
+            )
+        if not report.reconciled and not report.skipped_ambiguous:
+            self.console.print("  [green]Nothing to reconcile.[/green]")

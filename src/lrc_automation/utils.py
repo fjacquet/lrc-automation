@@ -255,6 +255,45 @@ def build_full_path(
     return f"{root_absolute}{path_from_root}{base_name}.{extension}"
 
 
+def date_portion_of_path(path_from_root: str, year: int, month: int) -> str:
+    """Return the date-only prefix of a pathFromRoot string.
+
+    Strips any trailing location subfolders (Country/City/) and returns
+    only the date segment(s), preserving the exact format found in the path.
+
+    Examples:
+      "10/13/"                   year=2012 month=10  ->  "10/"
+      "2023/06/"                 year=2023 month=6   ->  "2023/06/"
+      "2023/06/FR/Paris/"        year=2023 month=6   ->  "2023/06/"
+      "10/Switzerland/Saillon/"  year=2012 month=10  ->  "10/"
+      "2012/10/Switzerland/"     year=2012 month=10  ->  "2012/10/"
+      "2023-06-15/"              year=2023 month=6   ->  "2023-06-15/"
+    """
+    parts = path_from_root.rstrip("/").split("/")
+    year_str = str(year)
+    month_strs = (f"{month:02d}", str(month))
+
+    # ISO date folder: "YYYY-MM-DD" as single segment
+    iso_prefix = f"{year}-{month:02d}-"
+    for i, part in enumerate(parts):
+        if part.startswith(iso_prefix):
+            return "/".join(parts[: i + 1]) + "/"
+
+    # YYYY/MM pattern: find year segment then month right after
+    for i, part in enumerate(parts):
+        if part == year_str:
+            if i + 1 < len(parts) and parts[i + 1] in month_strs:
+                return "/".join(parts[: i + 2]) + "/"
+            break
+
+    # Bare MM (year lives in root absolutePath)
+    for i, part in enumerate(parts):
+        if part in month_strs:
+            return "/".join(parts[: i + 1]) + "/"
+
+    return path_from_root  # fallback: unchanged
+
+
 def parse_sidecar_extensions(sidecar_str: str | None) -> list[str]:
     """Parse the sidecarExtensions column value.
 

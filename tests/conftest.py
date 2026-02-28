@@ -653,3 +653,106 @@ def tmp_catalog_year_in_year(tmp_path: Path) -> Path:
     """Catalog with a photo in a year-in-year folder (wrong root year)."""
     db_path = tmp_path / "test_yiy.lrcat"
     return create_test_catalog(db_path, year_in_year_test_data())
+
+
+def per_year_root_test_data(root_dir: str) -> dict:
+    """Test data: per-year root (year in absolutePath, month-only pathFromRoot)."""
+    root_path = root_dir if root_dir.endswith("/") else root_dir + "/"
+    return {
+        "roots": [
+            (1, "ROOT-UUID-1", root_path, "2023", "../2023"),
+        ],
+        "folders": [
+            # Per-year root: pathFromRoot contains only the month
+            (1, "FOLD-UUID-1", "06/", 1),
+        ],
+        "files": [
+            (
+                1,
+                "FILE-UUID-1",
+                "IMG_PYR_1",
+                "JPG",
+                1,
+                "IMG_PYR_1",
+                None,
+                None,
+                "IMG_PYR_1.JPG",
+                None,
+            ),
+        ],
+        "images": [
+            (1, "IMG-UUID-1", "2023-06-15T14:30:00", 1, "JPG", 0, 3, "AB", None, None),
+        ],
+        "exif": [
+            # Paris GPS coordinates
+            (1, 1, "2023-06-15T14:30:00", None, None, None, 48.8566, 2.3522, 1),
+        ],
+    }
+
+
+@pytest.fixture
+def tmp_catalog_per_year_root(tmp_path: Path) -> tuple[Path, Path]:
+    """Catalog with a per-year root (year in absolutePath, month-only pathFromRoot)."""
+    root_dir = tmp_path / "2023"
+    root_dir.mkdir()
+    (root_dir / "06").mkdir()
+    (root_dir / "06" / "IMG_PYR_1.JPG").write_text("photo")
+
+    db_path = tmp_path / "test_pyr.lrcat"
+    create_test_catalog(db_path, per_year_root_test_data(str(root_dir)))
+    return db_path, root_dir
+
+
+def per_year_root_damaged_test_data(root_dir: str) -> dict:
+    """Test data: per-year root where pathFromRoot incorrectly includes the year.
+
+    Simulates the damaged state left by the year-doubling bug (ADR-003): the file
+    was moved to root/2023/06/Switzerland/Saillon/ and the DB recorded pathFromRoot
+    as "2023/06/Switzerland/Saillon/" instead of "06/Switzerland/Saillon/".
+    """
+    root_path = root_dir if root_dir.endswith("/") else root_dir + "/"
+    return {
+        "roots": [
+            (1, "ROOT-UUID-D", root_path, "2023", "../2023"),
+        ],
+        "folders": [
+            # pathFromRoot wrongly contains the year — the damaged state
+            (1, "FOLD-UUID-D", "2023/06/Switzerland/Saillon/", 1),
+        ],
+        "files": [
+            (
+                1,
+                "FILE-UUID-D",
+                "IMG_DAMAGED_1",
+                "JPG",
+                1,
+                "IMG_DAMAGED_1",
+                None,
+                None,
+                "IMG_DAMAGED_1.JPG",
+                None,
+            ),
+        ],
+        "images": [
+            (1, "IMG-UUID-D", "2023-06-15T14:30:00", 1, "JPG", 0, 3, "AB", None, None),
+        ],
+        "exif": [
+            # Paris GPS coordinates
+            (1, 1, "2023-06-15T14:30:00", None, None, None, 48.8566, 2.3522, 1),
+        ],
+    }
+
+
+@pytest.fixture
+def tmp_catalog_per_year_root_damaged(tmp_path: Path) -> tuple[Path, Path]:
+    """Catalog in the year-doubled-damage state: pathFromRoot includes the year."""
+    root_dir = tmp_path / "2023"
+    root_dir.mkdir()
+    # File exists at the doubled path on disk
+    damaged_dir = root_dir / "2023" / "06" / "Switzerland" / "Saillon"
+    damaged_dir.mkdir(parents=True)
+    (damaged_dir / "IMG_DAMAGED_1.JPG").write_text("photo")
+
+    db_path = tmp_path / "test_pyr_damaged.lrcat"
+    create_test_catalog(db_path, per_year_root_damaged_test_data(str(root_dir)))
+    return db_path, root_dir

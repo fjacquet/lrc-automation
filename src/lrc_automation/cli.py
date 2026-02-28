@@ -1,5 +1,6 @@
 """Lightroom Classic Catalog Automation CLI."""
 
+import logging
 from pathlib import Path
 
 import click
@@ -37,6 +38,13 @@ console = Console()
     envvar="LRC_LOCATION_FOLDERS",
     help="Append Country/City subfolders via GPS (requires lrc-automation[geo])",
 )
+@click.option(
+    "--log-file",
+    type=click.Path(),
+    envvar="LRC_LOG_FILE",
+    default=None,
+    help="Log file path (default: <catalog>.log alongside the catalog)",
+)
 @click.pass_context
 def cli(
     ctx: click.Context,
@@ -44,6 +52,7 @@ def cli(
     verbose: bool,
     target_layout: str,
     location_folders: bool,
+    log_file: str | None,
 ) -> None:
     """Lightroom Classic Catalog Automation Tool."""
     ctx.ensure_object(dict)
@@ -56,6 +65,12 @@ def cli(
     ctx.obj["verbose"] = verbose
     ctx.obj["target_layout"] = target_layout
     ctx.obj["location_folders"] = location_folders
+
+    from .log import configure_logging
+
+    log_path = Path(log_file) if log_file else catalog_path.with_suffix(".log")
+    configure_logging(log_path, verbose)
+    logging.getLogger(__name__).info("lrc-auto started: catalog=%s", catalog_path)
 
 
 @cli.command()
@@ -360,6 +375,13 @@ def apply(
                 console.print(f"[yellow]Warning:[/yellow] {warning}")
 
             reporter.print_execution_report(report)
+            logging.getLogger(__name__).info(
+                "apply: succeeded=%d failed=%d removed=%d rolled_back=%s",
+                len(report.succeeded),
+                len(report.failed),
+                report.folders_removed,
+                report.rolled_back,
+            )
 
             if any(c.change_type == ChangeType.RENAME_FILE for c in report.succeeded):
                 console.print(
@@ -375,12 +397,21 @@ def apply(
 
 
 @cli.command()
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(),
+    help="Export disk audit to file (JSON or CSV)",
+)
 @click.pass_context
-def validate(ctx: click.Context) -> None:
-    """Run integrity checks on the catalog."""
+def validate(ctx: click.Context, output: str | None) -> None:
+    """Run integrity checks and full disk audit on the catalog."""
+    from .reporter import Reporter
     from .validators import CatalogValidator
 
     catalog_path: Path = ctx.obj["catalog_path"]
+    reporter = Reporter(console)
+    log = logging.getLogger(__name__)
 
     try:
         with CatalogConnection(catalog_path) as cat:
@@ -389,14 +420,83 @@ def validate(ctx: click.Context) -> None:
             validator = CatalogValidator(conn)
 
             console.print("[bold]Running catalog integrity checks...[/bold]")
+            log.info("validate: starting integrity checks on %s", catalog_path)
             warnings = validator.preflight_check()
             warnings += validator.check_year_in_year()
-
             if warnings:
                 for w in warnings:
                     console.print(f"[yellow]Warning:[/yellow] {w}")
-            else:
+                    log.warning("integrity: %s", w)
+
+            # Full disk audit with parent-folder search for missing files
+            result = validator.audit_files_on_disk()
+            reporter.print_audit_result(result)
+            log.info(
+                "validate: checked=%d missing=%d found_elsewhere=%d truly_missing=%d",
+                result.total_checked,
+                len(result.missing),
+                result.found_elsewhere_count,
+                result.truly_missing_count,
+            )
+
+            if output:
+                output_path = Path(output)
+                if output_path.suffix == ".json":
+                    reporter.export_audit_json(result, output_path)
+                elif output_path.suffix == ".csv":
+                    reporter.export_audit_csv(result, output_path)
+                else:
+                    console.print("[red]Output format must be .json or .csv[/red]")
+
+            if not warnings and not result.missing:
                 console.print("[green]All checks passed.[/green]")
+
+    except CatalogError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise SystemExit(1) from e
+
+
+@cli.command()
+@click.pass_context
+def reconcile(ctx: click.Context) -> None:
+    """Fix catalog pointers for files found at a different disk location.
+
+    Runs a full disk audit, then for each file that exists on disk but is
+    registered at the wrong catalog path, updates AgLibraryFile.folder to
+    match where the file actually lives.  No files are moved on disk.
+
+    Ambiguous matches (same filename in multiple locations) are skipped and
+    reported for manual resolution.
+    """
+    from .reconciler import CatalogReconciler
+    from .reporter import Reporter
+
+    catalog_path: Path = ctx.obj["catalog_path"]
+    reporter = Reporter(console)
+    log = logging.getLogger(__name__)
+
+    try:
+        with CatalogConnection(catalog_path) as cat:
+            cat.validate_is_lrcat()
+            cat.check_lightroom_not_running()
+            cat.backup()
+
+            conn = cat.open(readonly=False)
+            reconciler = CatalogReconciler(conn)
+            log.info("reconcile: starting on %s", catalog_path)
+
+            console.print("[bold]Running catalog reconciliation...[/bold]")
+            conn.execute("BEGIN IMMEDIATE")
+            report = reconciler.reconcile()
+            conn.commit()
+
+            reporter.print_reconcile_report(report)
+            log.info(
+                "reconcile: reconciled=%d skipped=%d truly_missing=%d",
+                len(report.reconciled),
+                len(report.skipped_ambiguous),
+                len(report.truly_missing),
+            )
 
     except CatalogError as e:
         console.print(f"[red]Error:[/red] {e}")

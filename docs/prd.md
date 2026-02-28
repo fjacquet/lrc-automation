@@ -1,6 +1,6 @@
 # Product Requirements Document: lrc-automation
 
-**Version:** 0.5.x
+**Version:** 0.6.x
 **Date:** 2026-02-28
 **Author:** fjacquet
 **Status:** Living document
@@ -31,6 +31,7 @@ Lightroom Classic's Lua SDK provides no `moveToFolder()` API and cannot be used 
 | G5 | Optionally enrich target paths with `Country/City` subfolders derived from embedded GPS coordinates |
 | G6 | Never lose data — mandatory backup before writes, full rollback on any error |
 | G7 | Detect and propose normalisation of DDMMYYYY filename prefixes to YYMMDD, with GPS-based target folder suggestions |
+| G8 | Audit every catalog record against disk and surface misplaced or missing files with a persistent log |
 
 ---
 
@@ -95,14 +96,19 @@ Assumed context:
 | F-EXEC-3 | Maintain a rollback stack: reverse all disk moves on any error |
 | F-EXEC-4 | Support cross-filesystem moves (copy + delete) transparently |
 | F-EXEC-5 | Skip virtual copies (they share the master's physical file) |
+| F-EXEC-6 | After the main transaction commits, sweep source directories; `rmdir` any now-empty directory and delete its `AgLibraryFolder` DB row |
+| F-EXEC-7 | Report `folders_removed` count in the execution summary |
 
 ### 5.5 Validation
 
 | ID | Requirement |
 |----|------------|
 | F-VAL-1 | Run `PRAGMA integrity_check` before and after every write session |
-| F-VAL-2 | Verify all moved files exist at their new paths |
-| F-VAL-3 | Detect orphaned `AgLibraryFile` rows (no matching file on disk) |
+| F-VAL-2 | Verify all moved files exist at their new paths after `apply` |
+| F-VAL-3 | `audit_files_on_disk()`: check every catalog record against disk (no cap); return a typed `FileAuditResult` with all missing entries |
+| F-VAL-4 | For each missing file, rglob the root's parent directory (one pass per unique parent) to locate where the file actually lives on disk |
+| F-VAL-5 | Export audit results as JSON or CSV via `validate --output FILE` |
+| F-VAL-6 | Detect year-in-year folder anomalies (`check_year_in_year`) |
 
 ### 5.6 Prefix Format Normalisation
 
@@ -125,6 +131,25 @@ Assumed context:
 | F-GEO-4 | Sanitize country and city names for use as folder names (strip `/ \ : * ? " < > |`) |
 | F-GEO-5 | Cache resolved coordinates in-memory; support batch resolution for efficiency |
 | F-GEO-6 | Fall back gracefully (omit location suffix) if coordinates cannot be resolved |
+
+### 5.8 Logging
+
+| ID | Requirement |
+|----|------------|
+| F-LOG-1 | All operations write to a log file at DEBUG level alongside the catalog (`<catalog>.log`) by default |
+| F-LOG-2 | Override log path with `--log-file PATH` / `LRC_LOG_FILE` env var |
+| F-LOG-3 | Console handler stays at WARNING unless `-v` is set; file handler always at DEBUG |
+| F-LOG-4 | Logged events: every `MOVE`, `RENAME`, `SKIP`, `REMOVED empty folder` in executor; audit start/summary and every `MISSING` file in validate; `RECONCILE` entries in reconcile |
+
+### 5.9 Reconciliation
+
+| ID | Requirement |
+|----|------------|
+| F-REC-1 | `lrc-auto reconcile` runs `audit_files_on_disk()` then updates `AgLibraryFile.folder` for each unambiguous `found_elsewhere` file |
+| F-REC-2 | Find or create the `AgLibraryFolder` row matching the file's actual disk location |
+| F-REC-3 | Skip ambiguous matches (`found_at` has more than one candidate); log a warning |
+| F-REC-4 | Require a catalog backup before writing (same guard as `apply`) |
+| F-REC-5 | Report reconciled count, skipped-ambiguous count, and truly-missing count |
 
 ---
 
@@ -149,17 +174,19 @@ Assumed context:
 | `LRC_BACKUP_DIR` | `--backup-dir` | same dir as catalog | Backup destination |
 | `LRC_TARGET_LAYOUT` | `--layout` | `%Y/%m/` | `strftime` pattern for target folder |
 | `LRC_LOCATION_FOLDERS` | `--location-folders` | `false` | Append `Country/City/` from GPS |
+| `LRC_LOG_FILE` | `--log-file` | `<catalog>.log` | Log file path |
 
 ---
 
 ## 8. CLI Surface
 
 ```
-lrc-auto scan      [-c PATH]                        # Read-only: list misplaced photos
-lrc-auto plan      [-c PATH] [-o plan.json]          # Generate move plan
-lrc-auto apply     [-c PATH] [--dry-run]             # Execute plan
-lrc-auto validate  [-c PATH]                         # Integrity check
-lrc-auto restore   [-c PATH] --backup-path PATH      # Roll back to backup
+lrc-auto scan       [-c PATH]                        # Read-only: list misplaced photos
+lrc-auto plan       [-c PATH] [-o plan.json]          # Generate move plan
+lrc-auto apply      [-c PATH] [--dry-run]             # Execute plan
+lrc-auto validate   [-c PATH] [-o FILE]               # Integrity check + full disk audit + export
+lrc-auto reconcile  [-c PATH]                         # Fix catalog pointers for found-elsewhere files
+lrc-auto restore    [-c PATH] --backup-path PATH      # Roll back to backup
 ```
 
 ---
@@ -172,8 +199,11 @@ CLI (cli.py)
        ├─ CatalogScanner (scanner.py) ← build PhotoRecord list
        ├─ ChangePlanner (planner.py)  ← build ChangePlan
        ├─ ChangeExecutor (executor.py)← disk moves + SQL updates
-       ├─ Validators (validators.py)  ← integrity checks
-       └─ LocationResolver (geocoder.py) ← GPS → Country/City [geo]
+       ├─ CatalogValidator (validators.py) ← integrity checks + full disk audit
+       ├─ CatalogReconciler (reconciler.py) ← fix catalog pointers for misplaced files
+       ├─ LocationResolver (geocoder.py) ← GPS → Country/City [geo]
+       ├─ Reporter (reporter.py)      ← Rich terminal output + JSON/CSV export
+       └─ log.py                      ← configure_logging (stdlib logging, no deps)
 ```
 
 See [ADR-001](adr/001-lightroom-classic-catalog-automation.md) for the full design rationale.
@@ -189,3 +219,4 @@ See [ADR-001](adr/001-lightroom-classic-catalog-automation.md) for the full desi
 | OQ-3 | Should a `--dry-run` flag on `apply` replace the separate `plan` command? |
 | OQ-4 | MCP server wrapper — expose `scan` and `plan` results to AI assistants? |
 | OQ-5 | Support for Windows paths (backslash separators in `AgLibraryFolder.pathFromRoot`)? |
+| OQ-6 | **Volume-offline handling** — should `validate` and `reconcile` skip roots whose `absolutePath` is not mounted, instead of reporting all their files as missing? |

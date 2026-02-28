@@ -1,6 +1,7 @@
 """Change executor - applies plans to disk and SQLite catalog."""
 
 import contextlib
+import logging
 import os
 import shutil
 import sqlite3
@@ -11,6 +12,8 @@ from pathlib import Path
 from .catalog import CatalogConnection
 from .models import ChangePlan, ChangeType, ExecutionReport, FileChange, PhotoRecord
 from .utils import generate_uuid, parse_sidecar_extensions
+
+logger = logging.getLogger(__name__)
 
 
 class ExecutionError(Exception):
@@ -55,10 +58,18 @@ class ChangeExecutor:
             folder_id_map = self._create_folders(conn)
 
             # Phase 2: Apply changes
+            source_dirs: set[tuple[int, str, str]] = set()
             for change in self.plan.changes:
                 try:
                     if change.change_type == ChangeType.MOVE_PHOTO:
                         self._execute_move(conn, change, folder_id_map)
+                        source_dirs.add(
+                            (
+                                change.photo.root_folder_id,
+                                change.photo.current_folder_path,
+                                change.photo.root_absolute_path,
+                            )
+                        )
                     elif change.change_type == ChangeType.RENAME_FILE:
                         self._execute_rename(conn, change)
                     report.record_success(change)
@@ -78,6 +89,7 @@ class ChangeExecutor:
                     return report
 
             conn.commit()
+            report.folders_removed = self._cleanup_empty_folders(conn, source_dirs)
 
         except Exception as e:
             with contextlib.suppress(sqlite3.Error):
@@ -208,12 +220,18 @@ class ChangeExecutor:
     def _apply_file_op(self, src: Path, dst: Path, move: bool) -> None:
         """Move or rename a file and record the rollback action."""
         if not src.exists():
+            logger.warning("SKIP (source not found): %s", src)
             raise SkippableError(f"Source file not found: {src}")
         dst.parent.mkdir(parents=True, exist_ok=True)
         if dst.exists():
+            logger.warning("SKIP (destination exists): %s", dst)
             raise SkippableError(f"Destination already exists: {dst}")
         op = shutil.move if move else os.rename
         op(str(src), str(dst))
+        if move:
+            logger.info("MOVE    %s  →  %s", src, dst)
+        else:
+            logger.info("RENAME  %s  →  %s", src.name, dst.name)
         self._rollback_actions.append(partial(op, str(dst), str(src)))
 
     def _handle_sidecars(
@@ -246,3 +264,27 @@ class ChangeExecutor:
             with contextlib.suppress(OSError):
                 undo()
         self._rollback_actions.clear()
+
+    def _cleanup_empty_folders(
+        self,
+        conn: sqlite3.Connection,
+        source_dirs: set[tuple[int, str, str]],
+    ) -> int:
+        """Remove empty source dirs from disk and DB. Returns count removed."""
+        removed = 0
+        for root_folder_id, path_from_root, root_absolute_path in source_dirs:
+            full_dir = Path(root_absolute_path) / path_from_root
+            try:
+                if full_dir.exists() and not any(full_dir.iterdir()):
+                    full_dir.rmdir()
+                    conn.execute(
+                        "DELETE FROM AgLibraryFolder "
+                        "WHERE rootFolder = ? AND pathFromRoot = ?",
+                        (root_folder_id, path_from_root),
+                    )
+                    conn.commit()
+                    logger.info("REMOVED empty folder: %s", full_dir)
+                    removed += 1
+            except OSError:
+                pass  # non-critical
+        return removed

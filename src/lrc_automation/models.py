@@ -118,6 +118,7 @@ class ExecutionReport:
     succeeded: list[FileChange] = field(default_factory=list)
     failed: list[tuple[FileChange, str]] = field(default_factory=list)
     rolled_back: bool = False
+    folders_removed: int = 0
 
     def record_success(self, change: FileChange) -> None:
         self.succeeded.append(change)
@@ -133,3 +134,63 @@ class ExecutionReport:
     @property
     def total(self) -> int:
         return len(self.succeeded) + len(self.failed)
+
+
+@dataclass
+class MissingFile:
+    """A catalog file record whose expected disk path does not exist."""
+
+    expected_path: Path
+    base_name: str
+    extension: str
+    root_folder_id: int
+    file_id: int
+    found_at: list[Path]  # empty → truly missing; multiple → ambiguous match
+
+    @property
+    def status(self) -> str:
+        if not self.found_at:
+            return "truly_missing"
+        if len(self.found_at) == 1:
+            return "found_elsewhere"
+        return "ambiguous"
+
+
+@dataclass
+class FileAuditResult:
+    """Result of a full disk audit across all catalog records."""
+
+    total_checked: int
+    missing: list[MissingFile]
+
+    @property
+    def present_count(self) -> int:
+        return self.total_checked - len(self.missing)
+
+    @property
+    def found_elsewhere_count(self) -> int:
+        return sum(1 for m in self.missing if m.found_at)
+
+    @property
+    def truly_missing_count(self) -> int:
+        return sum(1 for m in self.missing if not m.found_at)
+
+
+@dataclass
+class ReconcileChange:
+    """A single catalog pointer fix: AgLibraryFile.folder updated to actual location."""
+
+    file_id: int
+    old_folder_id: int
+    new_folder_id: int
+    actual_path: Path
+    expected_path: Path
+
+
+@dataclass
+class ReconcileReport:
+    """Summary of a reconcile run."""
+
+    reconciled: list[ReconcileChange] = field(default_factory=list)
+    skipped_ambiguous: list[MissingFile] = field(default_factory=list)
+    truly_missing: list[MissingFile] = field(default_factory=list)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from pathlib import Path
 
 from .constants import (
     DEFAULT_TARGET_LAYOUT,
@@ -11,6 +12,7 @@ from .constants import (
 )
 from .models import ChangePlan, ChangeType, FileChange, PhotoRecord
 from .scanner import CatalogScanner
+from .utils import date_portion_of_path
 
 _MAX_COLLISION_TRIES = 9999
 
@@ -102,10 +104,23 @@ class ChangePlanner:
             if not loc:
                 continue
             country, city = loc
-            target_path = photo.get_expected_folder_path_with_location(
-                self.target_layout, country, city
+            if photo.capture_time is None:
+                continue
+            date_pfx = date_portion_of_path(
+                photo.current_folder_path,
+                photo.capture_time.year,
+                photo.capture_time.month,
             )
-            if target_path is None or target_path == photo.current_folder_path:
+            # In per-year roots the year lives in absolutePath, not in pathFromRoot.
+            # A previous bad run may have stored pathFromRoot with the year prefix
+            # (e.g. "2025/12/Switzerland/...").  date_portion_of_path then returns
+            # "2025/12/" which, joined to the root, doubles the year.  Strip it.
+            year_str = str(photo.capture_time.year)
+            root_tail = Path(photo.root_absolute_path.rstrip("/")).name
+            if root_tail == year_str and date_pfx.startswith(year_str + "/"):
+                date_pfx = date_pfx[len(year_str) + 1 :]
+            target_path = f"{date_pfx}{country}/{city}/"
+            if target_path == photo.current_folder_path:
                 continue
             self._add_move_change(plan, photo, target_path, in_plan)
 

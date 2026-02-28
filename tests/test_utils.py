@@ -277,3 +277,48 @@ class TestParseSidecarExtensions:
 
     def test_empty(self) -> None:
         assert parse_sidecar_extensions("") == []
+
+
+class TestDatePortionOfPath:
+    def test_year_month_in_path(self) -> None:
+        from lrc_automation.utils import date_portion_of_path
+
+        assert date_portion_of_path("2023/06/", 2023, 6) == "2023/06/"
+
+    def test_month_only_in_path(self) -> None:
+        from lrc_automation.utils import date_portion_of_path
+
+        assert date_portion_of_path("10/", 2012, 10) == "10/"
+
+    def test_strips_location_flat_root(self) -> None:
+        from lrc_automation.utils import date_portion_of_path
+
+        assert date_portion_of_path("2023/06/FR/Paris/", 2023, 6) == "2023/06/"
+
+    def test_strips_location_per_year_root(self) -> None:
+        from lrc_automation.utils import date_portion_of_path
+
+        assert date_portion_of_path("10/Switzerland/Saillon/", 2012, 10) == "10/"
+
+    def test_iso_date_folder(self) -> None:
+        from lrc_automation.utils import date_portion_of_path
+
+        assert date_portion_of_path("2023-06-15/", 2023, 6) == "2023-06-15/"
+
+    def test_iso_with_location(self) -> None:
+        from lrc_automation.utils import date_portion_of_path
+
+        assert date_portion_of_path("2023-06-15/CH/Saillon/", 2023, 6) == "2023-06-15/"
+
+    def test_year_in_path_with_day_subfolder(self) -> None:
+        from lrc_automation.utils import date_portion_of_path
+
+        # YYYY/MM/DD/ path — should return YYYY/MM/
+        assert date_portion_of_path("2012/10/13/", 2012, 10) == "2012/10/"
+
+    def test_fallback_unchanged(self) -> None:
+        from lrc_automation.utils import date_portion_of_path
+
+        # No date found — return original
+        result = date_portion_of_path("Vacances/", 2023, 6)
+        assert result == "Vacances/"

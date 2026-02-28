@@ -205,3 +205,92 @@ class TestPlanLocationMoves:
         # No moves expected (file 1 is correctly placed date-wise, file 3 no GPS)
         assert len(plan.changes) == 0
         conn.close()
+
+
+class TestPlanLocationMovesPerYearRoot:
+    """Verify that location moves don't double the year for per-year root catalogs."""
+
+    def test_target_path_does_not_double_year(
+        self,
+        tmp_catalog_per_year_root: tuple[Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Per-year root: pathFromRoot is '06/', target should be '06/FR/Paris/'."""
+        import sqlite3
+
+        from lrc_automation.geocoder import LocationResolver
+        from lrc_automation.planner import ChangePlanner
+        from lrc_automation.scanner import CatalogScanner
+
+        db_path, _ = tmp_catalog_per_year_root
+
+        # Monkeypatch geocoder to return Paris for any coordinates
+        monkeypatch.setattr(
+            LocationResolver,
+            "resolve_batch",
+            lambda self, coords: {c: ("FR", "Paris") for c in coords},
+        )
+
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        planner = ChangePlanner(conn, scanner, location_folders=True)
+        # Trigger location moves explicitly
+        from lrc_automation.models import ChangePlan
+
+        location_plan = ChangePlan()
+        planner._plan_location_moves(location_plan)
+
+        # Should have exactly one move
+        assert len(location_plan.changes) == 1
+        change = location_plan.changes[0]
+        target = change.target_folder_path
+
+        # Must NOT contain doubled year (2023/2023/ or 2023/06/ prefix with 2023 again)
+        assert target is not None
+        assert "2023/06" not in target, f"Year was doubled in target path: {target!r}"
+        # Must be the month-only prefix + location
+        assert target == "06/FR/Paris/"
+        conn.close()
+
+    def test_damaged_per_year_root_strips_doubled_year(
+        self,
+        tmp_catalog_per_year_root_damaged: tuple[Path, Path],
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Damaged per-year root: pathFromRoot='2023/06/Switzerland/Saillon/'.
+
+        After the year-doubling bug, some photos have pathFromRoot that includes
+        the year.  _plan_location_moves must strip the year so the target path is
+        '06/FR/Paris/' not '2023/06/FR/Paris/' (which would double the year again).
+        """
+        import sqlite3
+
+        from lrc_automation.geocoder import LocationResolver
+        from lrc_automation.planner import ChangePlanner
+        from lrc_automation.scanner import CatalogScanner
+
+        db_path, _ = tmp_catalog_per_year_root_damaged
+
+        monkeypatch.setattr(
+            LocationResolver,
+            "resolve_batch",
+            lambda self, coords: {c: ("FR", "Paris") for c in coords},
+        )
+
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        planner = ChangePlanner(conn, scanner, location_folders=True)
+        from lrc_automation.models import ChangePlan
+
+        location_plan = ChangePlan()
+        planner._plan_location_moves(location_plan)
+
+        assert len(location_plan.changes) == 1
+        target = location_plan.changes[0].target_folder_path
+        assert target is not None
+        # Year must NOT appear in the target path — it's already in absolutePath
+        assert "2023" not in target, f"Year doubled in target: {target!r}"
+        assert target == "06/FR/Paris/"
+        conn.close()

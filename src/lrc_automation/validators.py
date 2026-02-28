@@ -1,9 +1,11 @@
 """Pre-flight and post-flight catalog integrity validators."""
 
+import logging
 import sqlite3
+from collections import defaultdict
 from pathlib import Path
 
-from .models import ChangePlan, ChangeType, FileChange
+from .models import ChangePlan, ChangeType, FileAuditResult, FileChange, MissingFile
 
 
 class CatalogValidator:
@@ -180,3 +182,101 @@ class CatalogValidator:
         if count > 0:
             warnings.insert(0, f"Total year-in-year files: {count}")
         return warnings
+
+    def audit_files_on_disk(self) -> FileAuditResult:
+        """Full disk audit: check every catalog record, search parent for missing files.
+
+        Algorithm:
+        1. Fetch all (absolutePath, pathFromRoot, baseName, extension) from DB.
+        2. Check each expected full path on disk — collect missing rows.
+        3. For each unique parent of missing root folders, run ONE rglob pass to
+           build a filename → [paths] index. This avoids O(N²) searches.
+        4. Look up each missing file in the index; record where it was found.
+        """
+        logger = logging.getLogger(__name__)
+
+        rows = self.conn.execute(
+            """
+            SELECT
+                rf.id_local  AS root_id,
+                f.id_local   AS file_id,
+                rf.absolutePath,
+                fld.pathFromRoot,
+                f.baseName,
+                f.extension
+            FROM AgLibraryFile f
+            JOIN AgLibraryFolder fld ON f.folder = fld.id_local
+            JOIN AgLibraryRootFolder rf ON fld.rootFolder = rf.id_local
+            """
+        ).fetchall()
+
+        logger.info("Auditing %d catalog records against disk", len(rows))
+
+        missing_rows = [
+            row
+            for row in rows
+            if not (Path(row[2]) / row[3] / f"{row[4]}.{row[5]}").exists()
+        ]
+        logger.info(
+            "%d files present, %d missing",
+            len(rows) - len(missing_rows),
+            len(missing_rows),
+        )
+
+        if not missing_rows:
+            return FileAuditResult(total_checked=len(rows), missing=[])
+
+        # Build one rglob index per unique parent search directory
+        parent_index: dict[Path, dict[str, list[Path]]] = {}
+        unique_parents = {_search_parent(Path(r[2])) for r in missing_rows}
+        for parent in sorted(unique_parents):
+            if not parent.exists():
+                logger.warning(
+                    "Search root not accessible (volume unmounted?): %s", parent
+                )
+                parent_index[parent] = {}
+                continue
+            logger.info("Indexing %s for missing-file search …", parent)
+            idx: dict[str, list[Path]] = defaultdict(list)
+            for p in parent.rglob("*"):
+                if p.is_file():
+                    idx[p.name].append(p)
+            parent_index[parent] = idx
+            total = sum(len(v) for v in idx.values())
+            logger.info("Indexed %d files under %s", total, parent)
+
+        missing_files: list[MissingFile] = []
+        for row in missing_rows:
+            filename = f"{row[4]}.{row[5]}"
+            parent = _search_parent(Path(row[2]))
+            found_at = list(parent_index.get(parent, {}).get(filename, []))
+            mf = MissingFile(
+                expected_path=Path(row[2]) / row[3] / filename,
+                base_name=row[4],
+                extension=row[5],
+                root_folder_id=row[0],
+                file_id=row[1],
+                found_at=found_at,
+            )
+            if found_at:
+                logger.warning(
+                    "MISSING (found at %s): %s",
+                    found_at[0] if len(found_at) == 1 else f"{len(found_at)} locations",
+                    mf.expected_path,
+                )
+            else:
+                logger.warning("MISSING (not found anywhere): %s", mf.expected_path)
+            missing_files.append(mf)
+
+        return FileAuditResult(total_checked=len(rows), missing=missing_files)
+
+
+def _search_parent(root_path: Path) -> Path:
+    """Return the directory to rglob when searching for a missing file.
+
+    For a per-year root like ``/Volumes/photo/2023/`` this returns
+    ``/Volumes/photo/`` so sibling year-roots are also searched.
+    Falls back to the root itself when it has no parent (filesystem root).
+    """
+    parent = root_path.parent
+    return parent if parent != root_path else root_path
