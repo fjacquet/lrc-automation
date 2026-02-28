@@ -24,6 +24,8 @@ class Reporter:
         duplicates: list[tuple[PhotoRecord, str]],
         target_layout: str = "%Y/%m/",
         location_folders: bool = False,
+        needs_location: int = 0,
+        year_in_year: int = 0,
     ) -> None:
         """Print a summary of scan results."""
         self.console.print("\n[bold]Catalog Scan Results[/bold]")
@@ -36,6 +38,15 @@ class Reporter:
         pct = f"{gps_count / len(misplaced) * 100:.0f}%" if misplaced else "n/a"
         self.console.print(f"  with GPS: [cyan]{gps_count}[/cyan] ({pct})")
         self.console.print(f"Duplicate prefixes: [yellow]{len(duplicates)}[/yellow]")
+        if location_folders and needs_location > 0:
+            self.console.print(
+                f"Needs location subfolder: [yellow]{needs_location}[/yellow]"
+            )
+        if year_in_year > 0:
+            self.console.print(
+                f"Year-in-year folders: [yellow]{year_in_year}[/yellow]"
+                "  (photos in wrong root — use 'lrc-auto validate' for details)"
+            )
 
         if misplaced:
             self.console.print(

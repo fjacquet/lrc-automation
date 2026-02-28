@@ -199,3 +199,49 @@ class CatalogScanner:
         )
         row = cursor.fetchone()
         return int(row[0]) if row else 0
+
+    def scan_needs_location_folder(self) -> list[PhotoRecord]:
+        """Return GPS photos in correct date folder but missing a location subfolder.
+
+        Photos are "correctly placed" by date but not yet in a Country/City subfolder.
+        Only meaningful when location_folders=True.
+        """
+        if not self.location_folders:
+            return []
+        result = []
+        for photo in self._fetch_all_photos():
+            if photo.gps_latitude is None or photo.gps_longitude is None:
+                continue
+            if photo.capture_time is None:
+                continue
+            expected_date = photo.get_expected_folder_path(self.target_layout)
+            if expected_date is None:
+                continue
+            # Photo is in the exact date-only folder (not yet in a location subfolder)
+            if photo.current_folder_path == expected_date:
+                result.append(photo)
+        return result
+
+    def scan_year_in_year_photos(self) -> list[PhotoRecord]:
+        """Return photos whose root folder year differs from the year in pathFromRoot.
+
+        Example: a 2003 photo imported in 2022 may live at:
+          root absolutePath = "/Lightroom/2022/"
+          pathFromRoot      = "2003/12/"
+        These photos are physically in the wrong yearly root folder.
+        """
+        result = []
+        for photo in self._fetch_all_photos():
+            # Extract root year from last component of root_absolute_path
+            root_year_str = photo.root_absolute_path.rstrip("/").split("/")[-1]
+            if not root_year_str.isdigit():
+                continue
+            root_year = int(root_year_str)
+            # Extract path year from first component of current_folder_path
+            path_year_str = photo.current_folder_path.split("/")[0]
+            if not path_year_str.isdigit():
+                continue
+            path_year = int(path_year_str)
+            if root_year != path_year and 1900 <= path_year <= 2100:
+                result.append(photo)
+        return result

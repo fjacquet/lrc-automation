@@ -99,9 +99,17 @@ def scan(ctx: click.Context, output: str | None) -> None:
 
                 resolver = LocationResolver()
             prefix_conversions = scanner.scan_prefix_format(resolver)
+            needs_location = len(scanner.scan_needs_location_folder())
+            year_in_year = len(scanner.scan_year_in_year_photos())
 
             reporter.print_scan_summary(
-                total, misplaced, duplicates, target_layout, location_folders
+                total,
+                misplaced,
+                duplicates,
+                target_layout,
+                location_folders,
+                needs_location=needs_location,
+                year_in_year=year_in_year,
             )
             reporter.print_prefix_format_summary(prefix_conversions)
 

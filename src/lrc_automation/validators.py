@@ -140,3 +140,43 @@ class CatalogValidator:
             warnings.insert(0, f"Total missing files: {missing}")
 
         return warnings
+
+    def check_year_in_year(self) -> list[str]:
+        """Find photos whose root folder year differs from the year in pathFromRoot.
+
+        Example: a 2003 photo imported in 2022 may reside at
+          absolutePath = '/Lightroom/2022/'  pathFromRoot = '2003/12/'
+        These are physically in the wrong yearly root folder on disk.
+        """
+        warnings: list[str] = []
+        cursor = self.conn.execute("""
+            SELECT
+                rf.absolutePath,
+                fld.pathFromRoot,
+                f.baseName,
+                f.extension
+            FROM AgLibraryFile f
+            JOIN AgLibraryFolder fld ON f.folder = fld.id_local
+            JOIN AgLibraryRootFolder rf ON fld.rootFolder = rf.id_local
+        """)
+        count = 0
+        for row in cursor:
+            root_absolute_path: str = row[0]
+            path_from_root: str = row[1]
+            root_year_str = root_absolute_path.rstrip("/").split("/")[-1]
+            if not root_year_str.isdigit():
+                continue
+            path_year_str = path_from_root.split("/")[0]
+            if not path_year_str.isdigit():
+                continue
+            if root_year_str != path_year_str and 1900 <= int(path_year_str) <= 2100:
+                count += 1
+                if count <= 20:
+                    full_path = f"{root_absolute_path}{path_from_root}{row[2]}.{row[3]}"
+                    warnings.append(f"Year-in-year: {full_path}")
+
+        if count > 20:
+            warnings.append(f"... and {count - 20} more year-in-year files")
+        if count > 0:
+            warnings.insert(0, f"Total year-in-year files: {count}")
+        return warnings

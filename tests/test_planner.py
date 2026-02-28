@@ -3,6 +3,8 @@
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from lrc_automation.models import ChangeType
 from lrc_automation.planner import ChangePlanner
 from lrc_automation.scanner import CatalogScanner
@@ -139,4 +141,65 @@ class TestChangePlanner:
         # No duplicate folder paths
         folder_set = set(plan.folders_to_create)
         assert len(folder_set) == len(plan.folders_to_create)
+        conn.close()
+
+
+class TestPlanLocationMoves:
+    """Tests for _plan_location_moves: GPS photos already in date-only folders."""
+
+    def test_plan_location_moves_creates_move_to_country_city(
+        self, tmp_catalog_needs_location: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """GPS photo in date-only folder gets moved to Country/City subfolder."""
+        from lrc_automation.geocoder import LocationResolver
+
+        monkeypatch.setattr(
+            LocationResolver,
+            "resolve_batch",
+            lambda self, coords: {(48.8566, 2.3522): ("FR", "Paris")},
+        )
+        conn = sqlite3.connect(str(tmp_catalog_needs_location))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        planner = ChangePlanner(conn, scanner, location_folders=True)
+        plan = planner.build_plan(include_moves=True, include_renames=False)
+        moves = [c for c in plan.changes if c.change_type == ChangeType.MOVE_PHOTO]
+        # File 1 (GPS in date-only folder) should be moved to 2023/06/FR/Paris/
+        target_paths = [c.target_folder_path for c in moves]
+        assert any("FR" in (p or "") and "Paris" in (p or "") for p in target_paths)
+        conn.close()
+
+    def test_plan_location_moves_skips_already_located(
+        self, tmp_catalog_needs_location: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """GPS photo already in a location subfolder is NOT moved again."""
+        from lrc_automation.geocoder import LocationResolver
+
+        monkeypatch.setattr(
+            LocationResolver,
+            "resolve_batch",
+            lambda self, coords: {(48.8566, 2.3522): ("FR", "Paris")},
+        )
+        conn = sqlite3.connect(str(tmp_catalog_needs_location))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        planner = ChangePlanner(conn, scanner, location_folders=True)
+        plan = planner.build_plan(include_moves=True, include_renames=False)
+        moves = [c for c in plan.changes if c.change_type == ChangeType.MOVE_PHOTO]
+        moved_file_ids = [c.photo.file_id for c in moves]
+        # File 2 is already in FR/Paris — should NOT appear
+        assert 2 not in moved_file_ids
+        conn.close()
+
+    def test_plan_location_moves_disabled_when_flag_off(
+        self, tmp_catalog_needs_location: Path
+    ) -> None:
+        """With location_folders=False, _plan_location_moves adds no changes."""
+        conn = sqlite3.connect(str(tmp_catalog_needs_location))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=False)
+        planner = ChangePlanner(conn, scanner, location_folders=False)
+        plan = planner.build_plan(include_moves=True, include_renames=False)
+        # No moves expected (file 1 is correctly placed date-wise, file 3 no GPS)
+        assert len(plan.changes) == 0
         conn.close()

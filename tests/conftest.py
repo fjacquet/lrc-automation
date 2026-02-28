@@ -523,3 +523,133 @@ def diverse_folder_catalog(tmp_path: Path) -> Path:
     """Create a test catalog with diverse folder naming patterns."""
     db_path = tmp_path / "test_diverse.lrcat"
     return create_test_catalog(db_path, diverse_folder_test_data())
+
+
+def needs_location_test_data() -> dict:
+    """Test data for scan_needs_location_folder: photos in date-only folder with GPS."""
+    root_path = "/tmp/test_photos/"
+    return {
+        "roots": [
+            (1, "ROOT-UUID-1", root_path, "test_photos", "../test_photos"),
+        ],
+        "folders": [
+            # Date-only folder: photos that need a location subfolder
+            (1, "FOLD-UUID-1", "2023/06/", 1),
+            # Already in location subfolder
+            (2, "FOLD-UUID-2", "2023/06/FR/Paris/", 1),
+            # Date-only folder for no-GPS photo
+            (3, "FOLD-UUID-3", "2023/07/", 1),
+        ],
+        "files": [
+            # File 1: GPS, in date-only folder → should be returned
+            (
+                1,
+                "FILE-UUID-1",
+                "IMG_GPS_DATE",
+                "JPG",
+                1,
+                "IMG_GPS_DATE",
+                None,
+                None,
+                "IMG_GPS_DATE.JPG",
+                None,
+            ),
+            # File 2: GPS, already in location subfolder → NOT returned
+            (
+                2,
+                "FILE-UUID-2",
+                "IMG_GPS_LOC",
+                "JPG",
+                2,
+                "IMG_GPS_LOC",
+                None,
+                None,
+                "IMG_GPS_LOC.JPG",
+                None,
+            ),
+            # File 3: no GPS, in date-only folder → NOT returned
+            (
+                3,
+                "FILE-UUID-3",
+                "IMG_NOGPS",
+                "JPG",
+                3,
+                "IMG_NOGPS",
+                None,
+                None,
+                "IMG_NOGPS.JPG",
+                None,
+            ),
+        ],
+        "images": [
+            (1, "IMG-UUID-1", "2023-06-15T14:30:00", 1, "JPG", 0, 3, "AB", None, None),
+            (2, "IMG-UUID-2", "2023-06-15T14:30:00", 2, "JPG", 0, 4, "AB", None, None),
+            (3, "IMG-UUID-3", "2023-07-10T10:00:00", 3, "JPG", 0, 2, "AB", None, None),
+        ],
+        "exif": [
+            (1, 1, "2023-06-15T14:30:00", None, None, None, 48.8566, 2.3522, 1),
+            (2, 2, "2023-06-15T14:30:00", None, None, None, 48.8566, 2.3522, 1),
+            (3, 3, "2023-07-10T10:00:00", None, None, None, None, None, 0),
+        ],
+    }
+
+
+@pytest.fixture
+def tmp_catalog_needs_location(tmp_path: Path) -> Path:
+    """Catalog with GPS photos in date-only folder (candidates for location)."""
+    db_path = tmp_path / "test_needs_location.lrcat"
+    return create_test_catalog(db_path, needs_location_test_data())
+
+
+def year_in_year_test_data() -> dict:
+    """Test data for scan_year_in_year_photos: photos in wrong root year."""
+    return {
+        "roots": [
+            (1, "ROOT-UUID-1", "/Lightroom/2022/", "2022", "../2022"),
+        ],
+        "folders": [
+            # Wrong year in pathFromRoot (2003 vs root 2022)
+            (1, "FOLD-UUID-1", "2003/12/", 1),
+            # Correct year in pathFromRoot (2022)
+            (2, "FOLD-UUID-2", "2022/06/", 1),
+        ],
+        "files": [
+            # Year-in-year: root=2022, path=2003/12/
+            (
+                1,
+                "FILE-UUID-1",
+                "IMG_YIY",
+                "JPG",
+                1,
+                "IMG_YIY",
+                None,
+                None,
+                "IMG_YIY.JPG",
+                None,
+            ),
+            # Correct: root=2022, path=2022/06/
+            (
+                2,
+                "FILE-UUID-2",
+                "IMG_OK",
+                "JPG",
+                2,
+                "IMG_OK",
+                None,
+                None,
+                "IMG_OK.JPG",
+                None,
+            ),
+        ],
+        "images": [
+            (1, "IMG-UUID-1", "2003-12-15T10:00:00", 1, "JPG", 0, 3, "AB", None, None),
+            (2, "IMG-UUID-2", "2022-06-20T10:00:00", 2, "JPG", 0, 4, "AB", None, None),
+        ],
+    }
+
+
+@pytest.fixture
+def tmp_catalog_year_in_year(tmp_path: Path) -> Path:
+    """Catalog with a photo in a year-in-year folder (wrong root year)."""
+    db_path = tmp_path / "test_yiy.lrcat"
+    return create_test_catalog(db_path, year_in_year_test_data())

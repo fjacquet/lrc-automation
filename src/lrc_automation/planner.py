@@ -9,7 +9,7 @@ from .constants import (
     QUERY_FILE_EXISTS_IN_FOLDER,
     QUERY_MAX_FOLDER_ID,
 )
-from .models import ChangePlan, ChangeType, FileChange
+from .models import ChangePlan, ChangeType, FileChange, PhotoRecord
 from .scanner import CatalogScanner
 
 _MAX_COLLISION_TRIES = 9999
@@ -50,6 +50,8 @@ class ChangePlanner:
 
         if include_moves:
             self._plan_moves(plan)
+            if self.location_folders:
+                self._plan_location_moves(plan)
 
         if include_renames:
             self._plan_renames(plan)
@@ -59,83 +61,14 @@ class ChangePlanner:
     def _plan_moves(self, plan: ChangePlan) -> None:
         """Plan moves for misplaced photos."""
         misplaced = self.scanner.scan_misplaced_photos()
-
-        # Batch-resolve GPS coordinates if location folders enabled
-        location_map: dict[tuple[float, float], tuple[str, str]] = {}
-        if self.location_folders:
-            from .geocoder import LocationResolver
-
-            resolver = LocationResolver()
-            coords = [
-                (p.gps_latitude, p.gps_longitude)
-                for p in misplaced
-                if p.gps_latitude is not None and p.gps_longitude is not None
-            ]
-            if coords:
-                location_map = resolver.resolve_batch(coords)
-
-        # Track basenames already planned for folders that don't exist yet
+        location_map = self._build_location_map(misplaced)
         in_plan: dict[tuple[int, str], set[str]] = {}
 
         for photo in misplaced:
-            # Determine target path with optional location subfolder
-            country: str | None = None
-            city: str | None = None
-            if (
-                self.location_folders
-                and photo.gps_latitude is not None
-                and photo.gps_longitude is not None
-            ):
-                loc = location_map.get((photo.gps_latitude, photo.gps_longitude))
-                if loc:
-                    country, city = loc
-
-            if self.location_folders and (country and city):
-                target_path = photo.get_expected_folder_path_with_location(
-                    self.target_layout, country, city
-                )
-            else:
-                target_path = photo.get_expected_folder_path(self.target_layout)
+            target_path = self._compute_target_path(photo, location_map)
             if target_path is None:
                 continue
-
-            # Check if target folder exists in catalog
-            folder_key = (photo.root_folder_id, target_path)
-            target_folder = self.existing_folders.get(folder_key)
-
-            target_folder_id = None
-            if target_folder:
-                target_folder_id = target_folder.id_local
-            else:
-                # Need to create folder(s)
-                self._ensure_folder_chain(plan, photo.root_folder_id, target_path)
-
-            # Check for filename collision
-            if target_folder_id is not None:
-                # Folder exists in catalog — query the DB
-                new_basename = self._resolve_collision(
-                    target_folder_id, photo.base_name, photo.extension
-                )
-            else:
-                # Folder to be created — resolve against other planned moves
-                taken = in_plan.setdefault(folder_key, set())
-                new_basename = _resolve_in_plan(photo.base_name, photo.extension, taken)
-                taken.add(f"{new_basename}.{photo.extension}")
-
-            change = FileChange(
-                change_type=ChangeType.MOVE_PHOTO,
-                photo=photo,
-                source_folder_path=photo.current_folder_path,
-                target_folder_path=target_path,
-                target_folder_id=target_folder_id,
-            )
-
-            # If there's a collision, also rename
-            if new_basename != photo.base_name:
-                change.old_name = photo.base_name
-                change.new_name = new_basename
-
-            plan.changes.append(change)
+            self._add_move_change(plan, photo, target_path, in_plan)
 
     def _plan_renames(self, plan: ChangePlan) -> None:
         """Plan renames for files with duplicate prefixes."""
@@ -155,6 +88,105 @@ class ChangePlanner:
                     new_name=final_name,
                 )
             )
+
+    def _plan_location_moves(self, plan: ChangePlan) -> None:
+        """Plan location-subfolder moves for GPS photos in date-correct folders."""
+        candidates = self.scanner.scan_needs_location_folder()
+        if not candidates:
+            return
+        location_map = self._build_location_map(candidates)
+        in_plan: dict[tuple[int, str], set[str]] = {}
+
+        for photo in candidates:
+            loc = location_map.get((photo.gps_latitude, photo.gps_longitude))  # type: ignore[arg-type]
+            if not loc:
+                continue
+            country, city = loc
+            target_path = photo.get_expected_folder_path_with_location(
+                self.target_layout, country, city
+            )
+            if target_path is None or target_path == photo.current_folder_path:
+                continue
+            self._add_move_change(plan, photo, target_path, in_plan)
+
+    def _build_location_map(
+        self, photos: list[PhotoRecord]
+    ) -> dict[tuple[float, float], tuple[str, str]]:
+        """Batch-resolve GPS coordinates to (country, city) via LocationResolver."""
+        if not self.location_folders:
+            return {}
+        from .geocoder import LocationResolver
+
+        resolver = LocationResolver()
+        coords = [
+            (p.gps_latitude, p.gps_longitude)
+            for p in photos
+            if p.gps_latitude is not None and p.gps_longitude is not None
+        ]
+        if not coords:
+            return {}
+        return resolver.resolve_batch(coords)
+
+    def _compute_target_path(
+        self,
+        photo: PhotoRecord,
+        location_map: dict[tuple[float, float], tuple[str, str]],
+    ) -> str | None:
+        """Compute target folder path, including optional location subfolder."""
+        country: str | None = None
+        city: str | None = None
+        if (
+            self.location_folders
+            and photo.gps_latitude is not None
+            and photo.gps_longitude is not None
+        ):
+            loc = location_map.get((photo.gps_latitude, photo.gps_longitude))
+            if loc:
+                country, city = loc
+
+        if self.location_folders and country and city:
+            return photo.get_expected_folder_path_with_location(
+                self.target_layout, country, city
+            )
+        return photo.get_expected_folder_path(self.target_layout)
+
+    def _add_move_change(
+        self,
+        plan: ChangePlan,
+        photo: PhotoRecord,
+        target_path: str,
+        in_plan: dict[tuple[int, str], set[str]],
+    ) -> None:
+        """Add a MOVE_PHOTO change, handling folder creation and name collision."""
+        folder_key = (photo.root_folder_id, target_path)
+        target_folder = self.existing_folders.get(folder_key)
+
+        target_folder_id = None
+        if target_folder:
+            target_folder_id = target_folder.id_local
+        else:
+            self._ensure_folder_chain(plan, photo.root_folder_id, target_path)
+
+        if target_folder_id is not None:
+            new_basename = self._resolve_collision(
+                target_folder_id, photo.base_name, photo.extension
+            )
+        else:
+            taken = in_plan.setdefault(folder_key, set())
+            new_basename = _resolve_in_plan(photo.base_name, photo.extension, taken)
+            taken.add(f"{new_basename}.{photo.extension}")
+
+        change = FileChange(
+            change_type=ChangeType.MOVE_PHOTO,
+            photo=photo,
+            source_folder_path=photo.current_folder_path,
+            target_folder_path=target_path,
+            target_folder_id=target_folder_id,
+        )
+        if new_basename != photo.base_name:
+            change.old_name = photo.base_name
+            change.new_name = new_basename
+        plan.changes.append(change)
 
     def _ensure_folder_chain(
         self, plan: ChangePlan, root_folder_id: int, target_path: str

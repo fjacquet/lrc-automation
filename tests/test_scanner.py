@@ -169,3 +169,77 @@ class TestScannerBroadenedDetection:
         file_ids = [p.file_id for p in misplaced]
         assert 12 not in file_ids
         conn.close()
+
+
+class TestScanNeedsLocationFolder:
+    """Tests for CatalogScanner.scan_needs_location_folder()."""
+
+    def test_returns_gps_photos_in_date_only_folder(
+        self, tmp_catalog_needs_location: Path
+    ) -> None:
+        """GPS photo in date-only folder (2023/06/) is a candidate."""
+        conn = sqlite3.connect(str(tmp_catalog_needs_location))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        candidates = scanner.scan_needs_location_folder()
+        file_ids = [p.file_id for p in candidates]
+        assert 1 in file_ids
+        conn.close()
+
+    def test_skips_photos_already_in_location_subfolder(
+        self, tmp_catalog_needs_location: Path
+    ) -> None:
+        """GPS photo already in 2023/06/FR/Paris/ is NOT a candidate."""
+        conn = sqlite3.connect(str(tmp_catalog_needs_location))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        candidates = scanner.scan_needs_location_folder()
+        file_ids = [p.file_id for p in candidates]
+        assert 2 not in file_ids
+        conn.close()
+
+    def test_skips_photos_without_gps(self, tmp_catalog_needs_location: Path) -> None:
+        """Photo without GPS is NOT a candidate even if in date-only folder."""
+        conn = sqlite3.connect(str(tmp_catalog_needs_location))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=True)
+        candidates = scanner.scan_needs_location_folder()
+        file_ids = [p.file_id for p in candidates]
+        assert 3 not in file_ids
+        conn.close()
+
+    def test_returns_empty_when_flag_off(
+        self, tmp_catalog_needs_location: Path
+    ) -> None:
+        """Returns [] when location_folders=False regardless of GPS data."""
+        conn = sqlite3.connect(str(tmp_catalog_needs_location))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn, location_folders=False)
+        assert scanner.scan_needs_location_folder() == []
+        conn.close()
+
+
+class TestScanYearInYear:
+    """Tests for CatalogScanner.scan_year_in_year_photos()."""
+
+    def test_detects_photo_in_wrong_root_year(
+        self, tmp_catalog_year_in_year: Path
+    ) -> None:
+        """Photo with root 2022 but pathFromRoot 2003/12/ is detected."""
+        conn = sqlite3.connect(str(tmp_catalog_year_in_year))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn)
+        yiy = scanner.scan_year_in_year_photos()
+        file_ids = [p.file_id for p in yiy]
+        assert 1 in file_ids
+        conn.close()
+
+    def test_skips_correct_year_photo(self, tmp_catalog_year_in_year: Path) -> None:
+        """Photo with root 2022 and pathFromRoot 2022/06/ is NOT detected."""
+        conn = sqlite3.connect(str(tmp_catalog_year_in_year))
+        conn.row_factory = sqlite3.Row
+        scanner = CatalogScanner(conn)
+        yiy = scanner.scan_year_in_year_photos()
+        file_ids = [p.file_id for p in yiy]
+        assert 2 not in file_ids
+        conn.close()
