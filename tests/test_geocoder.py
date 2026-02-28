@@ -40,7 +40,7 @@ class TestLocationResolver:
         result = resolver.resolve(47.3769, 8.5417)
         assert result is not None
         country, city = result
-        assert country == "Switzerland"
+        assert country == "CH"
         assert isinstance(city, str)
         assert len(city) > 0
 
@@ -50,7 +50,7 @@ class TestLocationResolver:
         result = resolver.resolve(48.8566, 2.3522)
         assert result is not None
         country, _city = result
-        assert country == "France"
+        assert country == "FR"
 
     def test_resolve_batch(self) -> None:
         resolver = LocationResolver()
@@ -106,4 +106,4 @@ class TestLocationResolver:
         result = resolver.resolve(-46.615, 168.339)
         assert result is not None
         country, _city = result
-        assert country == "New Zealand"
+        assert country == "NZ"
