@@ -288,6 +288,24 @@ def apply(
             for warning in warnings:
                 console.print(f"[yellow]Warning:[/yellow] {warning}")
 
+            # Plan source-file check: surface all missing files before touching anything
+            missing_sources = validator.preflight_plan_check(change_plan)
+            if missing_sources:
+                n = len(missing_sources)
+                console.print(
+                    f"\n[yellow]Warning:[/yellow] {n} source file(s) "
+                    "not found on disk and will be skipped:"
+                )
+                for path in missing_sources[:20]:
+                    console.print(f"  [dim]missing:[/dim] {path}")
+                if len(missing_sources) > 20:
+                    console.print(f"  ... and {len(missing_sources) - 20} more")
+                if not yes and not click.confirm(
+                    "\nProceed anyway (skipping missing files)?"
+                ):
+                    console.print("Aborted.")
+                    return
+
             # Execute
             executor = ChangeExecutor(cat, change_plan)
             report = executor.execute()

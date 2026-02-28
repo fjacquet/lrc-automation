@@ -3,7 +3,7 @@
 import sqlite3
 from pathlib import Path
 
-from .models import ChangeType, FileChange
+from .models import ChangePlan, ChangeType, FileChange
 
 
 class CatalogValidator:
@@ -47,6 +47,25 @@ class CatalogValidator:
             )
 
         return warnings
+
+    def preflight_plan_check(self, plan: ChangePlan) -> list[str]:
+        """Verify all source files in the plan exist on disk before execution.
+
+        Returns missing source paths. Callers should show these to the user
+        and decide whether to abort or proceed (the executor will skip them
+        via SkippableError, but this surfaces all issues upfront).
+        """
+        missing: list[str] = []
+        for change in plan.changes:
+            photo = change.photo
+            if change.change_type == ChangeType.MOVE_PHOTO:
+                src = photo.full_path
+            else:
+                folder = Path(photo.root_absolute_path) / photo.current_folder_path
+                src = folder / f"{change.old_name}.{photo.extension}"
+            if not src.exists():
+                missing.append(str(src))
+        return missing
 
     def postflight_check(self, succeeded: list["FileChange"]) -> list[str]:
         """Run after changes. Verify committed moves/renames exist on disk."""
