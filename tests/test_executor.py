@@ -321,3 +321,64 @@ class TestCleanupEmptyFolders:
 
         assert count == 1
         assert after == before - 1
+
+
+class TestExecutorCrossRoot:
+    """Executor moves files across year-root boundaries correctly."""
+
+    def test_cross_root_move_on_disk(
+        self, tmp_catalog_multi_root_with_files: tuple[Path, Path, Path]
+    ) -> None:
+        """IMG_CROSS moves from root_2013/2012/08/ to root_2012/08/ on disk."""
+        db_path, root_2012_dir, root_2013_dir = tmp_catalog_multi_root_with_files
+
+        with CatalogConnection(db_path) as cat:
+            conn = cat.open(readonly=False)
+            scanner = CatalogScanner(conn)
+            planner = ChangePlanner(conn, scanner)
+            plan = planner.build_plan(
+                include_moves=False,
+                include_renames=False,
+                include_root_migrations=True,
+            )
+            assert plan.move_count > 0
+
+            executor = ChangeExecutor(cat, plan)
+            report = executor.execute()
+
+        assert not report.rolled_back
+        assert len(report.succeeded) > 0
+        assert len(report.failed) == 0
+        assert (root_2012_dir / "08" / "IMG_CROSS.JPG").exists()
+        assert not (root_2013_dir / "2012" / "08" / "IMG_CROSS.JPG").exists()
+
+    def test_catalog_updated_after_cross_root_move(
+        self, tmp_catalog_multi_root_with_files: tuple[Path, Path, Path]
+    ) -> None:
+        """After execution, AgLibraryFile.folder points to a folder in root 1 (2012)."""
+        import sqlite3 as _sqlite3
+
+        db_path, _r12, _r13 = tmp_catalog_multi_root_with_files
+
+        with CatalogConnection(db_path) as cat:
+            conn = cat.open(readonly=False)
+            scanner = CatalogScanner(conn)
+            planner = ChangePlanner(conn, scanner)
+            plan = planner.build_plan(
+                include_moves=False,
+                include_renames=False,
+                include_root_migrations=True,
+            )
+            executor = ChangeExecutor(cat, plan)
+            executor.execute()
+
+        raw_conn = _sqlite3.connect(str(db_path))
+        cursor = raw_conn.execute(
+            "SELECT f.rootFolder FROM AgLibraryFile af "
+            "JOIN AgLibraryFolder f ON af.folder = f.id_local "
+            "WHERE af.id_local = 1"
+        )
+        row = cursor.fetchone()
+        raw_conn.close()
+        assert row is not None
+        assert row[0] == 1  # Folder now belongs to root 1 (2012)

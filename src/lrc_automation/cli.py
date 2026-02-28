@@ -39,6 +39,14 @@ console = Console()
     help="Append Country/City subfolders via GPS (requires lrc-automation[geo])",
 )
 @click.option(
+    "--location-order",
+    envvar="LRC_LOCATION_ORDER",
+    default="month_cc_city",
+    show_default=True,
+    type=click.Choice(["month_cc_city", "cc_city_month", "cc_month_city"]),
+    help="Ordering of month and CC/City within location subfolders",
+)
+@click.option(
     "--log-file",
     type=click.Path(),
     envvar="LRC_LOG_FILE",
@@ -52,9 +60,12 @@ def cli(
     verbose: bool,
     target_layout: str,
     location_folders: bool,
+    location_order: str,
     log_file: str | None,
 ) -> None:
     """Lightroom Classic Catalog Automation Tool."""
+    from .constants import LocationOrder
+
     ctx.ensure_object(dict)
     catalog_path = Path(catalog)
     if catalog_path.suffix != ".lrcat":
@@ -65,6 +76,7 @@ def cli(
     ctx.obj["verbose"] = verbose
     ctx.obj["target_layout"] = target_layout
     ctx.obj["location_folders"] = location_folders
+    ctx.obj["location_order"] = LocationOrder(location_order)
 
     from .log import configure_logging
 
@@ -126,7 +138,11 @@ def scan(ctx: click.Context, output: str | None) -> None:
                 needs_location=needs_location,
                 year_in_year=year_in_year,
             )
-            reporter.print_prefix_format_summary(prefix_conversions)
+            reporter.print_prefix_format_summary(
+                prefix_conversions,
+                target_layout=target_layout,
+                location_order=ctx.obj.get("location_order"),
+            )
 
             if output:
                 output_path = Path(output)
@@ -169,7 +185,7 @@ def scan(ctx: click.Context, output: str | None) -> None:
 @cli.command()
 @click.option(
     "--fix",
-    type=click.Choice(["moves", "renames", "all"]),
+    type=click.Choice(["moves", "renames", "root-migrations", "all"]),
     default="all",
     help="Which fixes to plan",
 )
@@ -189,6 +205,7 @@ def plan(ctx: click.Context, fix: str, output: str | None) -> None:
     catalog_path: Path = ctx.obj["catalog_path"]
     target_layout: str = ctx.obj["target_layout"]
     location_folders: bool = ctx.obj["location_folders"]
+    location_order = ctx.obj["location_order"]
     reporter = Reporter(console)
 
     try:
@@ -206,14 +223,18 @@ def plan(ctx: click.Context, fix: str, output: str | None) -> None:
                 scanner,
                 target_layout=target_layout,
                 location_folders=location_folders,
+                location_order=location_order,
             )
 
             change_plan = planner.build_plan(
                 include_moves=(fix in ("moves", "all")),
                 include_renames=(fix in ("renames", "all")),
+                include_root_migrations=(fix == "root-migrations"),
             )
 
             reporter.print_change_plan(change_plan)
+            if fix == "root-migrations":
+                reporter.print_root_migration_summary(change_plan.changes)
 
             if output:
                 output_path = Path(output)
@@ -232,7 +253,7 @@ def plan(ctx: click.Context, fix: str, output: str | None) -> None:
 @cli.command()
 @click.option(
     "--fix",
-    type=click.Choice(["moves", "renames", "all"]),
+    type=click.Choice(["moves", "renames", "root-migrations", "all"]),
     default="all",
     help="Which fixes to apply",
 )
@@ -259,6 +280,7 @@ def apply(
     catalog_path: Path = ctx.obj["catalog_path"]
     target_layout: str = ctx.obj["target_layout"]
     location_folders: bool = ctx.obj["location_folders"]
+    location_order = ctx.obj["location_order"]
     reporter = Reporter(console)
 
     try:
@@ -285,10 +307,12 @@ def apply(
                 scanner,
                 target_layout=target_layout,
                 location_folders=location_folders,
+                location_order=location_order,
             )
             change_plan = planner.build_plan(
                 include_moves=(fix in ("moves", "all")),
                 include_renames=(fix in ("renames", "all")),
+                include_root_migrations=(fix == "root-migrations"),
             )
 
             if not change_plan.changes:

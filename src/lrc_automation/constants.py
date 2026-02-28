@@ -1,6 +1,15 @@
 """Constants - regex patterns, date formats, table names."""
 
 import re
+from enum import StrEnum
+
+
+class LocationOrder(StrEnum):
+    """Ordering of month and CC/City within location subfolders."""
+
+    MONTH_CC_CITY = "month_cc_city"  # YYYY/MM/CC/City (default)
+    CC_CITY_MONTH = "cc_city_month"  # YYYY/CC/City/MM
+    CC_MONTH_CITY = "cc_month_city"  # YYYY/CC/MM/City
 
 # Default target layout (strftime format)
 DEFAULT_TARGET_LAYOUT = "%Y/%m/"

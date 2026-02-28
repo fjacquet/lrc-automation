@@ -1,9 +1,15 @@
 """Data models for Lightroom Classic catalog automation."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .constants import LocationOrder
 
 
 class ChangeType(Enum):
@@ -70,18 +76,36 @@ class PhotoRecord:
         layout: str,
         country: str | None,
         city: str | None,
+        location_order: LocationOrder | None = None,
     ) -> str | None:
         """Derive target folder with optional Country/City subfolder.
 
-        Returns date path + Country/City/ when both are available,
-        otherwise falls back to date-only path.
+        Returns a path based on location_order when both country and city are
+        available, otherwise falls back to date-only path.
         """
+        from .constants import LocationOrder
+
+        if location_order is None:
+            location_order = LocationOrder.MONTH_CC_CITY
+
         base = self.get_expected_folder_path(layout)
         if base is None:
             return None
-        if country and city:
-            return f"{base}{country}/{city}/"
-        return base
+        if not (country and city):
+            return base
+        if self.capture_time is None:
+            return base
+
+        if location_order == LocationOrder.CC_CITY_MONTH:
+            return (
+                f"{self.capture_time:%Y}/{country}/{city}/{self.capture_time:%m}/"
+            )
+        if location_order == LocationOrder.CC_MONTH_CITY:
+            return (
+                f"{self.capture_time:%Y}/{country}/{self.capture_time:%m}/{city}/"
+            )
+        # Default: MONTH_CC_CITY
+        return f"{base}{country}/{city}/"
 
 
 @dataclass
@@ -92,6 +116,9 @@ class FileChange:
     source_folder_path: str | None = None
     target_folder_path: str | None = None
     target_folder_id: int | None = None
+    # Cross-root support: populated only when destination root ≠ source root
+    target_root_id: int | None = None
+    target_root_absolute_path: str | None = None
     # For RENAME_FILE
     old_name: str | None = None
     new_name: str | None = None

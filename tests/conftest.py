@@ -756,3 +756,105 @@ def tmp_catalog_per_year_root_damaged(tmp_path: Path) -> tuple[Path, Path]:
     db_path = tmp_path / "test_pyr_damaged.lrcat"
     create_test_catalog(db_path, per_year_root_damaged_test_data(str(root_dir)))
     return db_path, root_dir
+
+
+def multi_root_test_data(root_2012: str, root_2013: str) -> dict:
+    """Test data: two year-based roots; Photo 1 is cross-root (wrong year root).
+
+    - Root 1 (id=1): root_2012 path, last segment '2012'
+    - Root 2 (id=2): root_2013 path, last segment '2013'
+    - Folder 1: pathFromRoot='2012/08/', rootFolder=2 → year-in-year
+    - Folder 2: pathFromRoot='2013/06/', rootFolder=2 → well-placed
+    - Photo 1 (IMG_CROSS): folder=1, capture=2012-08-15 → cross-root candidate
+    - Photo 2 (IMG_OK): folder=2, capture=2013-06-20 → well-placed, not moved
+    """
+    r2012 = root_2012 if root_2012.endswith("/") else root_2012 + "/"
+    r2013 = root_2013 if root_2013.endswith("/") else root_2013 + "/"
+    return {
+        "roots": [
+            (1, "ROOT-UUID-2012", r2012, "2012", "../2012"),
+            (2, "ROOT-UUID-2013", r2013, "2013", "../2013"),
+        ],
+        "folders": [
+            (1, "FOLD-UUID-1", "2012/08/", 2),
+            (2, "FOLD-UUID-2", "2013/06/", 2),
+        ],
+        "files": [
+            (
+                1,
+                "FILE-UUID-1",
+                "IMG_CROSS",
+                "JPG",
+                1,
+                "IMG_CROSS",
+                None,
+                None,
+                "IMG_CROSS.JPG",
+                None,
+            ),
+            (
+                2,
+                "FILE-UUID-2",
+                "IMG_OK",
+                "JPG",
+                2,
+                "IMG_OK",
+                None,
+                None,
+                "IMG_OK.JPG",
+                None,
+            ),
+        ],
+        "images": [
+            (1, "IMG-UUID-1", "2012-08-15T10:00:00", 1, "JPG", 0, 3, "AB", None, None),
+            (2, "IMG-UUID-2", "2013-06-20T10:00:00", 2, "JPG", 0, 4, "AB", None, None),
+        ],
+    }
+
+
+@pytest.fixture
+def tmp_catalog_multi_root(tmp_path: Path) -> tuple[Path, Path, Path]:
+    """Catalog with two year-roots; Photo 1 is cross-root (wrong year root).
+
+    Both root directories are created on disk so the planner's disk-existence
+    check passes for cross-root moves.
+    Returns (db_path, root_2012_dir, root_2013_dir).
+    """
+    root_2012_dir = tmp_path / "2012"
+    root_2013_dir = tmp_path / "2013"
+    root_2012_dir.mkdir()
+    root_2013_dir.mkdir()
+
+    db_path = tmp_path / "test_multi_root.lrcat"
+    create_test_catalog(
+        db_path, multi_root_test_data(str(root_2012_dir), str(root_2013_dir))
+    )
+    return db_path, root_2012_dir, root_2013_dir
+
+
+@pytest.fixture
+def tmp_catalog_multi_root_with_files(tmp_path: Path) -> tuple[Path, Path, Path]:
+    """Same as tmp_catalog_multi_root but with actual files on disk.
+
+    IMG_CROSS.JPG is at the wrong location (root_2013/2012/08/IMG_CROSS.JPG).
+    IMG_OK.JPG is at its correct location (root_2013/2013/06/IMG_OK.JPG).
+    Returns (db_path, root_2012_dir, root_2013_dir).
+    """
+    root_2012_dir = tmp_path / "2012"
+    root_2013_dir = tmp_path / "2013"
+    root_2012_dir.mkdir()
+    root_2013_dir.mkdir()
+
+    cross_dir = root_2013_dir / "2012" / "08"
+    cross_dir.mkdir(parents=True)
+    (cross_dir / "IMG_CROSS.JPG").write_text("photo")
+
+    ok_dir = root_2013_dir / "2013" / "06"
+    ok_dir.mkdir(parents=True)
+    (ok_dir / "IMG_OK.JPG").write_text("photo")
+
+    db_path = tmp_path / "test_multi_root.lrcat"
+    create_test_catalog(
+        db_path, multi_root_test_data(str(root_2012_dir), str(root_2013_dir))
+    )
+    return db_path, root_2012_dir, root_2013_dir

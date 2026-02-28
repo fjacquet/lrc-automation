@@ -8,6 +8,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.table import Table
 
+from .constants import LocationOrder
 from .models import (
     ChangePlan,
     ChangeType,
@@ -129,6 +130,9 @@ class Reporter:
     def print_prefix_format_summary(
         self,
         conversions: list[tuple[PhotoRecord, str, tuple[str, str] | None]],
+        *,
+        target_layout: str = "%Y/%m/",
+        location_order: LocationOrder | None = None,
     ) -> None:
         """Print DDMMYYYY→YYMMDD prefix conversion proposals.
 
@@ -151,8 +155,11 @@ class Reporter:
         table.add_column("Target Folder")
 
         for i, (photo, proposed, location) in enumerate(conversions[:50], 1):
-            if location:
-                folder = f"{photo.current_folder_path}{location[0]}/{location[1]}/"
+            if location and photo.capture_time:
+                computed = photo.get_expected_folder_path_with_location(
+                    target_layout, location[0], location[1], location_order
+                )
+                folder = computed if computed is not None else photo.current_folder_path
             else:
                 folder = photo.current_folder_path
             table.add_row(str(i), photo.base_name, proposed, folder)
@@ -407,3 +414,40 @@ class Reporter:
             )
         if not report.reconciled and not report.skipped_ambiguous:
             self.console.print("  [green]Nothing to reconcile.[/green]")
+
+    def print_root_migration_summary(self, changes: list[FileChange]) -> None:
+        """Print cross-root vs intra-root split for a root-migration plan."""
+        moves = [c for c in changes if c.change_type == ChangeType.MOVE_PHOTO]
+        cross = [c for c in moves if c.target_root_id is not None]
+        intra = [c for c in moves if c.target_root_id is None]
+
+        self.console.print("\n[bold]Root Migration Plan[/bold]")
+        self.console.print(
+            f"  Cross-root moves : [yellow]{len(cross)}[/yellow]"
+        )
+        self.console.print(
+            f"  Intra-root fixes : [cyan]{len(intra)}[/cyan]"
+        )
+
+        if cross:
+            table = Table(show_lines=False)
+            table.add_column("#", style="dim", width=5)
+            table.add_column("File")
+            table.add_column("Source Root")
+            table.add_column("Dest Root")
+            table.add_column("Src Path")
+            table.add_column("Dest Path")
+            for i, c in enumerate(cross[:100], 1):
+                table.add_row(
+                    str(i),
+                    f"{c.photo.base_name}.{c.photo.extension}",
+                    c.photo.root_absolute_path,
+                    c.target_root_absolute_path or "",
+                    c.source_folder_path or "",
+                    c.target_folder_path or "",
+                )
+            self.console.print(table)
+            if len(cross) > 100:
+                self.console.print(
+                    f"  ... and {len(cross) - 100} more cross-root moves."
+                )

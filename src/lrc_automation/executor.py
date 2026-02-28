@@ -151,17 +151,18 @@ class ChangeExecutor:
         if target_path is None:
             raise ExecutionError("No target folder path")
 
-        # Determine target folder ID
+        # Determine target folder ID — use target root when cross-root move
         target_folder_id = change.target_folder_id
         if target_folder_id is None:
-            key = (photo.root_folder_id, target_path)
+            effective_root_id = change.target_root_id or photo.root_folder_id
+            key = (effective_root_id, target_path)
             target_folder_id = folder_id_map.get(key)
             if target_folder_id is None:
                 # Try to find it in existing folders
                 cursor = conn.execute(
                     "SELECT id_local FROM AgLibraryFolder "
                     "WHERE rootFolder = ? AND pathFromRoot = ?",
-                    (photo.root_folder_id, target_path),
+                    (effective_root_id, target_path),
                 )
                 row = cursor.fetchone()
                 if row:
@@ -172,7 +173,8 @@ class ChangeExecutor:
         # Build source and destination paths
         src = photo.full_path
         base_name = change.new_name or photo.base_name
-        dst_dir = Path(photo.root_absolute_path) / target_path
+        dest_root = change.target_root_absolute_path or photo.root_absolute_path
+        dst_dir = Path(dest_root) / target_path
         dst = dst_dir / f"{base_name}.{photo.extension}"
 
         self._apply_file_op(src, dst, move=True)
