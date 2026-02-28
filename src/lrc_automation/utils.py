@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 
 from .constants import (
+    DDMMYYYY_PREFIX_PATTERN,
     DEFAULT_TARGET_LAYOUT,
     DUPLICATE_PREFIX_PATTERN,
     FOLDER_BARE_YEAR_PATTERN,
@@ -14,6 +15,9 @@ from .constants import (
     IMG_DATE_PATTERN,
     layout_to_regex,
 )
+
+# ISO date at the start of a filename rest-part, e.g. "2012-06-16" or "2012-06-16-rest"
+_ISO_DATE_IN_REST = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[-\s](.+))?$")
 
 
 def parse_capture_time(value: str | None) -> datetime | None:
@@ -148,25 +152,95 @@ def extract_date_from_path(full_path: str) -> tuple[int, int] | None:
 
 
 def clean_duplicate_prefix(base_name: str) -> str | None:
-    """Clean a filename with duplicated date prefix.
+    """Clean a filename with duplicated date prefix and normalise to YYMMDD.
 
-    Example: '29122012-29122012-IMG_20121229_131334' -> '29122012-IMG_131334'
+    Example: '29122012-29122012-IMG_20121229_131334' -> '121229-IMG_131334'
+    Example: '16062012-16062012-2012-06-16'          -> '120616'
+    Example: '16062012-16062012-2012-06-16-party'    -> '120616-party'
+    Example: '16062012-16062012-2012-07-04-event'    -> '120704-event'
 
-    Returns the cleaned name, or None if no duplicate prefix found.
+    When an ISO date appears in the rest, it is always treated as authoritative
+    (EXIF-based). If it differs from the prefix date, the ISO date wins.
+
+    Returns the cleaned+normalised name, or None if no duplicate prefix found
+    or if the prefix encodes a bogus date (e.g. the Lightroom 1904 epoch).
     """
     match = DUPLICATE_PREFIX_PATTERN.match(base_name)
     if not match:
         return None
 
-    prefix = match.group(1)  # e.g. "29122012"
-    rest = match.group(2)  # e.g. "IMG_20121229_131334"
+    prefix = match.group(1)  # 8-digit DDMMYYYY, e.g. "29122012"
+    rest = match.group(2)
 
-    # Also strip redundant date from IMG_YYYYMMDD_NNNNNN -> IMG_NNNNNN
+    # Validate the date embedded in the prefix (DDMMYYYY layout)
+    day = int(prefix[0:2])
+    month = int(prefix[2:4])
+    year = int(prefix[4:8])
+    if not _validate_ym(year, month) or not (1 <= day <= 31):
+        return None
+
+    # Strip redundant date from IMG_YYYYMMDD_NNNNNN -> IMG_NNNNNN
     img_match = IMG_DATE_PATTERN.match(rest)
     if img_match:
         rest = f"IMG_{img_match.group(2)}"
+        yy = prefix[6:8]
+        mm = prefix[2:4]
+        dd = prefix[0:2]
+        return f"{yy}{mm}{dd}-{rest}"
 
-    return f"{prefix}-{rest}"
+    # If rest starts with an ISO date, use that as the authoritative date
+    iso_m = _ISO_DATE_IN_REST.match(rest)
+    if iso_m:
+        ry, rm, rd = int(iso_m.group(1)), int(iso_m.group(2)), int(iso_m.group(3))
+        if _validate_ym(ry, rm) and 1 <= rd <= 31:
+            yy = str(ry)[2:]
+            rest = iso_m.group(4)  # None if nothing follows the ISO date
+            return f"{yy}{rm:02d}{rd:02d}-{rest}" if rest else f"{yy}{rm:02d}{rd:02d}"
+
+    # Fall back to prefix date
+    yy = prefix[6:8]
+    mm = prefix[2:4]
+    dd = prefix[0:2]
+    return f"{yy}{mm}{dd}-{rest}" if rest else f"{yy}{mm}{dd}"
+
+
+def convert_prefix_format(base_name: str) -> str | None:
+    """Convert a DDMMYYYY filename prefix to YYMMDD format.
+
+    Example: '02052002-volcan'                    -> '020502-volcan'
+             '05012026-IMG_6215'                  -> '260105-IMG_6215'
+             '16062012-2012-06-16 10.51.50 HDR'   -> '120616-10.51.50 HDR'
+             '16062012-2012-06-16'                 -> '120616'
+             '16062012-2012-07-04-event'           -> '120704-event'
+
+    When an ISO date (YYYY-MM-DD) appears at the start of the rest, it is
+    always treated as the authoritative (EXIF-based) date and stripped from
+    the name. If it differs from the DDMMYYYY prefix, the ISO date wins.
+
+    Returns the converted name, or None if the prefix is not DDMMYYYY
+    or encodes a bogus date.
+    """
+    m = DDMMYYYY_PREFIX_PATTERN.match(base_name)
+    if not m:
+        return None
+
+    dd, mm, yyyy, rest = m.group(1), m.group(2), m.group(3), m.group(4)
+    day, month, year = int(dd), int(mm), int(yyyy)
+    if not _validate_ym(year, month) or not (1 <= day <= 31):
+        return None
+
+    # If rest starts with an ISO date, use that as the authoritative date
+    # (it is EXIF-based and more reliable than the manually-added DDMMYYYY prefix)
+    iso_m = _ISO_DATE_IN_REST.match(rest)
+    if iso_m:
+        ry, rm, rd = int(iso_m.group(1)), int(iso_m.group(2)), int(iso_m.group(3))
+        if _validate_ym(ry, rm) and 1 <= rd <= 31:
+            yy = str(ry)[2:]
+            rest = iso_m.group(4)  # None if nothing follows the ISO date
+            return f"{yy}{rm:02d}{rd:02d}-{rest}" if rest else f"{yy}{rm:02d}{rd:02d}"
+
+    yy = yyyy[2:]  # last two digits of year
+    return f"{yy}{mm}{dd}-{rest}"
 
 
 def generate_uuid() -> str:

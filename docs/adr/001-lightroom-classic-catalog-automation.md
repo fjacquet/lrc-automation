@@ -20,6 +20,7 @@ Build a **Python CLI tool** that directly manipulates the `.lrcat` SQLite catalo
 ### Why Not Lightroom Classic Lua SDK Plugin?
 
 The Lua SDK was evaluated and **rejected** because:
+
 - `LrPhoto` has **no `moveToFolder()` method** -- the SDK cannot move photos between folders programmatically
 - `LrFileUtils` can rename/move files on disk, but Lightroom will then think the photo is missing, with no way to reconnect
 - The SDK can only **read** metadata and **create collections**, not perform the file operations we need
@@ -31,6 +32,7 @@ Existing MCP servers (Zapier, Pipedream) target **Lightroom CC** (cloud version)
 ### Why Direct SQLite Manipulation?
 
 The `.lrcat` catalog file is a SQLite database with well-documented tables:
+
 - `AgLibraryRootFolder` - absolute root paths
 - `AgLibraryFolder` - folder paths relative to root
 - `AgLibraryFile` - filenames with folder FK
@@ -67,31 +69,53 @@ lrc-automation/
 ### Key SQLite Operations
 
 **Move photo to different folder:**
+
 ```sql
 UPDATE AgLibraryFile SET folder = :new_folder_id WHERE id_local = :file_id;
 ```
 
 **Rename file:**
+
 ```sql
 UPDATE AgLibraryFile SET baseName = :new_name, idx_filename = :new_idx WHERE id_local = :file_id;
 ```
 
 **Create folder:**
+
 ```sql
 INSERT INTO AgLibraryFolder (id_local, id_global, pathFromRoot, rootFolder) VALUES (...);
 ```
 
 **Path reconstruction:**
+
 ```
 full_path = AgLibraryRootFolder.absolutePath + AgLibraryFolder.pathFromRoot + AgLibraryFile.baseName + "." + extension
 ```
 
 ### Rename Logic
 
+**Duplicate date prefix removal:**
+
 `29122012-29122012-IMG_20121229_131334` -> `29122012-IMG_131334`
 
 1. Detect duplicated date prefix: `(\d{8})-\1-(.+)` -> keep one prefix
 2. Strip redundant date from `IMG_YYYYMMDD_NNNNNN` -> `IMG_NNNNNN`
+3. Validate the embedded DDMMYYYY is a real date (rejects bogus `01011904-` prefixes from 1904-epoch videos)
+
+**Prefix format normalisation (DDMMYYYY → YYMMDD):**
+
+Camera utilities sometimes prepend dates in European day-first order (`DDMMYYYY`), while the rest of the archive uses `YYMMDD`. The scanner detects this pattern and proposes a normalised name:
+
+`02052002-volcan` -> `020502-volcan`
+
+- Pattern: `^(\d{2})(\d{2})(\d{4})-(.+)$` — day, month, 4-digit year, hyphen, rest
+- Conversion: `YYMMDD-rest` where `YY` = last two digits of year
+- Files with GPS coordinates also get a `Country/City/` target-folder proposal (location is in the **folder path**, not the filename)
+- GPS-tagged proposals are sorted first in the scan report for immediate actionability
+
+### Pre-import Filename Visibility
+
+`AgLibraryFile.originalFilename` stores the filename as it existed before the Lightroom import. This column is now included in all photo queries and exposed in the `PhotoRecord` model, allowing the duplicate-prefix report to show the original camera filename alongside the current catalog name.
 
 ### Safety Measures
 
@@ -121,6 +145,15 @@ lrc-auto restore -c ~/Pictures/MyCatalog.lrcat --backup-path ...  # Restore
 - `shutil` (stdlib) - File move operations
 - `pytest` - Testing
 
+**Optional `[geo]` extra:**
+
+- `reverse-geocoder` - Offline K-D tree over GeoNames (~50 MB); converts GPS coordinates to country code + city name without any network call
+- `pycountry` - Maps ISO 3166-1 alpha-2 codes (e.g. `FR`) to full country names (e.g. `France`) for human-readable folder paths
+
+#### Why `pycountry` over embedding a lookup dict?
+
+`reverse-geocoder` returns only the two-letter ISO code. Rolling a hand-maintained mapping would drift over time (country name changes, new territories). `pycountry` bundles the authoritative ISO 3166 data and is updated with each release. It adds ~4 MB and zero runtime network calls.
+
 ### Edge Cases
 
 | Case | Handling |
@@ -144,12 +177,20 @@ lrc-auto restore -c ~/Pictures/MyCatalog.lrcat --backup-path ...  # Restore
 | 5 | Tests: unit + integration tests |
 | 6 | Optional: MCP server wrapper |
 
-## Real Catalog Analysis (2026-02-17)
+## Real Catalog Analysis (2026-02-17, updated 2026-02-28)
 
 Scanned against a production catalog (schema v1400000, LR Classic v14):
 
 - **92,717 photos** across **4,180 folders** and **42 root folders**
 - **1,175 misplaced photos** detected (capture date != folder date)
+- **20,178 photos (22%)** carry GPS coordinates (`AgHarvestedExifMetadata.gpsLatitude IS NOT NULL`)
+- **21,531 files** have DDMMYYYY-format name prefixes requiring normalisation to YYMMDD
+
+### GPS Detection Fix
+
+The original implementation gated GPS data on `AgHarvestedExifMetadata.hasGPS = 1`. Field inspection of a production catalog revealed that `hasGPS` is `NULL` for the vast majority of photos, even when `gpsLatitude`/`gpsLongitude` are populated. This appears to be a Lightroom version-specific quirk (LR v14).
+
+**Decision:** Remove `hasGPS` from all queries. Gate GPS processing exclusively on `gpsLatitude IS NOT NULL`. This correctly detects 20,178 GPS-tagged photos versus 0 with the old approach.
 
 ### Folder Structure (Not What We Expected)
 
@@ -182,17 +223,20 @@ The date is often encoded in the **root folder** path itself (e.g. `/Volumes/pho
 ## Consequences
 
 **Positive:**
+
 - Full automation of photo organization fixes
 - Safe with mandatory backup and rollback
 - Read-only scan mode for review before changes
 - No dependency on Lightroom's limited SDK
 
 **Negative:**
+
 - Requires Lightroom to be closed during apply
 - Risk of catalog corruption if SQLite schema changes between LR versions (mitigated by schema version check)
 - Not officially supported by Adobe
 
 **Risks:**
+
 - Adobe could change the SQLite schema in future LR updates -> check `Adobe_variablesTable` for version
 - Partial disk failure during move -> rollback stack + backup restoration
 

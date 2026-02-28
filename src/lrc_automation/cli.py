@@ -93,10 +93,17 @@ def scan(ctx: click.Context, output: str | None) -> None:
             total = scanner.get_total_photo_count()
             misplaced = scanner.scan_misplaced_photos()
             duplicates = scanner.scan_duplicate_prefixes()
+            resolver = None
+            if location_folders:
+                from .geocoder import LocationResolver
+
+                resolver = LocationResolver()
+            prefix_conversions = scanner.scan_prefix_format(resolver)
 
             reporter.print_scan_summary(
                 total, misplaced, duplicates, target_layout, location_folders
             )
+            reporter.print_prefix_format_summary(prefix_conversions)
 
             if output:
                 output_path = Path(output)
@@ -220,6 +227,7 @@ def apply(
 ) -> None:
     """Apply changes to catalog and disk. Requires Lightroom to be closed."""
     from .executor import ChangeExecutor
+    from .models import ChangeType
     from .planner import ChangePlanner
     from .reporter import Reporter
     from .scanner import CatalogScanner
@@ -290,6 +298,14 @@ def apply(
                 console.print(f"[yellow]Warning:[/yellow] {warning}")
 
             reporter.print_execution_report(report)
+
+            if any(c.change_type == ChangeType.RENAME_FILE for c in report.succeeded):
+                console.print(
+                    "\n[bold yellow]Next step:[/bold yellow] Open Lightroom Classic, "
+                    "select all renamed photos, then use "
+                    "[bold]Metadata \u2192 Save Metadata to Files[/bold] "
+                    "to regenerate .xmp sidecars."
+                )
 
     except CatalogError as e:
         console.print(f"[red]Error:[/red] {e}")

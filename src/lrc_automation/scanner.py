@@ -1,6 +1,12 @@
 """Catalog scanner for misplaced photos and duplicate filenames."""
 
+from __future__ import annotations
+
 import sqlite3
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .geocoder import LocationResolver
 
 from .constants import (
     DEFAULT_TARGET_LAYOUT,
@@ -12,6 +18,7 @@ from .constants import (
 from .models import Folder, PhotoRecord, RootFolder
 from .utils import (
     clean_duplicate_prefix,
+    convert_prefix_format,
     extract_date_from_path,
     parse_capture_time,
 )
@@ -70,6 +77,7 @@ class CatalogScanner:
                     capture_time=parse_capture_time(row["captureTime"]),
                     current_folder_path=row["pathFromRoot"],
                     root_absolute_path=row["absolutePath"],
+                    original_filename=row["originalFilename"],
                 )
             )
         return photos
@@ -79,7 +87,6 @@ class CatalogScanner:
         cursor = self.conn.execute(QUERY_ALL_PHOTOS_WITH_GPS)
         photos = []
         for row in cursor:
-            has_gps = row["hasGPS"] == 1 if row["hasGPS"] is not None else False
             photos.append(
                 PhotoRecord(
                     image_id=row["image_id"],
@@ -93,11 +100,12 @@ class CatalogScanner:
                     current_folder_path=row["pathFromRoot"],
                     root_absolute_path=row["absolutePath"],
                     gps_latitude=float(row["gpsLatitude"])
-                    if has_gps and row["gpsLatitude"] is not None
+                    if row["gpsLatitude"] is not None
                     else None,
                     gps_longitude=float(row["gpsLongitude"])
-                    if has_gps and row["gpsLongitude"] is not None
+                    if row["gpsLongitude"] is not None
                     else None,
+                    original_filename=row["originalFilename"],
                 )
             )
         return photos
@@ -138,6 +146,51 @@ class CatalogScanner:
             if cleaned is not None:
                 duplicates.append((photo, cleaned))
         return duplicates
+
+    def scan_prefix_format(
+        self,
+        resolver: LocationResolver | None = None,
+    ) -> list[tuple[PhotoRecord, str, tuple[str, str] | None]]:
+        """Return photos with DDMMYYYY prefix that should be YYMMDD.
+
+        Returns (photo, proposed_name, location) tuples where:
+        - proposed_name is YYMMDD-rest (Country/City goes in the folder, not the name)
+        - location is (country, city) from GPS, or None
+
+        Results are sorted so GPS-tagged photos come first.
+        """
+        # First pass: collect candidates and GPS coords for batch resolution
+        candidates: list[tuple[PhotoRecord, str]] = []
+        gps_coords: list[tuple[float, float]] = []
+
+        for photo in self._fetch_all_photos():
+            converted = convert_prefix_format(photo.base_name)
+            if converted is None:
+                continue
+            candidates.append((photo, converted))
+            if (
+                resolver is not None
+                and photo.gps_latitude is not None
+                and photo.gps_longitude is not None
+            ):
+                gps_coords.append((photo.gps_latitude, photo.gps_longitude))
+
+        # Batch-resolve all GPS coordinates in a single K-D tree query
+        location_map: dict[tuple[float, float], tuple[str, str]] = {}
+        if gps_coords and resolver is not None:
+            location_map = resolver.resolve_batch(gps_coords)
+
+        # Second pass: assemble results with resolved locations
+        results: list[tuple[PhotoRecord, str, tuple[str, str] | None]] = []
+        for photo, converted in candidates:
+            location: tuple[str, str] | None = None
+            if photo.gps_latitude is not None and photo.gps_longitude is not None:
+                location = location_map.get((photo.gps_latitude, photo.gps_longitude))
+            results.append((photo, converted, location))
+
+        # GPS-tagged photos first so the report is immediately useful
+        results.sort(key=lambda x: x[2] is None)
+        return results
 
     def get_total_photo_count(self) -> int:
         """Return total number of non-virtual-copy photos."""

@@ -145,11 +145,10 @@ class ChangeExecutor:
         dst_dir = Path(photo.root_absolute_path) / target_path
         dst = dst_dir / f"{base_name}.{photo.extension}"
 
-        # Move file on disk
-        self._move_file(src, dst)
-
-        # Move sidecars
-        self._move_sidecars(photo, src.parent, dst_dir, photo.base_name, base_name)
+        self._apply_file_op(src, dst, move=True)
+        self._handle_sidecars(
+            photo, src.parent, dst_dir, photo.base_name, base_name, move=True
+        )
 
         # Update catalog
         if change.new_name:
@@ -174,90 +173,54 @@ class ChangeExecutor:
             raise ExecutionError("Missing old or new name")
 
         folder_path = Path(photo.root_absolute_path) / photo.current_folder_path
-
-        # Rename main file
         src = folder_path / f"{old_name}.{photo.extension}"
         dst = folder_path / f"{new_name}.{photo.extension}"
-        self._rename_file(src, dst)
 
-        # Rename sidecars
-        self._rename_sidecars(photo, folder_path, old_name, new_name)
+        self._apply_file_op(src, dst, move=False)
+        self._handle_sidecars(
+            photo, folder_path, folder_path, old_name, new_name, move=False
+        )
 
-        # Update catalog
         conn.execute(
             "UPDATE AgLibraryFile SET baseName = ?, "
             "idx_filename = ? WHERE id_local = ?",
             (new_name, new_name, photo.file_id),
         )
 
-    def _move_file(self, src: Path, dst: Path) -> None:
-        """Move a file and record rollback action."""
+    def _apply_file_op(self, src: Path, dst: Path, move: bool) -> None:
+        """Move or rename a file and record the rollback action."""
         if not src.exists():
             raise ExecutionError(f"Source file not found: {src}")
-
         dst.parent.mkdir(parents=True, exist_ok=True)
-
         if dst.exists():
             raise ExecutionError(f"Destination already exists: {dst}")
+        op = shutil.move if move else os.rename
+        op(str(src), str(dst))
+        self._rollback_actions.append(partial(op, str(dst), str(src)))
 
-        shutil.move(str(src), str(dst))
-        self._rollback_actions.append(partial(shutil.move, str(dst), str(src)))
-
-    def _rename_file(self, src: Path, dst: Path) -> None:
-        """Rename a file and record rollback action."""
-        if not src.exists():
-            raise ExecutionError(f"Source file not found: {src}")
-
-        if dst.exists():
-            raise ExecutionError(f"Destination already exists: {dst}")
-
-        os.rename(src, dst)
-        self._rollback_actions.append(partial(os.rename, str(dst), str(src)))
-
-    def _move_sidecars(
+    def _handle_sidecars(
         self,
         photo: PhotoRecord,
         src_dir: Path,
         dst_dir: Path,
         old_base: str,
         new_base: str,
+        move: bool,
     ) -> None:
-        """Move sidecar files alongside the main file."""
+        """Move or rename sidecar files alongside the main file."""
+        op = shutil.move if move else os.rename
         for ext in parse_sidecar_extensions(photo.sidecar_extensions):
             src = src_dir / f"{old_base}.{ext}"
             dst = dst_dir / f"{new_base}.{ext}"
             if src.exists():
-                shutil.move(str(src), str(dst))
-                self._rollback_actions.append(partial(shutil.move, str(dst), str(src)))
-
-        # Also check for .xmp sidecar (may not be in sidecarExtensions)
+                op(str(src), str(dst))
+                self._rollback_actions.append(partial(op, str(dst), str(src)))
+        # XMP sidecar (may not be listed in sidecarExtensions)
         xmp_src = src_dir / f"{old_base}.xmp"
         xmp_dst = dst_dir / f"{new_base}.xmp"
         if xmp_src.exists() and not xmp_dst.exists():
-            shutil.move(str(xmp_src), str(xmp_dst))
-            self._rollback_actions.append(
-                partial(shutil.move, str(xmp_dst), str(xmp_src))
-            )
-
-    def _rename_sidecars(
-        self, photo: PhotoRecord, folder: Path, old_base: str, new_base: str
-    ) -> None:
-        """Rename sidecar files alongside the main file."""
-        for ext in parse_sidecar_extensions(photo.sidecar_extensions):
-            src = folder / f"{old_base}.{ext}"
-            dst = folder / f"{new_base}.{ext}"
-            if src.exists():
-                os.rename(src, dst)
-                self._rollback_actions.append(partial(os.rename, str(dst), str(src)))
-
-        # Also check for .xmp sidecar
-        xmp_src = folder / f"{old_base}.xmp"
-        xmp_dst = folder / f"{new_base}.xmp"
-        if xmp_src.exists() and not xmp_dst.exists():
-            os.rename(xmp_src, xmp_dst)
-            self._rollback_actions.append(
-                partial(os.rename, str(xmp_dst), str(xmp_src))
-            )
+            op(str(xmp_src), str(xmp_dst))
+            self._rollback_actions.append(partial(op, str(xmp_dst), str(xmp_src)))
 
     def _rollback_disk_changes(self) -> None:
         """Undo all disk changes in reverse order."""

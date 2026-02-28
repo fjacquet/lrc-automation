@@ -1,10 +1,12 @@
-.PHONY: install lint format typecheck test check docs docs-serve clean
+.PHONY: install lint format typecheck test check docs docs-serve clean all
+
+all: install check docs
 
 install:
 	uv sync
 
 lint:
-	uv run ruff check .
+	uv run ruff check . --fix
 
 format:
 	uv run ruff format .

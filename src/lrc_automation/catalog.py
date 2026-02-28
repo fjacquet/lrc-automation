@@ -77,6 +77,12 @@ class CatalogConnection:
         """
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         target_dir = backup_dir or self.catalog_path.parent
+
+        if not target_dir.exists():
+            raise CatalogError(f"Backup directory does not exist: {target_dir}")
+        if not target_dir.is_dir():
+            raise CatalogError(f"Backup path is not a directory: {target_dir}")
+
         backup_name = f"{self.catalog_path.stem}.lrcat.bak-{timestamp}"
         backup_path = target_dir / backup_name
 

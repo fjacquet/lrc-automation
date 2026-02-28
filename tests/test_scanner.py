@@ -32,7 +32,7 @@ class TestCatalogScanner:
         assert len(duplicates) == 1
         photo, cleaned = duplicates[0]
         assert photo.base_name == "29122012-29122012-IMG_20121229_131334"
-        assert cleaned == "29122012-IMG_131334"
+        assert cleaned == "121229-IMG_131334"
         conn.close()
 
     def test_correctly_placed_not_in_misplaced(self, tmp_catalog: Path) -> None:

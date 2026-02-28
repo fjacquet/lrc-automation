@@ -32,10 +32,11 @@ class LocationResolver:
 
     def __init__(self) -> None:
         self._rg: types.ModuleType | None = None
+        self._pc: types.ModuleType | None = None
         self._cache: dict[tuple[float, float], tuple[str, str]] = {}
 
     def _ensure_loaded(self) -> None:
-        """Lazy-load reverse_geocoder on first use."""
+        """Lazy-load reverse_geocoder and pycountry on first use."""
         if self._rg is None:
             try:
                 import reverse_geocoder  # type: ignore[import-untyped]
@@ -46,6 +47,24 @@ class LocationResolver:
                     "reverse_geocoder is required for --location-folders. "
                     "Install it with: pip install lrc-automation[geo]"
                 ) from e
+        if self._pc is None:
+            try:
+                import pycountry  # type: ignore[import-untyped,unused-ignore]
+
+                self._pc = pycountry
+            except ImportError:
+                pass  # pycountry is optional; fall back to ISO code
+
+    def _cc_to_name(self, cc: str) -> str:
+        """Convert ISO 3166-1 alpha-2 code to full country name.
+
+        Falls back to the raw code if pycountry is unavailable or the code is unknown.
+        """
+        if self._pc is not None:
+            country_obj = self._pc.countries.get(alpha_2=cc)
+            if country_obj is not None:
+                return str(country_obj.name)
+        return cc
 
     def resolve(self, lat: float, lon: float) -> tuple[str, str] | None:
         """Resolve a single coordinate to (country, city).
@@ -64,7 +83,7 @@ class LocationResolver:
             return None
 
         result = results[0]
-        country = _sanitize_folder_name(result.get("cc", ""))
+        country = _sanitize_folder_name(self._cc_to_name(result.get("cc", "")))
         city = _sanitize_folder_name(result.get("name", ""))
 
         if not country or not city:
@@ -104,7 +123,7 @@ class LocationResolver:
         rg_results: list[dict[str, str]] = self._rg.search(uncached)
 
         for coord, result in zip(uncached, rg_results, strict=True):
-            country = _sanitize_folder_name(result.get("cc", ""))
+            country = _sanitize_folder_name(self._cc_to_name(result.get("cc", "")))
             city = _sanitize_folder_name(result.get("name", ""))
 
             if country and city:

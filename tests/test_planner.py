@@ -30,7 +30,7 @@ class TestChangePlanner:
         # Verify the rename
         rename = plan.changes[0]
         assert rename.change_type == ChangeType.RENAME_FILE
-        assert rename.new_name == "29122012-IMG_131334"
+        assert rename.new_name == "121229-IMG_131334"
         conn.close()
 
     def test_build_plan_all(self, tmp_catalog: Path) -> None:

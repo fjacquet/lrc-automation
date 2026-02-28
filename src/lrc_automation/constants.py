@@ -67,6 +67,8 @@ FRENCH_MONTH_MAP: dict[str, int] = {
 # Duplicate date prefix patterns
 # Matches: DDMMYYYY-DDMMYYYY-rest (e.g. 29122012-29122012-IMG_20121229_131334)
 DUPLICATE_PREFIX_PATTERN = re.compile(r"^(\d{8})-\1-(.+)$")
+# Matches DDMMYYYY-prefixed filenames (8-digit date prefix)
+DDMMYYYY_PREFIX_PATTERN = re.compile(r"^(\d{2})(\d{2})(\d{4})-(.+)$")
 
 # IMG with embedded date: IMG_YYYYMMDD_NNNNNN
 IMG_DATE_PATTERN = re.compile(r"^IMG_(\d{8})_(\d+.*)$")
@@ -100,7 +102,8 @@ QUERY_ALL_PHOTOS = """
         f.sidecarExtensions,
         img.captureTime,
         fld.pathFromRoot,
-        rf.absolutePath
+        rf.absolutePath,
+        f.originalFilename
     FROM Adobe_images AS img
     JOIN AgLibraryFile AS f ON img.rootFile = f.id_local
     JOIN AgLibraryFolder AS fld ON f.folder = fld.id_local
@@ -122,7 +125,7 @@ QUERY_ALL_PHOTOS_WITH_GPS = """
         rf.absolutePath,
         exif.gpsLatitude,
         exif.gpsLongitude,
-        exif.hasGPS
+        f.originalFilename
     FROM Adobe_images AS img
     JOIN AgLibraryFile AS f ON img.rootFile = f.id_local
     JOIN AgLibraryFolder AS fld ON f.folder = fld.id_local

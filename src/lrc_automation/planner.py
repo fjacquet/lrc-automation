@@ -12,6 +12,19 @@ from .constants import (
 from .models import ChangePlan, ChangeType, FileChange
 from .scanner import CatalogScanner
 
+_MAX_COLLISION_TRIES = 9999
+
+
+def _resolve_in_plan(base_name: str, extension: str, taken: set[str]) -> str:
+    """Resolve a filename collision against already-planned renames (no DB needed)."""
+    if f"{base_name}.{extension}" not in taken:
+        return base_name
+    for i in range(1, _MAX_COLLISION_TRIES + 1):
+        candidate = f"{base_name}_{i}"
+        if f"{candidate}.{extension}" not in taken:
+            return candidate
+    raise RuntimeError(f"Cannot resolve in-plan collision for '{base_name}'")
+
 
 class ChangePlanner:
     """Builds a ChangePlan from scan results."""
@@ -61,6 +74,9 @@ class ChangePlanner:
             if coords:
                 location_map = resolver.resolve_batch(coords)
 
+        # Track basenames already planned for folders that don't exist yet
+        in_plan: dict[tuple[int, str], set[str]] = {}
+
         for photo in misplaced:
             # Determine target path with optional location subfolder
             country: str | None = None
@@ -94,12 +110,17 @@ class ChangePlanner:
                 # Need to create folder(s)
                 self._ensure_folder_chain(plan, photo.root_folder_id, target_path)
 
-            # Check for filename collision in target folder
-            new_basename = photo.base_name
+            # Check for filename collision
             if target_folder_id is not None:
+                # Folder exists in catalog — query the DB
                 new_basename = self._resolve_collision(
                     target_folder_id, photo.base_name, photo.extension
                 )
+            else:
+                # Folder to be created — resolve against other planned moves
+                taken = in_plan.setdefault(folder_key, set())
+                new_basename = _resolve_in_plan(photo.base_name, photo.extension, taken)
+                taken.add(f"{new_basename}.{photo.extension}")
 
             change = FileChange(
                 change_type=ChangeType.MOVE_PHOTO,
@@ -160,15 +181,18 @@ class ChangePlanner:
         if cursor.fetchone()[0] == 0:
             return base_name
 
-        counter = 1
-        while True:
+        for counter in range(1, _MAX_COLLISION_TRIES + 1):
             candidate = f"{base_name}_{counter}"
             cursor = self.conn.execute(
                 QUERY_FILE_EXISTS_IN_FOLDER, (folder_id, candidate, extension)
             )
             if cursor.fetchone()[0] == 0:
                 return candidate
-            counter += 1
+
+        raise RuntimeError(
+            f"Cannot resolve collision for '{base_name}.{extension}' "
+            f"after {_MAX_COLLISION_TRIES} tries"
+        )
 
     def _get_next_folder_id(self) -> int:
         """Get the next available folder id_local."""

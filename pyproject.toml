@@ -10,11 +10,12 @@ requires-python = ">=3.12"
 dependencies = [
     "click>=8.3.1",
     "python-dotenv>=1.2.1",
+    "reverse-geocoder>=1.5.1",
     "rich>=14.3.2",
 ]
 
 [project.optional-dependencies]
-geo = ["reverse_geocoder>=1.5.1"]
+geo = ["reverse_geocoder>=1.5.1", "pycountry>=24.6.1"]
 
 [project.scripts]
 lrc-auto = "lrc_automation.cli:main"
@@ -29,6 +30,7 @@ dev = [
     "mkdocs-material>=9.6",
     "mypy>=1.14",
     "pytest>=9.0.2",
+    "pycountry>=24.6.1",
     "reverse_geocoder>=1.5.1",
     "ruff>=0.15.1",
 ]

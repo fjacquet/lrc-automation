@@ -34,5 +34,6 @@ nav:
   - Home: index.md
   - Usage: usage.md
   - Architecture: architecture.md
+  - PRD: prd.md
   - ADR:
       - "001 - Catalog Automation": adr/001-lightroom-classic-catalog-automation.md

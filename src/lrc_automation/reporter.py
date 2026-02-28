@@ -31,9 +31,10 @@ class Reporter:
         self.console.print(f"Target layout: {target_layout}")
         if location_folders:
             self.console.print("Location folders: [green]enabled[/green]")
-            gps_count = sum(1 for p in misplaced if p.gps_latitude is not None)
-            self.console.print(f"Misplaced photos with GPS: [cyan]{gps_count}[/cyan]")
         self.console.print(f"Misplaced photos: [yellow]{len(misplaced)}[/yellow]")
+        gps_count = sum(1 for p in misplaced if p.gps_latitude is not None)
+        pct = f"{gps_count / len(misplaced) * 100:.0f}%" if misplaced else "n/a"
+        self.console.print(f"  with GPS: [cyan]{gps_count}[/cyan] ({pct})")
         self.console.print(f"Duplicate prefixes: [yellow]{len(duplicates)}[/yellow]")
 
         if misplaced:
@@ -85,23 +86,63 @@ class Reporter:
             table = Table(show_lines=False)
             table.add_column("#", style="dim", width=6)
             table.add_column("Current Name")
+            table.add_column("Original Name")
             table.add_column("Cleaned Name")
             table.add_column("Folder")
 
             for i, (photo, cleaned) in enumerate(duplicates[:50], 1):
+                orig = photo.original_filename or "-"
                 table.add_row(
                     str(i),
                     photo.base_name,
+                    orig,
                     cleaned,
                     photo.current_folder_path,
                 )
 
             self.console.print(table)
             if len(duplicates) > 50:
+                remaining = len(duplicates) - 50
                 self.console.print(
-                    f"  ... and {len(duplicates) - 50} more. "
-                    "Use --output to export all."
+                    f"  ... and {remaining} more. Use --output to export all."
                 )
+
+    def print_prefix_format_summary(
+        self,
+        conversions: list[tuple[PhotoRecord, str, tuple[str, str] | None]],
+    ) -> None:
+        """Print DDMMYYYY→YYMMDD prefix conversion proposals.
+
+        GPS-tagged photos appear first. Country/City is shown as the target
+        folder, not embedded in the filename.
+        """
+        if not conversions:
+            return
+
+        gps_count = sum(1 for _, _, loc in conversions if loc is not None)
+        self.console.print(
+            f"\n[bold]Prefix Format[/bold] (DDMMYYYY → YYMMDD): "
+            f"[yellow]{len(conversions)}[/yellow] files, "
+            f"[cyan]{gps_count}[/cyan] with GPS location"
+        )
+        table = Table(show_lines=False)
+        table.add_column("#", style="dim", width=6)
+        table.add_column("Current Name")
+        table.add_column("Proposed Name")
+        table.add_column("Target Folder")
+
+        for i, (photo, proposed, location) in enumerate(conversions[:50], 1):
+            if location:
+                folder = f"{photo.current_folder_path}{location[0]}/{location[1]}/"
+            else:
+                folder = photo.current_folder_path
+            table.add_row(str(i), photo.base_name, proposed, folder)
+
+        self.console.print(table)
+        if len(conversions) > 50:
+            self.console.print(
+                f"  ... and {len(conversions) - 50} more. Use --output to export all."
+            )
 
     def print_change_plan(self, plan: ChangePlan) -> None:
         """Print a change plan as a Rich table."""

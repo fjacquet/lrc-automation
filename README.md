@@ -152,6 +152,7 @@ The Lightroom Classic `.lrcat` catalog is a SQLite database. Key tables:
 Full file path = `AgLibraryRootFolder.absolutePath` + `AgLibraryFolder.pathFromRoot` + `AgLibraryFile.baseName` + `.` + `extension`
 
 **Moving a photo** only requires updating one column:
+
 ```sql
 UPDATE AgLibraryFile SET folder = :new_folder_id WHERE id_local = :file_id;
 ```
@@ -175,6 +176,7 @@ uv run ruff format .
 ## Catalog Stats (reference)
 
 Tested against a real catalog with:
+
 - 92,717 photos across 4,180 folders and 42 root folders
 - Schema version 1400000 (Lightroom Classic v14)
 - File types: JPG (64k), DNG (11k), CR2 (7k), MOV (2.8k), RAF (1.9k), and more

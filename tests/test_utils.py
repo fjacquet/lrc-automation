@@ -6,6 +6,7 @@ from lrc_automation.constants import layout_to_regex
 from lrc_automation.models import PhotoRecord
 from lrc_automation.utils import (
     clean_duplicate_prefix,
+    convert_prefix_format,
     extract_date_from_path,
     extract_yyyy_mm,
     parse_capture_time,
@@ -67,7 +68,7 @@ class TestExtractYyyyMm:
 class TestCleanDuplicatePrefix:
     def test_basic_duplicate(self) -> None:
         result = clean_duplicate_prefix("29122012-29122012-IMG_20121229_131334")
-        assert result == "29122012-IMG_131334"
+        assert result == "121229-IMG_131334"
 
     def test_no_duplicate(self) -> None:
         result = clean_duplicate_prefix("IMG_20121229_131334")
@@ -78,8 +79,73 @@ class TestCleanDuplicatePrefix:
         assert result is None
 
     def test_duplicate_without_img_date(self) -> None:
+        result = clean_duplicate_prefix("15062018-15062018-PHOTO_001")
+        assert result == "180615-PHOTO_001"
+
+    def test_iso_date_in_rest_stripped(self) -> None:
+        # "16062012-16062012-2012-06-16" -> "120616"
+        result = clean_duplicate_prefix("16062012-16062012-2012-06-16")
+        assert result == "120616"
+
+    def test_iso_date_in_rest_with_suffix_stripped(self) -> None:
+        # "16062012-16062012-2012-06-16-party" -> "120616-party"
+        result = clean_duplicate_prefix("16062012-16062012-2012-06-16-party")
+        assert result == "120616-party"
+
+    def test_iso_date_in_rest_different_date_uses_iso(self) -> None:
+        # ISO date differs from prefix → ISO date wins (EXIF-authoritative)
+        result = clean_duplicate_prefix("16062012-16062012-2012-07-04-event")
+        assert result == "120704-event"
+
+    def test_bogus_1904_prefix_skipped(self) -> None:
+        """Files with LR's bogus 1904 epoch date in the prefix should be ignored."""
+        result = clean_duplicate_prefix(
+            "01011904-01011904-965b8d5b-1824-4684-a995-0a7c175c34b6"
+        )
+        assert result is None
+
+    def test_invalid_month_in_prefix_skipped(self) -> None:
+        """Prefix with invalid month (e.g. 34) should be ignored."""
         result = clean_duplicate_prefix("12345678-12345678-PHOTO_001")
-        assert result == "12345678-PHOTO_001"
+        assert result is None
+
+
+class TestConvertPrefixFormat:
+    def test_basic_conversion(self) -> None:
+        assert convert_prefix_format("02052002-volcan") == "020502-volcan"
+
+    def test_recent_date(self) -> None:
+        assert convert_prefix_format("05012026-IMG_6215") == "260105-IMG_6215"
+
+    def test_no_prefix(self) -> None:
+        assert convert_prefix_format("IMG_6215") is None
+
+    def test_already_yymmdd(self) -> None:
+        # 6-digit prefix doesn't match the 8-digit DDMMYYYY pattern
+        assert convert_prefix_format("020502-volcan") is None
+
+    def test_bogus_1904_skipped(self) -> None:
+        assert convert_prefix_format("01011904-photo") is None
+
+    def test_invalid_month_skipped(self) -> None:
+        assert convert_prefix_format("01132026-photo") is None
+
+    def test_preserves_rest_of_name(self) -> None:
+        result = convert_prefix_format("15062018-holiday-beach-fun")
+        assert result == "180615-holiday-beach-fun"
+
+    def test_iso_date_in_rest_stripped(self) -> None:
+        # ISO date matches prefix date → strip it entirely
+        assert convert_prefix_format("16062012-2012-06-16") == "120616"
+
+    def test_iso_date_in_rest_with_suffix_stripped(self) -> None:
+        # ISO date matches, suffix kept
+        result = convert_prefix_format("16062012-2012-06-16 10.51.50 HDR")
+        assert result == "120616-10.51.50 HDR"
+
+    def test_iso_date_in_rest_different_date_uses_iso(self) -> None:
+        # ISO date differs from prefix → ISO date wins (EXIF-authoritative)
+        assert convert_prefix_format("16062012-2012-07-04-event") == "120704-event"
 
 
 class TestLayoutToRegex:

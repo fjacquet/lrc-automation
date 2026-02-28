@@ -39,6 +39,7 @@ class PhotoRecord:
     root_absolute_path: str
     gps_latitude: float | None = None
     gps_longitude: float | None = None
+    original_filename: str | None = None
 
     @property
     def full_path(self) -> Path:

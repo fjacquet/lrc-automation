@@ -49,7 +49,7 @@ class TestChangeExecutor:
             assert len(report.failed) == 0
 
             # Verify file was renamed on disk
-            assert (root_dir / "2023/07/29122012-IMG_131334.JPG").exists()
+            assert (root_dir / "2023/07/121229-IMG_131334.JPG").exists()
             assert not (
                 root_dir / "2023/07/29122012-29122012-IMG_20121229_131334.JPG"
             ).exists()
@@ -73,7 +73,7 @@ class TestChangeExecutor:
                 "SELECT baseName FROM AgLibraryFile WHERE id_local = 3"
             )
             row = cursor.fetchone()
-            assert row[0] == "29122012-IMG_131334"
+            assert row[0] == "121229-IMG_131334"
 
     def test_rollback_on_error(self, tmp_catalog_with_files: tuple[Path, Path]) -> None:
         """Test that disk changes are rolled back on SQL error."""
