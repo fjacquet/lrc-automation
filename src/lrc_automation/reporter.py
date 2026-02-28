@@ -189,7 +189,15 @@ class Reporter:
     def print_execution_report(self, report: ExecutionReport) -> None:
         """Print execution results."""
         self.console.print("\n[bold]Execution Report[/bold]")
-        self.console.print(f"Succeeded: [green]{len(report.succeeded)}[/green]")
+
+        if report.rolled_back:
+            self.console.print(
+                "[bold red]ROLLED BACK[/bold red] — error occurred; "
+                "all disk and catalog changes have been reversed."
+            )
+        else:
+            self.console.print(f"Succeeded: [green]{len(report.succeeded)}[/green]")
+
         self.console.print(f"Failed: [red]{len(report.failed)}[/red]")
 
         if report.failed:

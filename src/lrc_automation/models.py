@@ -117,12 +117,18 @@ class ChangePlan:
 class ExecutionReport:
     succeeded: list[FileChange] = field(default_factory=list)
     failed: list[tuple[FileChange, str]] = field(default_factory=list)
+    rolled_back: bool = False
 
     def record_success(self, change: FileChange) -> None:
         self.succeeded.append(change)
 
     def record_error(self, change: FileChange, error: str) -> None:
         self.failed.append((change, error))
+
+    def mark_rolled_back(self) -> None:
+        """Called when a failure triggered a full rollback of all changes."""
+        self.rolled_back = True
+        self.succeeded.clear()
 
     @property
     def total(self) -> int:

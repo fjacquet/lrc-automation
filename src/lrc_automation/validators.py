@@ -3,7 +3,7 @@
 import sqlite3
 from pathlib import Path
 
-from .models import ChangePlan, ChangeType
+from .models import ChangeType, FileChange
 
 
 class CatalogValidator:
@@ -48,14 +48,13 @@ class CatalogValidator:
 
         return warnings
 
-    def postflight_check(self, plan: ChangePlan) -> list[str]:
-        """Run after changes. Verify moved/renamed files exist on disk."""
+    def postflight_check(self, succeeded: list["FileChange"]) -> list[str]:
+        """Run after changes. Verify committed moves/renames exist on disk."""
         warnings: list[str] = []
 
-        # Verify all moved files exist at new locations
-        for change in plan.changes:
+        # Verify all committed changes exist at new locations
+        for change in succeeded:
             if change.change_type == ChangeType.MOVE_PHOTO:
-                # Build expected new path
                 base = change.new_name or change.photo.base_name
                 new_path = (
                     Path(change.photo.root_absolute_path)

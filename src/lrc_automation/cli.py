@@ -292,8 +292,10 @@ def apply(
             executor = ChangeExecutor(cat, change_plan)
             report = executor.execute()
 
-            # Post-flight validation
-            post_warnings = validator.postflight_check(change_plan)
+            # Post-flight validation (skip disk checks if rolled back)
+            post_warnings = validator.postflight_check(
+                [] if report.rolled_back else report.succeeded
+            )
             for warning in post_warnings:
                 console.print(f"[yellow]Warning:[/yellow] {warning}")
 

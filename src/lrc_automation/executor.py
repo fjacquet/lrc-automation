@@ -17,6 +17,10 @@ class ExecutionError(Exception):
     """Error during plan execution."""
 
 
+class SkippableError(ExecutionError):
+    """Pre-disk-op validation failure — nothing was touched, safe to skip."""
+
+
 class ChangeExecutor:
     """Executes a ChangePlan: moves files on disk and updates SQLite catalog."""
 
@@ -52,11 +56,15 @@ class ChangeExecutor:
                     elif change.change_type == ChangeType.RENAME_FILE:
                         self._execute_rename(conn, change)
                     report.record_success(change)
-                except Exception as e:
+                except SkippableError as e:
+                    # Pre-disk-op failure: nothing was touched, safe to skip
                     report.record_error(change, str(e))
-                    # Rollback everything on first error
+                except Exception as e:
+                    # Mid-operation failure: disk partially modified, rollback all
+                    report.record_error(change, str(e))
                     conn.rollback()
                     self._rollback_disk_changes()
+                    report.mark_rolled_back()
                     return report
 
             conn.commit()
@@ -190,10 +198,10 @@ class ChangeExecutor:
     def _apply_file_op(self, src: Path, dst: Path, move: bool) -> None:
         """Move or rename a file and record the rollback action."""
         if not src.exists():
-            raise ExecutionError(f"Source file not found: {src}")
+            raise SkippableError(f"Source file not found: {src}")
         dst.parent.mkdir(parents=True, exist_ok=True)
         if dst.exists():
-            raise ExecutionError(f"Destination already exists: {dst}")
+            raise SkippableError(f"Destination already exists: {dst}")
         op = shutil.move if move else os.rename
         op(str(src), str(dst))
         self._rollback_actions.append(partial(op, str(dst), str(src)))
