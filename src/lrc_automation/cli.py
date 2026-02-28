@@ -390,6 +390,7 @@ def validate(ctx: click.Context) -> None:
 
             console.print("[bold]Running catalog integrity checks...[/bold]")
             warnings = validator.preflight_check()
+            warnings += validator.check_year_in_year()
 
             if warnings:
                 for w in warnings:

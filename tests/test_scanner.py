@@ -218,6 +218,26 @@ class TestScanNeedsLocationFolder:
         assert scanner.scan_needs_location_folder() == []
         conn.close()
 
+    def test_returns_gps_photos_in_iso_date_folder(
+        self, diverse_folder_catalog: Path
+    ) -> None:
+        """GPS photo in an ISO date folder (2023-12-24/) is also a candidate."""
+        import sqlite3
+
+        conn = sqlite3.connect(str(diverse_folder_catalog))
+        conn.row_factory = sqlite3.Row
+        # Add GPS data for photo 10 (ISO date folder, capture 2023-12)
+        conn.execute(
+            "INSERT INTO AgHarvestedExifMetadata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (10, 10, "2023-12-15T10:00:00", None, None, None, 48.8566, 2.3522, 1),
+        )
+        conn.commit()
+        scanner = CatalogScanner(conn, location_folders=True)
+        candidates = scanner.scan_needs_location_folder()
+        file_ids = [p.file_id for p in candidates]
+        assert 10 in file_ids
+        conn.close()
+
 
 class TestScanYearInYear:
     """Tests for CatalogScanner.scan_year_in_year_photos()."""
