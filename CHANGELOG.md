@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-02-28
+
 ### Added
 - **Cross-root migration** (`--fix root-migrations`): detect and fix 406 "year-in-year"
   photos (e.g. root=2013, pathFromRoot=2012/08/) that live in the wrong year root.
