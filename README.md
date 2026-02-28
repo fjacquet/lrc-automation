@@ -16,10 +16,12 @@ See [ADR-001](docs/adr/001-lightroom-classic-catalog-automation.md) for the full
 
 ## Features
 
-- **Scan** (read-only): Identify misplaced photos and files with duplicate date prefixes
-- **Plan** (read-only): Generate a change plan, exportable to JSON or CSV for review
-- **Apply** (write): Move files on disk and update the catalog, with mandatory backup and rollback on error
-- **Validate**: Run integrity checks on the catalog
+- **Scan** (read-only): Identify misplaced photos, duplicate date prefixes, DDMMYYYY filename prefixes, and year-in-year folder anomalies
+- **Plan** (read-only): Generate a change plan for moves, renames, or cross-root migrations; exportable to JSON or CSV
+- **Apply** (write): Move and rename files on disk and update the catalog, with mandatory backup and rollback on error
+- **Validate**: Run integrity checks, full disk audit (missing vs. found-elsewhere), exportable to JSON or CSV
+- **Reconcile** (write): Fix catalog folder pointers for files found at a different path than recorded
+- **Cleanup** (write): Remove empty directories and macOS AppleDouble (`._*`) files left by previous operations
 - **Restore**: Restore catalog from a backup
 
 ## Supported Folder Structures
@@ -84,6 +86,9 @@ lrc-auto -c "/path/to/catalog.lrcat" plan
 lrc-auto -c "/path/to/catalog.lrcat" plan --fix moves
 lrc-auto -c "/path/to/catalog.lrcat" plan --fix renames
 
+# Preview cross-root year-in-year migrations (opt-in, not included in --fix all)
+lrc-auto -c "/path/to/catalog.lrcat" plan --fix root-migrations
+
 # Export plan for review
 lrc-auto -c "/path/to/catalog.lrcat" plan -o plan.json
 ```
@@ -91,20 +96,45 @@ lrc-auto -c "/path/to/catalog.lrcat" plan -o plan.json
 ### Apply (modifies catalog + disk)
 
 ```bash
-# Apply all fixes (prompts for confirmation, creates backup)
+# Apply all fixes (moves + renames; creates backup)
 lrc-auto -c "/path/to/catalog.lrcat" apply
 
-# Apply only moves
+# Apply only moves or only renames
 lrc-auto -c "/path/to/catalog.lrcat" apply --fix moves
+lrc-auto -c "/path/to/catalog.lrcat" apply --fix renames
+
+# Apply cross-root year-in-year migrations (explicit opt-in required)
+lrc-auto -c "/path/to/catalog.lrcat" apply --fix root-migrations
 
 # Skip confirmation prompt
 lrc-auto -c "/path/to/catalog.lrcat" apply -y
 ```
 
-### Validate
+### Validate + Audit
 
 ```bash
+# Integrity check + full disk audit
 lrc-auto -c "/path/to/catalog.lrcat" validate
+
+# Export audit results
+lrc-auto -c "/path/to/catalog.lrcat" validate --output audit.json
+```
+
+### Reconcile
+
+Fix catalog folder pointers for files found at a different path than recorded
+(e.g. after the year-doubling bug or a manual file move outside Lightroom):
+
+```bash
+lrc-auto -c "/path/to/catalog.lrcat" reconcile
+```
+
+### Cleanup
+
+Remove empty directories and macOS AppleDouble (`._*`) files left by previous operations:
+
+```bash
+lrc-auto -c "/path/to/catalog.lrcat" cleanup
 ```
 
 ### Restore from Backup

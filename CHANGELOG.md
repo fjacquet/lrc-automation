@@ -6,6 +6,41 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+- **Cross-root migration** (`--fix root-migrations`): detect and fix 406 "year-in-year"
+  photos (e.g. root=2013, pathFromRoot=2012/08/) that live in the wrong year root.
+  Strips the spurious leading year from `pathFromRoot` and moves the file to the correct
+  year root (cross-root) or corrects the folder path within the same root (intra-root).
+  Disabled by default; not triggered by `--fix all`. (ADR-006)
+- `FileChange` gains two optional fields: `target_root_id` and
+  `target_root_absolute_path` for cross-root move support
+- `ChangePlanner._find_root_for_year()` static helper: finds the catalog root whose
+  `absolutePath` ends with a given year
+- `ChangePlanner._plan_root_migrations()`: builds cross-root and intra-root fixes
+- `Reporter.print_root_migration_summary()`: prints cross-root vs intra-root split table
+- **DDMMYYYY → YYMMDD prefix renames** wired into `apply --fix renames` and `--fix all`.
+  Previously detected by `scan` and `plan` but never applied.
+- `cleanup` command: removes empty directories and AppleDouble (`._*`) files left behind
+  by previous operations
+- `reconcile` command: fixes `AgLibraryFile.folder` pointers for files found at a
+  different path than the catalog records (repairs damage from year-doubling bug). (ADR-005)
+- `validate --output`: export audit results to JSON or CSV
+- `--log-file` option on the top-level group: write DEBUG-level logs to file while
+  keeping terminal output at WARNING level
+- Full disk audit (`validate`): `audit_files_on_disk()` finds truly-missing vs
+  found-elsewhere files using one rglob per unique root. (ADR-004)
+- 12 new tests for cross-root migration (models, planner, executor)
+
+### Fixed
+- `Reporter.print_prefix_format_summary()`: target folder no longer doubles CC/City
+  segments (e.g. `CH/Aubonne/CH/Aubonne/`) — now uses `get_expected_folder_path_with_location()`
+- `executor._execute_move()`: uses `target_root_absolute_path` when set, so cross-root
+  moves write to the correct directory instead of the source root
+- `validators.postflight_check()`: verifies file existence in the correct destination root
+- Per-year-root year-doubling bug in `_plan_location_moves()`: a previous bad run could
+  leave `pathFromRoot` starting with the year (e.g. `2025/12/CH/…`); the planner now
+  strips the doubled year before computing the target path
+
 ## [0.4.0] - 2026-02-17
 
 ### Added
