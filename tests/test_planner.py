@@ -625,9 +625,7 @@ class TestPlanRootMigrations:
         assert (1, "08/") in plan.folders_to_create
         conn.close()
 
-    def test_intra_root_change_has_no_target_root_fields(
-        self, tmp_path: Path
-    ) -> None:
+    def test_intra_root_change_has_no_target_root_fields(self, tmp_path: Path) -> None:
         """Intra-root fix: capture_year == root_year → target_root_id=None."""
         from tests.conftest import create_test_catalog
 
@@ -652,7 +650,18 @@ class TestPlanRootMigrations:
                 ),
             ],
             "images": [
-                (1, "IMG-UUID-1", "2013-07-10T10:00:00", 1, "JPG", 0, 3, "AB", None, None),  # noqa: E501
+                (
+                    1,
+                    "IMG-UUID-1",
+                    "2013-07-10T10:00:00",
+                    1,
+                    "JPG",
+                    0,
+                    3,
+                    "AB",
+                    None,
+                    None,
+                ),  # noqa: E501
             ],
         }
         db_path = tmp_path / "test_intra.lrcat"
@@ -702,8 +711,7 @@ class TestPlanRootMigrations:
         cross_root_changes = [
             c
             for c in plan.changes
-            if c.change_type == ChangeType.MOVE_PHOTO
-            and c.target_root_id is not None
+            if c.change_type == ChangeType.MOVE_PHOTO and c.target_root_id is not None
         ]
         assert len(cross_root_changes) == 0
         conn.close()

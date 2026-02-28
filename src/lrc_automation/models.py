@@ -97,13 +97,9 @@ class PhotoRecord:
             return base
 
         if location_order == LocationOrder.CC_CITY_MONTH:
-            return (
-                f"{self.capture_time:%Y}/{country}/{city}/{self.capture_time:%m}/"
-            )
+            return f"{self.capture_time:%Y}/{country}/{city}/{self.capture_time:%m}/"
         if location_order == LocationOrder.CC_MONTH_CITY:
-            return (
-                f"{self.capture_time:%Y}/{country}/{self.capture_time:%m}/{city}/"
-            )
+            return f"{self.capture_time:%Y}/{country}/{self.capture_time:%m}/{city}/"
         # Default: MONTH_CC_CITY
         return f"{base}{country}/{city}/"
 

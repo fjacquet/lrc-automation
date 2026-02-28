@@ -422,12 +422,8 @@ class Reporter:
         intra = [c for c in moves if c.target_root_id is None]
 
         self.console.print("\n[bold]Root Migration Plan[/bold]")
-        self.console.print(
-            f"  Cross-root moves : [yellow]{len(cross)}[/yellow]"
-        )
-        self.console.print(
-            f"  Intra-root fixes : [cyan]{len(intra)}[/cyan]"
-        )
+        self.console.print(f"  Cross-root moves : [yellow]{len(cross)}[/yellow]")
+        self.console.print(f"  Intra-root fixes : [cyan]{len(intra)}[/cyan]")
 
         if cross:
             table = Table(show_lines=False)

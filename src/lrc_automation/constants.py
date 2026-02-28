@@ -11,6 +11,7 @@ class LocationOrder(StrEnum):
     CC_CITY_MONTH = "cc_city_month"  # YYYY/CC/City/MM
     CC_MONTH_CITY = "cc_month_city"  # YYYY/CC/MM/City
 
+
 # Default target layout (strftime format)
 DEFAULT_TARGET_LAYOUT = "%Y/%m/"
 

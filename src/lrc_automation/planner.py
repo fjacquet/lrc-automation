@@ -133,9 +133,7 @@ class ChangePlanner:
             planned_ids.add(photo.file_id)
 
     @staticmethod
-    def _find_root_for_year(
-        year: int, roots: list[RootFolder]
-    ) -> RootFolder | None:
+    def _find_root_for_year(year: int, roots: list[RootFolder]) -> RootFolder | None:
         """Return the RootFolder whose absolutePath ends with the given year."""
         year_str = str(year)
         for root in roots:
@@ -193,9 +191,7 @@ class ChangePlanner:
                 )
             else:
                 taken = in_plan.setdefault(folder_key, set())
-                new_basename = _resolve_in_plan(
-                    photo.base_name, photo.extension, taken
-                )
+                new_basename = _resolve_in_plan(photo.base_name, photo.extension, taken)
                 taken.add(f"{new_basename}.{photo.extension}")
 
             change = FileChange(

@@ -78,8 +78,7 @@ class CatalogValidator:
             if change.change_type == ChangeType.MOVE_PHOTO:
                 base = change.new_name or change.photo.base_name
                 dest_root = (
-                    change.target_root_absolute_path
-                    or change.photo.root_absolute_path
+                    change.target_root_absolute_path or change.photo.root_absolute_path
                 )
                 new_path = (
                     Path(dest_root)
