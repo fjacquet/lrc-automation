@@ -186,16 +186,17 @@ class TestScanNeedsLocationFolder:
         assert 1 in file_ids
         conn.close()
 
-    def test_skips_photos_already_in_location_subfolder(
+    def test_includes_photos_already_in_location_subfolder(
         self, tmp_catalog_needs_location: Path
     ) -> None:
-        """GPS photo already in 2023/06/FR/Paris/ is NOT a candidate."""
+        """GPS photo in FR/Paris/ is returned — planner skips if target matches."""
         conn = sqlite3.connect(str(tmp_catalog_needs_location))
         conn.row_factory = sqlite3.Row
         scanner = CatalogScanner(conn, location_folders=True)
         candidates = scanner.scan_needs_location_folder()
         file_ids = [p.file_id for p in candidates]
-        assert 2 not in file_ids
+        # file 2 is in FR/Paris/ — scanner returns it; planner skips if target==current
+        assert 2 in file_ids
         conn.close()
 
     def test_skips_photos_without_gps(self, tmp_catalog_needs_location: Path) -> None:

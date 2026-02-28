@@ -201,15 +201,15 @@ class CatalogScanner:
         return int(row[0]) if row else 0
 
     def scan_needs_location_folder(self) -> list[PhotoRecord]:
-        """Return GPS photos in a date-recognized folder but missing a location folder.
+        """Return GPS photos in a date-recognized folder needing a location folder.
 
-        Returns photos where:
-        - GPS coordinates are present
-        - The current folder contains a recognisable date matching capture time
-        - The folder is NOT already in the target Country/City subfolder format
+        Returns every GPS photo whose current folder contains a date matching its
+        capture time, regardless of whether it already has a location subfolder.
+        The planner resolves GPS and skips photos whose computed target path
+        already equals the current path (i.e. already in the correct CC/City folder).
 
-        Photos in non-standard date folders (ISO, French) are included — they will
-        be moved to YYYY/MM/CC/City/ by the planner.
+        This means photos in wrong-format location folders (e.g. "Switzerland/Saillon/"
+        instead of "CH/Saillon/") are returned so the planner can re-move them.
         Only meaningful when location_folders=True.
         """
         if not self.location_folders:
@@ -227,18 +227,6 @@ class CatalogScanner:
             if actual_ym is None or actual_ym != expected_ym:
                 # No recognised date, or date mismatch — handled by scan_misplaced
                 continue
-
-            # Check if already in a location subfolder.
-            # A photo is considered "located" if its path starts with YYYY/MM/
-            # and has additional components (e.g. "2025/06/FR/Paris/").
-            expected_date = photo.get_expected_folder_path(self.target_layout)
-            if expected_date is not None and photo.current_folder_path.startswith(
-                expected_date
-            ):
-                remainder = photo.current_folder_path[len(expected_date) :]
-                if remainder.strip("/"):
-                    continue  # already has country/city suffix
-
             result.append(photo)
         return result
 

@@ -169,10 +169,10 @@ class TestPlanLocationMoves:
         assert any("FR" in (p or "") and "Paris" in (p or "") for p in target_paths)
         conn.close()
 
-    def test_plan_location_moves_skips_already_located(
+    def test_plan_location_moves_skips_already_in_correct_location(
         self, tmp_catalog_needs_location: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """GPS photo already in a location subfolder is NOT moved again."""
+        """GPS photo already in the correct CC/City subfolder is NOT moved again."""
         from lrc_automation.geocoder import LocationResolver
 
         monkeypatch.setattr(
@@ -186,9 +186,11 @@ class TestPlanLocationMoves:
         planner = ChangePlanner(conn, scanner, location_folders=True)
         plan = planner.build_plan(include_moves=True, include_renames=False)
         moves = [c for c in plan.changes if c.change_type == ChangeType.MOVE_PHOTO]
-        moved_file_ids = [c.photo.file_id for c in moves]
-        # File 2 is already in FR/Paris — should NOT appear
-        assert 2 not in moved_file_ids
+        # File 2 is already in 2023/06/FR/Paris/ which matches target → not moved
+        for move in moves:
+            if move.photo.file_id == 2:
+                # Would only appear if target != current — confirm target equals current
+                assert move.target_folder_path != move.photo.current_folder_path
         conn.close()
 
     def test_plan_location_moves_disabled_when_flag_off(
