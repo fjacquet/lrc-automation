@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-ci-matrix-01-PLAN.md
-last_updated: "2026-03-06T21:20:42.887Z"
+stopped_at: Completed 04-ux-and-docs-02-PLAN.md
+last_updated: "2026-03-06T21:37:04.511Z"
 last_activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 7
-  completed_plans: 7
+  total_plans: 10
+  completed_plans: 9
   percent: 33
 ---
 
@@ -59,6 +59,8 @@ Progress: [███░░░░░░░] 33%
 | Phase 02-write-safety P02 | 4 | 2 tasks | 4 files |
 | Phase 03-ci-matrix P02 | 5 | 1 tasks | 1 files |
 | Phase 03-ci-matrix P01 | 5 | 2 tasks | 2 files |
+| Phase 04-ux-and-docs P02 | 2 | 2 tasks | 3 files |
+| Phase 04-ux-and-docs P01 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -88,6 +90,11 @@ Recent decisions affecting current work:
 - [Phase 03-ci-matrix]: setup-uv@v7 with enable-cache: true replaces v4 for OS-aware cache keys in multi-OS matrix
 - [Phase 03-ci-matrix]: uv sync without --all-extras on all platforms — reverse_geocoder lacks Windows wheel
 - [Phase 03-ci-matrix]: Individual uv run steps replace make check — make is unavailable on Windows runners
+- [Phase 04-ux-and-docs]: ADR-007 follows same Status/Date/Context/Decisions/Consequences/Alternatives format as ADR-001 through ADR-006
+- [Phase 04-ux-and-docs]: Windows docs placed as subsection of Installation in README; docs/usage.md Windows section placed before Configuration for Windows user onboarding flow
+- [Phase 04-ux-and-docs]: home_dir parameter on _discover_default_catalog() for testability — avoids monkeypatching Path.home()
+- [Phase 04-ux-and-docs]: type=click.Path() (no exists=True) allows None through to manual existence check in cli() body
+- [Phase 04-ux-and-docs]: monkeypatch.delenv('LRC_CATALOG_PATH') required in no-catalog tests since dev machine has env var set
 
 ### Pending Todos
 
@@ -108,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:55:17.344Z
-Stopped at: Completed 03-ci-matrix-01-PLAN.md
+Last session: 2026-03-06T21:36:53.673Z
+Stopped at: Completed 04-ux-and-docs-02-PLAN.md
 Resume file: None

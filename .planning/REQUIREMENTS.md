@@ -30,9 +30,9 @@ Requirements for the multiplatform milestone (Mac + Windows support).
 ### UX — User Experience & Docs
 
 - [ ] **UX-01**: `--catalog` flag is optional; tool auto-discovers the default catalog path for the current OS (macOS: `~/Pictures/Lightroom/`, Windows: `%USERPROFILE%\Pictures\Lightroom\`)
-- [ ] **UX-02**: README and `docs/usage.md` include a Windows installation and first-run section
+- [x] **UX-02**: README and `docs/usage.md` include a Windows installation and first-run section
 - [x] **UX-03**: `reverse_geocoder` is moved back to optional `[geo]` extra dependency (fixes pre-existing packaging regression from v0.5.0)
-- [ ] **UX-04**: ADR written documenting the multiplatform approach and decisions (process detection, path normalisation, SBOM)
+- [x] **UX-04**: ADR written documenting the multiplatform approach and decisions (process detection, path normalisation, SBOM)
 - [ ] **UX-05**: `docs/prd.md` updated to reflect multiplatform scope (Mac + Windows target platforms)
 - [ ] **UX-06**: `CHANGELOG.md` updated for v0.6.0 with all changes documented
 
@@ -71,8 +71,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CI-03 | Phase 3 | Complete |
 | CI-04 | Phase 3 | Complete |
 | UX-01 | Phase 4 | Pending |
-| UX-02 | Phase 4 | Pending |
-| UX-04 | Phase 4 | Pending |
+| UX-02 | Phase 4 | Complete |
+| UX-04 | Phase 4 | Complete |
 | UX-05 | Phase 4 | Pending |
 | UX-06 | Phase 4 | Pending |
 
