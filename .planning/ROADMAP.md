@@ -55,7 +55,12 @@ Plans:
   2. After `lrc-auto apply` moves photos on Windows, Lightroom can locate all moved folders without showing them as missing — confirming `pathFromRoot` was written with forward slashes.
   3. Running `lrc-auto cleanup` on Windows produces no errors and no spurious log entries related to AppleDouble (`._*`) file removal; the command silently skips that step.
   4. A file move that encounters a transient `PermissionError` (antivirus scan lock) is retried automatically and either succeeds or fails with a clear error message — no partial moves left on disk.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+
+- [ ] 02-01-PLAN.md — Replace pgrep with psutil cross-platform process detection in catalog.py (PROC-01)
+- [ ] 02-02-PLAN.md — Fix as_posix SQL writes, darwin guard for AppleDouble cleanup, and PermissionError retry loop (PROC-02, PROC-03, PROC-04)
 
 ### Phase 3: CI Matrix
 
@@ -92,6 +97,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Path Safety | 3/3 | Complete   | 2026-03-06 |
-| 2. Write Safety | 0/TBD | Not started | - |
+| 2. Write Safety | 0/2 | Not started | - |
 | 3. CI Matrix | 0/TBD | Not started | - |
 | 4. UX and Docs | 0/TBD | Not started | - |
