@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: milestone
 status: planning
-stopped_at: Completed 03-ci-matrix-02-PLAN.md
-last_updated: "2026-03-06T20:54:35.853Z"
+stopped_at: Completed 03-ci-matrix-01-PLAN.md
+last_updated: "2026-03-06T20:55:17.347Z"
 last_activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
 progress:
   total_phases: 4
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 7
-  completed_plans: 6
+  completed_plans: 7
   percent: 33
 ---
 
@@ -58,6 +58,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 02-write-safety P01 | 3 | 2 tasks | 5 files |
 | Phase 02-write-safety P02 | 4 | 2 tasks | 4 files |
 | Phase 03-ci-matrix P02 | 5 | 1 tasks | 1 files |
+| Phase 03-ci-matrix P01 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,10 @@ Recent decisions affecting current work:
 - [Phase 03-ci-matrix]: anchore/sbom-action@v0 chosen over actions/attest-sbom: produces downloadable release artifact visible on releases page
 - [Phase 03-ci-matrix]: setup-uv bumped to v7 with enable-cache: true in release.yml for consistency with ci.yml
 - [Phase 03-ci-matrix]: make check replaced by individual uv run commands in release.yml for explicit CI step visibility
+- [Phase 03-ci-matrix]: gitattributes eol=lf prevents CRLF failures on Windows runners
+- [Phase 03-ci-matrix]: setup-uv@v7 with enable-cache: true replaces v4 for OS-aware cache keys in multi-OS matrix
+- [Phase 03-ci-matrix]: uv sync without --all-extras on all platforms — reverse_geocoder lacks Windows wheel
+- [Phase 03-ci-matrix]: Individual uv run steps replace make check — make is unavailable on Windows runners
 
 ### Pending Todos
 
@@ -103,6 +108,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:54:35.850Z
-Stopped at: Completed 03-ci-matrix-02-PLAN.md
+Last session: 2026-03-06T20:55:17.344Z
+Stopped at: Completed 03-ci-matrix-01-PLAN.md
 Resume file: None

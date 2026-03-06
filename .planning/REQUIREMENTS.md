@@ -22,9 +22,9 @@ Requirements for the multiplatform milestone (Mac + Windows support).
 
 ### CI — CI & Dev Tooling
 
-- [ ] **CI-01**: GitHub Actions CI runs and passes on `windows-latest` runner using `uv run` commands (no dependency on `make`)
-- [ ] **CI-02**: Repository has `.gitattributes` enforcing LF line endings so `ruff format --check` passes on Windows CI checkout
-- [ ] **CI-03**: CI workflow uses `setup-uv@v7` (current stable, up from v4)
+- [x] **CI-01**: GitHub Actions CI runs and passes on `windows-latest` runner using `uv run` commands (no dependency on `make`)
+- [x] **CI-02**: Repository has `.gitattributes` enforcing LF line endings so `ruff format --check` passes on Windows CI checkout
+- [x] **CI-03**: CI workflow uses `setup-uv@v7` (current stable, up from v4)
 - [x] **CI-04**: SBOM (Software Bill of Materials) is generated automatically at release build time and attached to the GitHub release as an artifact
 
 ### UX — User Experience & Docs
@@ -66,9 +66,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PROC-02 | Phase 2 | Complete |
 | PROC-03 | Phase 2 | Complete |
 | PROC-04 | Phase 2 | Complete |
-| CI-01 | Phase 3 | Pending |
-| CI-02 | Phase 3 | Pending |
-| CI-03 | Phase 3 | Pending |
+| CI-01 | Phase 3 | Complete |
+| CI-02 | Phase 3 | Complete |
+| CI-03 | Phase 3 | Complete |
 | CI-04 | Phase 3 | Complete |
 | UX-01 | Phase 4 | Pending |
 | UX-02 | Phase 4 | Pending |
