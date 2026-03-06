@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-path-safety plan 02 (PATH-02 backslash normalisation)
-last_updated: "2026-03-06T20:08:17.519Z"
+stopped_at: Completed 01-path-safety-01-PLAN.md
+last_updated: "2026-03-06T20:08:55.736Z"
 last_activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
   percent: 33
 ---
 
@@ -54,6 +54,7 @@ Progress: [███░░░░░░░] 33%
 *Updated after each plan completion*
 | Phase 01-path-safety P03 | 198 | 2 tasks | 3 files |
 | Phase 01-path-safety P02 | 12 | 2 tasks | 2 files |
+| Phase 01-path-safety P01 | 4 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,7 @@ Recent decisions affecting current work:
 - [Phase 01-path-safety]: Remove pycountry from dev group alongside reverse_geocoder: both are geo-only, neither belongs in core dev environment
 - [Phase 01-path-safety]: Normalise backslash at call-site with norm_root variable rather than at PhotoRecord construction for surgical fix
 - [Phase 01-path-safety]: TDD RED-GREEN: commit failing tests before fix, then fix code in separate commit
+- [Phase 01-path-safety]: _path_to_sqlite_uri detects Windows drive-letter paths via posix string check because Path.is_absolute() is platform-dependent on macOS
 
 ### Pending Todos
 
@@ -89,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:08:17.516Z
-Stopped at: Completed 01-path-safety plan 02 (PATH-02 backslash normalisation)
+Last session: 2026-03-06T20:08:55.734Z
+Stopped at: Completed 01-path-safety-01-PLAN.md
 Resume file: None

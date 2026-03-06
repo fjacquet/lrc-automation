@@ -18,7 +18,7 @@ v0.6.0 extends lrc-automation from macOS-only to Windows + macOS by fixing four 
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Path Safety** - Catalog opens and scans correctly on Windows (SQLite URI, psutil, packaging)
+- [x] **Phase 1: Path Safety** - Catalog opens and scans correctly on Windows (SQLite URI, psutil, packaging) (completed 2026-03-06)
 - [ ] **Phase 2: Write Safety** - Apply/reconcile/cleanup write correct paths and handle Windows file-system edge cases
 - [ ] **Phase 3: CI Matrix** - Green CI on Windows + Linux runners, SBOM generation at release
 - [ ] **Phase 4: UX and Docs** - Zero-config catalog discovery, Windows onboarding documentation, ADR, PRD, CHANGELOG
@@ -91,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Path Safety | 2/3 | In Progress|  |
+| 1. Path Safety | 3/3 | Complete   | 2026-03-06 |
 | 2. Write Safety | 0/TBD | Not started | - |
 | 3. CI Matrix | 0/TBD | Not started | - |
 | 4. UX and Docs | 0/TBD | Not started | - |

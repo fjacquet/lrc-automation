@@ -9,9 +9,9 @@ Requirements for the multiplatform milestone (Mac + Windows support).
 
 ### PATH — Path Safety
 
-- [ ] **PATH-01**: Tool opens Lightroom catalog on Windows without SQLite URI error (normalize `file:` URI to forward slashes before opening)
+- [x] **PATH-01**: Tool opens Lightroom catalog on Windows without SQLite URI error (normalize `file:` URI to forward slashes before opening)
 - [x] **PATH-02**: Scan correctly extracts dates when catalog root uses Windows drive-letter paths (`C:/Photos/`) combined with `pathFromRoot`
-- [ ] **PATH-03**: Tool detects and warns the user when a Mac-origin catalog (`absolutePath` contains `/Volumes/`) is opened on Windows, without crashing
+- [x] **PATH-03**: Tool detects and warns the user when a Mac-origin catalog (`absolutePath` contains `/Volumes/`) is opened on Windows, without crashing
 
 ### PROC — Process Detection & Write Safety
 
@@ -58,9 +58,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PATH-01 | Phase 1 | Pending |
+| PATH-01 | Phase 1 | Complete |
 | PATH-02 | Phase 1 | Complete |
-| PATH-03 | Phase 1 | Pending |
+| PATH-03 | Phase 1 | Complete |
 | UX-03 | Phase 1 | Complete |
 | PROC-01 | Phase 2 | Pending |
 | PROC-02 | Phase 2 | Pending |
