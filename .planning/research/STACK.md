@@ -21,6 +21,7 @@ The existing stack is solid. Only ONE new runtime dependency is required. Everyt
 | psutil | >=7.0.0 | Cross-platform Lightroom process detection | Replaces macOS-only `pgrep` subprocess call in `catalog.py`. Ships binary wheels for Windows (amd64, arm64), macOS, and Linux. No build toolchain needed on Windows. |
 
 **Current problem in `catalog.py`:**
+
 ```python
 # Lines 58-71 — macOS-only, silently skips on Windows (FileNotFoundError)
 result = subprocess.run(
@@ -30,6 +31,7 @@ result = subprocess.run(
 ```
 
 **psutil replacement pattern (cross-platform):**
+
 ```python
 import psutil
 
@@ -55,6 +57,7 @@ def _is_lightroom_running(process_names: tuple[str, ...]) -> bool:
 `psutil` latest: **7.2.2** (released 2026-01-28). Binary wheels available for Python 3.12/3.13 on Windows (amd64, arm64), macOS, and Linux. No C compiler needed.
 
 **pyproject.toml change:**
+
 ```toml
 dependencies = [
     "click>=8.3.1",
@@ -73,6 +76,7 @@ Note: `reverse-geocoder>=1.5.1` is currently in `dependencies` but should be `[g
 `pathlib.Path` handles Windows paths correctly in Python 3.12. No additional library is required.
 
 **What pathlib already handles on Windows:**
+
 - `Path.home()` returns the correct home directory (`C:\Users\username`)
 - `/` operator joins with OS-appropriate separator
 - `Path.mkdir(parents=True, exist_ok=True)` works on Windows

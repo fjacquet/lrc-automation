@@ -146,6 +146,7 @@ Prioritize in this order:
 5. **AppleDouble log clarity** — cosmetic; no functional issue
 
 Defer:
+
 - Catalog path auto-discovery (optional `--catalog`): useful but not blocking
 - Mixed-separator path normalization: complex, affects migrated catalogs only
 - psutil as optional extra: simplest to make it unconditional for v0.6.0

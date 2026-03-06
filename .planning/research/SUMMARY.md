@@ -20,6 +20,7 @@ The highest-confidence risk is the SQLite URI path format: `f"file:{self.catalog
 The existing stack is validated and requires only one addition. See [STACK.md](.planning/research/STACK.md) for full detail.
 
 **Core technologies:**
+
 - **psutil >=7.0.0**: cross-platform Lightroom process detection — replaces macOS-only `pgrep` subprocess call; ships binary wheels for Windows amd64/arm64, macOS, Linux; no C compiler needed
 - **types-psutil >=7.0.0** (dev): mypy stubs for psutil in strict mode — required because project uses mypy strict
 - **sys.platform (stdlib)**: platform branching — idiomatic in modern Python, no new library needed
@@ -35,6 +36,7 @@ The existing stack is validated and requires only one addition. See [STACK.md](.
 See [FEATURES.md](.planning/research/FEATURES.md) for full detail with technical notes.
 
 **Must have (table stakes) — blocking for Windows users:**
+
 - Cross-platform process detection (psutil) — safety-critical; without it, Windows users have no guard against running `apply` while Lightroom is open
 - SQLite URI forward-slash fix — without it, the tool fails to open any catalog on Windows
 - `path_from_root` forward-slash fix in executor.py — without it, Lightroom shows moved folders as "missing" after `apply`
@@ -42,11 +44,13 @@ See [FEATURES.md](.planning/research/FEATURES.md) for full detail with technical
 - Windows default catalog path documentation — low-effort onboarding improvement
 
 **Should have (differentiators — UX improvements):**
+
 - Catalog path auto-discovery (optional `--catalog`) — zero-config startup; currently requires explicit `--catalog` flag
 - AppleDouble cleanup log clarity — cosmetic; `sys.platform` guard makes intent explicit on non-macOS
 - Windows MAX_PATH documentation — advise `LongPathsEnabled` registry key for deep photo library paths
 
 **Defer to v2+:**
+
 - Automatic Mac→Windows path migration (`absolutePath` rewriting) — risks data loss; use Lightroom's own "Find Missing Folder" workflow
 - Windows Registry integration for LR path — fragile, proprietary format
 - GUI or installer — tool is CLI-first; `pipx install` is sufficient
@@ -58,6 +62,7 @@ See [FEATURES.md](.planning/research/FEATURES.md) for full detail with technical
 The v0.6.0 multiplatform work touches four discrete modules with no cross-cutting concern warranting a new abstraction layer. Each platform concern has exactly one caller in the existing codebase, so targeted in-place changes are the correct pattern. The data flow from Lightroom catalog strings to concrete `Path` objects is already safe because Lightroom stores `absolutePath` and `pathFromRoot` with forward slashes universally — `pathlib.Path` handles these correctly on all platforms. See [ARCHITECTURE.md](.planning/research/ARCHITECTURE.md) for full detail.
 
 **Modules modified and their changes:**
+
 1. **catalog.py** — process detection rewrite (pgrep → psutil); SQLite URI forward-slash fix
 2. **constants.py** — add `LR_PROCESS_NAME_MACOS`, `LR_PROCESS_NAME_WIN`; add `DEFAULT_CATALOG_PATHS` dict; keep `LR_PROCESS_NAME` as alias
 3. **executor.py** — `sys.platform` guard on AppleDouble functions; `rel.as_posix()` instead of `str(rel)` for pathFromRoot SQL writes; Thumbs.db/desktop.ini skip in `_is_effectively_empty`
@@ -97,6 +102,7 @@ Based on combined research, a four-phase structure is recommended. The phase ord
 **Addresses features:** Cross-platform process detection (table stakes), absolutePath correctness on Windows (table stakes)
 
 **Changes:**
+
 - `catalog.py`: Replace `subprocess.run(["pgrep"...])` with `psutil.process_iter(["name"])`; add `path_to_sqlite_uri()` helper using `path.as_posix()` with `///` prefix
 - `constants.py`: Add `LR_PROCESS_NAME_MACOS`, `LR_PROCESS_NAME_WIN`; keep `LR_PROCESS_NAME` alias
 - `pyproject.toml`: Add psutil >=7.0.0 to dependencies; add types-psutil to dev; remove reverse-geocoder from core
@@ -116,6 +122,7 @@ Based on combined research, a four-phase structure is recommended. The phase ord
 **Addresses features:** path_from_root forward-slash fix (table stakes), platform-aware AppleDouble cleanup (table stakes)
 
 **Changes:**
+
 - `executor.py`: `rel.as_posix() + "/"` everywhere `pathFromRoot` is constructed from a `Path`; add `_IS_MACOS` module-level constant; guard AppleDouble functions with `sys.platform`; extend `_is_effectively_empty` to skip Thumbs.db / desktop.ini; retry loop for cross-drive `shutil.move`; `os.replace()` for sidecar XMP conflicts; post-move verification
 
 **Avoids:** Pitfall 4 (pathFromRoot backslash), Pitfall 5 (cross-drive move + antivirus), Pitfall 6 (os.rename overwrite), Pitfall 14 (Thumbs.db blocking cleanup)
@@ -129,6 +136,7 @@ Based on combined research, a four-phase structure is recommended. The phase ord
 **Delivers:** Green CI on ubuntu-latest, macos-latest, windows-latest for Python 3.12 and 3.13. Prevents Windows regressions going forward.
 
 **Changes:**
+
 - `.github/workflows/ci.yml`: OS matrix; conditional make/uv steps for Windows; gate `--all-extras` to non-Windows runners
 - `.gitattributes`: `* text=auto eol=lf` to prevent CRLF corruption
 - `uv.lock`: regenerate with `uv lock` covering both platforms; verify psutil and reverse-geocoder wheel availability
@@ -144,6 +152,7 @@ Based on combined research, a four-phase structure is recommended. The phase ord
 **Delivers:** Zero-config startup for standard Lightroom installations on both platforms. Windows-specific documentation section in README.
 
 **Changes:**
+
 - `cli.py`: `_default_catalog_path()` helper; make `--catalog` optional when default exists and file is found
 - `constants.py`: `DEFAULT_CATALOG_PATHS` dict
 - `docs/` / `README.md`: Windows install section (uv/pipx, .env syntax, MAX_PATH guidance, note that cleanup is macOS-primary)
@@ -163,9 +172,11 @@ Based on combined research, a four-phase structure is recommended. The phase ord
 ### Research Flags
 
 Phases needing deeper research during planning:
+
 - **Phase 3:** Validate `reverse_geocoder` wheel availability on PyPI for Python 3.12 and 3.13 on Windows before committing CI approach. Check with `uv pip install reverse-geocoder --python-platform windows-x86_64 --dry-run`.
 
 Phases with standard patterns (skip research-phase):
+
 - **Phase 1:** psutil API is extensively documented; pathlib behavior is Python stdlib with official docs; all patterns confirmed HIGH confidence
 - **Phase 2:** executor changes are mechanical (as_posix, sys.platform guard, retry loop); patterns well-established in Python ecosystem
 - **Phase 4:** Path.home() and Click option defaults are stdlib/framework patterns with official documentation
@@ -194,6 +205,7 @@ Phases with standard patterns (skip research-phase):
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - [psutil documentation v7.x](https://psutil.readthedocs.io/) — process_iter API, attrs parameter, exception handling
 - [psutil PyPI — v7.2.2](https://pypi.org/project/psutil/) — wheel availability confirmation
 - [Python pathlib docs](https://docs.python.org/3/library/pathlib.html) — Path separator handling, as_posix(), drive letter parsing
@@ -203,6 +215,7 @@ Phases with standard patterns (skip research-phase):
 - [GitHub Actions matrix strategy](https://codefresh.io/learn/github-actions/github-actions-matrix/) — OS matrix patterns
 
 ### Secondary (MEDIUM confidence)
+
 - [Lightroom Queen Forums — Semi OT Question re File path on Windows](https://www.lightroomqueen.com/community/threads/semi-ot-question-re-file-path-on-windows.43010/) — LR uses forward slashes in SQLite on Windows
 - [Lightroom Queen Forums — Mac/Windows catalog problems](https://www.lightroomqueen.com/community/threads/problems-using-same-catalog-in-windows-11-and-macbook-environments.49507/) — cross-platform catalog migration challenges
 - [billlee.photography — Fixing LR catalogs migrated Mac→Windows](https://billlee.photography/fixing-lightroom-catalogs-migrated-from-windows-to-mac/) — absolutePath format confirmed
@@ -212,6 +225,7 @@ Phases with standard patterns (skip research-phase):
 - [WinError 17 cross-drive move](https://github.com/pypa/pip/issues/2859) — cross-drive move failure mode
 
 ### Tertiary (LOW confidence)
+
 - [Lightroom Classic Catalog Image File Reader (GitHub)](https://github.com/thatlarrypearson/LightroomClassicCatalogReader) — schema confirmation (third-party reader)
 
 ---

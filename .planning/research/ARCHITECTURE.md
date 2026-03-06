@@ -44,6 +44,7 @@ community catalog reverse-engineering).
 
 A `platform.py` shim is only warranted when the same platform concern is referenced from
 multiple callers. In this codebase:
+
 - Process detection is called from exactly one place: `CatalogConnection.check_lightroom_not_running()`
 - AppleDouble logic is called from exactly one place: `executor.py:_is_effectively_empty()` and `_delete_apple_double_files()`
 - Default catalog path is referenced from exactly one place: `cli.py`
@@ -58,6 +59,7 @@ scale. Keep each concern in its natural home.
 ### 1. Process Detection — `catalog.py` (MODIFIED, lines 57-71)
 
 **Current code (macOS-only):**
+
 ```python
 result = subprocess.run(
     ["pgrep", "-f", LR_PROCESS_NAME],
@@ -66,6 +68,7 @@ result = subprocess.run(
 ```
 
 **Recommended replacement — psutil:**
+
 ```python
 import psutil
 
@@ -97,12 +100,14 @@ check always runs and always produces a boolean result. Silent pass-through is e
 ### 2. Process Name Constants — `constants.py` (MODIFIED)
 
 **Current:**
+
 ```python
 # Lightroom process name on macOS
 LR_PROCESS_NAME = "Adobe Lightroom Classic"
 ```
 
 **Recommended:**
+
 ```python
 # Lightroom process names per platform (as reported by psutil proc.info["name"])
 LR_PROCESS_NAME_MACOS = "Adobe Lightroom Classic"
@@ -146,9 +151,11 @@ is a cross-OS catalog migration scenario, not a native Windows catalog scenario 
 as unsupported in v0.6.0 scope.
 
 **validators.py path construction (line 171):**
+
 ```python
 root_year_str = root_absolute_path.rstrip("/").split("/")[-1]
 ```
+
 This string split on `/` is safe because Lightroom always uses forward slashes. No change
 needed.
 
@@ -182,6 +189,7 @@ def _delete_apple_double_files(directory: Path) -> None:
 ```
 
 **Rationale for `sys.platform` over a flag parameter:**
+
 - AppleDouble files are a macOS filesystem artifact — they do not exist on NTFS or ext4
 - Making it a flag would require plumbing through CatalogConnection → CLI, adding complexity
   with no practical benefit
@@ -227,6 +235,7 @@ removing `required=True` when the default exists and the file is found.
 ### 6. Dependencies — `pyproject.toml` (MODIFIED)
 
 Add psutil as a core (non-optional) dependency:
+
 ```toml
 [project]
 dependencies = [
@@ -270,7 +279,9 @@ The changes are low-coupling enough that most can be done in parallel, but the o
 below minimizes merge conflicts and provides fast test feedback.
 
 ### Step 1 — Constants (no functional impact, pure addition)
+
 Modify `constants.py`:
+
 - Add `LR_PROCESS_NAME_MACOS`, `LR_PROCESS_NAME_WIN`, `LR_PROCESS_NAME_LINUX`
 - Add `DEFAULT_CATALOG_PATHS` dict
 - Keep `LR_PROCESS_NAME` as alias (do not remove yet)
@@ -280,12 +291,14 @@ Modify `constants.py`:
 the constants exist when needed and avoids circular change ordering.
 
 ### Step 2 — psutil dependency (build infrastructure)
+
 Update `pyproject.toml` to add psutil. Run `uv sync`. Confirm psutil imports cleanly.
 Add a trivial smoke test: `import psutil; psutil.process_iter(["name"])` returns without error.
 
 **Why second:** The process detection rewrite in Step 3 depends on psutil being installed.
 
 ### Step 3 — Process detection rewrite in `catalog.py`
+
 - Remove `import subprocess`
 - Add `import psutil`
 - Replace `check_lightroom_not_running()` body with psutil-based implementation
@@ -296,6 +309,7 @@ Add a trivial smoke test: `import psutil; psutil.process_iter(["name"])` returns
 No other module touches this logic.
 
 ### Step 4 — AppleDouble guard in `executor.py`
+
 - Add `_IS_MACOS = sys.platform == "darwin"` module-level constant
 - Add guard to `_is_effectively_empty()` and `_delete_apple_double_files()`
 - Update CLI docstring for `cleanup` command
@@ -305,6 +319,7 @@ No other module touches this logic.
 **Why fourth:** Isolated change with clear test strategy. No dependency on Steps 1-3.
 
 ### Step 5 — Default catalog path in `cli.py`
+
 - Add `_default_catalog_path()` helper
 - Optionally wire into `--catalog` Click option as a computed default
 - Document platform-specific paths in `--help` output
@@ -313,6 +328,7 @@ No other module touches this logic.
 Can be deferred to a separate PR if scope creep is a concern.
 
 ### Step 6 — CI matrix expansion
+
 - Add `windows-latest` and `ubuntu-latest` to GitHub Actions OS matrix
 - Add `python-version: ["3.12", "3.13"]` if not already present
 - Verify psutil wheel availability in CI (it ships wheels for all three platforms)
@@ -409,6 +425,7 @@ mixed separators correctly.
 `pytest.MonkeyPatch` exclusively.
 
 **Instead:**
+
 ```python
 def test_lr_not_running_when_no_match(monkeypatch):
     def fake_iter(attrs):

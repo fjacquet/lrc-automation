@@ -77,6 +77,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UX-06 | Phase 4 | Pending |
 
 **Coverage:**
+
 - v0.6.0 requirements: 17 total
 - Mapped to phases: 17
 - Unmapped: 0 ✓

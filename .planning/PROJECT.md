@@ -35,6 +35,7 @@ Photos stay at the path their EXIF capture date dictates, so the Lightroom catal
 **Goal:** Make lrc-automation run on Windows, Linux, and macOS without platform-specific assumptions in the code.
 
 **Target features:**
+
 - Cross-platform process detection (replace macOS-only `pgrep` with `psutil`)
 - Windows catalog path handling (backslash paths, drive letters in `absolutePath`)
 - Platform-aware AppleDouble cleanup (no-op or skip on non-macOS)

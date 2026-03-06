@@ -31,6 +31,7 @@ forward slashes.
 Windows. No data is corrupted, but the tool is entirely unusable until fixed.
 
 **Prevention:**
+
 ```python
 # catalog.py — replace raw path in URI construction with:
 uri_path = self.catalog_path.as_posix()  # forward slashes, no drive-letter prefix issue
@@ -38,6 +39,7 @@ uri_path = self.catalog_path.as_posix()  # forward slashes, no drive-letter pref
 # SQLite accepts this form; no extra slash needed for Windows absolute paths.
 uri = f"file:{uri_path}?mode=ro"
 ```
+
 Apply to both the `validate_is_lrcat()` read-only connect and the `open(readonly=True)` path.
 
 **Detection:** `pytest` on Windows fails immediately in `TestCatalogConnection` with
@@ -68,6 +70,7 @@ Classic is open on Windows.
 
 **Prevention:** Replace `pgrep` with `psutil.process_iter()`, which is a declared dependency target
 for v0.6.0:
+
 ```python
 import psutil
 
@@ -79,6 +82,7 @@ def _is_lightroom_running() -> bool:
         if p.info["name"]
     )
 ```
+
 Add `psutil` to `pyproject.toml` dependencies (not optional — it is a safety invariant).
 
 **Detection:** Unit test that monkeypatches `psutil.process_iter` to return a fake LR process and
@@ -91,6 +95,7 @@ asserts `LightroomRunningError` is raised.
 ### Pitfall 3: String Concatenation for Full Paths Breaks on Windows
 
 **What goes wrong:** Multiple files use raw string concatenation to build full file paths:
+
 - `scanner.py`: `full_folder = photo.root_absolute_path + photo.current_folder_path`
 - `utils.py`: `build_full_path()` does `f"{root_absolute}{path_from_root}{base_name}.{extension}"`
 
@@ -109,6 +114,7 @@ catalog was created on Windows (e.g. `C:\Users\Photos\`), and `pathFromRoot` use
 "no date found, skip".
 
 **Prevention:**
+
 - In `PhotoRecord.full_path` (models.py), reconstruct using `Path(root_absolute_path) /
   path_from_root / f"{base_name}.{extension}"` instead of string concatenation.
 - In `extract_date_from_path()` and any path-segment logic, normalise separators before splitting:
@@ -171,6 +177,7 @@ copies. Lightroom will show the file in the new location but the old file remain
 space and potentially confusing subsequent scans.
 
 **Prevention:**
+
 1. Wrap cross-drive moves with a retry loop (1-2 retries, 100ms delay) to handle transient
    antivirus locks.
 2. After `shutil.move`, verify the destination exists and source does not before updating the
@@ -219,6 +226,7 @@ requires `file:///C:/Users/foo` (triple slash before drive letter on Windows). U
 rejects.
 
 **Prevention:** Build URI with a helper:
+
 ```python
 def path_to_sqlite_uri(path: Path, readonly: bool = False) -> str:
     posix = path.as_posix()
@@ -241,8 +249,10 @@ does not have GNU Make installed by default. The `ci.yml` workflow will fail imm
 Windows matrix entry with `'make' is not recognized`.
 
 **Prevention:** Either:
+
 - Install `make` via chocolatey: `choco install make` as a CI step, or
 - Replace the `make check` call with explicit `uv run` commands in the Windows matrix step:
+
   ```yaml
   - name: Lint + typecheck + test (Windows)
     if: runner.os == 'Windows'
@@ -251,6 +261,7 @@ Windows matrix entry with `'make' is not recognized`.
       uv run mypy src/
       uv run pytest -v
   ```
+
 The `uv run ruff format --check` step needs awareness that Windows paths in error messages differ.
 
 **Phase:** Phase 3 (CI matrix expansion).
@@ -265,6 +276,7 @@ any file read by tests. `ruff format --check` will report formatting differences
 were LF on macOS. Tests that read file content and compare strings may fail on trailing `\r`.
 
 **Prevention:**
+
 - Add `.gitattributes` with `* text=auto eol=lf` to force LF in the repo and on checkout.
 - Or set `git config core.autocrlf false` in the CI step before checkout.
 
@@ -282,6 +294,7 @@ MSVC available but the compile adds 5-10 minutes to CI and may fail on version m
 
 **Prevention:** Pin `reverse_geocoder` to a version with known Windows wheels for Python 3.12/3.13,
 or gate the geo extra out of the Windows CI matrix if wheels are unavailable:
+
 ```yaml
 - run: uv sync  # base only on Windows
   if: runner.os == 'Windows'
@@ -296,10 +309,12 @@ or gate the geo extra out of the Windows CI matrix if wheels are unavailable:
 ### Pitfall 11: `scan_year_in_year_photos()` Hardcodes `/` as Path Separator
 
 **What goes wrong:** `scanner.py:scan_year_in_year_photos()` does:
+
 ```python
 root_year_str = photo.root_absolute_path.rstrip("/").split("/")[-1]
 path_year_str = photo.current_folder_path.split("/")[0]
 ```
+
 On a Windows catalog, `root_absolute_path` may be `C:\Lightroom\2023\` (backslash). The `rstrip`
 and `split("/")` calls will produce `C:\Lightroom\2023\` unsplit — last segment would be `""` after
 rstrip, or the whole string. Year detection silently returns no results.
@@ -334,6 +349,7 @@ after the connection is opened.
 
 **What goes wrong:** The CLI requires `--catalog` / `LRC_CATALOG_PATH`. If a future enhancement
 adds auto-discovery of the default catalog location, the paths differ significantly:
+
 - macOS: `~/Pictures/Lightroom/Lightroom Catalog-v13-3.lrcat`
 - Windows: `%USERPROFILE%\Pictures\Lightroom\Lightroom Catalog-v13-3.lrcat`
   (or `C:\Users\<user>\Pictures\Lightroom\...`)
@@ -364,6 +380,7 @@ directory that only contains `Thumbs.db` would be considered "not effectively em
 removed.
 
 **Prevention:** Extend `_is_effectively_empty()` to also skip Windows thumbnail/metadata files:
+
 ```python
 _SKIP_NAMES = frozenset({"Thumbs.db", "desktop.ini", ".DS_Store"})
 
@@ -428,16 +445,16 @@ lockfile covers both platforms. Commit the updated `uv.lock`.
 
 ## Sources
 
-- Python docs — pathlib: https://docs.python.org/3/library/pathlib.html
-- SQLite URI filenames: https://sqlite.org/uri.html
-- Microsoft Learn — Maximum Path Length: https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation
-- psutil cross-platform process iteration: https://psutil.readthedocs.io/
-- SQLite WAL Windows lock bug: https://github.com/oven-sh/bun/issues/25964
-- shutil.move file-in-use on Windows: https://github.com/python/cpython/issues/120882
-- WinError 17 cross-drive move: https://github.com/pypa/pip/issues/2859
-- uv GitHub Actions integration: https://docs.astral.sh/uv/guides/integration/github/
-- astral-sh/setup-uv action: https://github.com/astral-sh/setup-uv
-- GitHub Actions CRLF issue: https://github.com/actions/checkout/issues/135
-- Lightroom Windows absolutePath format: https://www.lightroomqueen.com/community/threads/problems-using-same-catalog-in-windows-11-and-macbook-environments.49507/
-- SQLite URI path confusion Flask/SQLAlchemy: https://www.pythontutorials.net/blog/confusion-about-uri-path-to-configure-sqlite-database/
-- pathlib PureWindowsPath comparison: https://github.com/python/cpython/issues/104947
+- Python docs — pathlib: <https://docs.python.org/3/library/pathlib.html>
+- SQLite URI filenames: <https://sqlite.org/uri.html>
+- Microsoft Learn — Maximum Path Length: <https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation>
+- psutil cross-platform process iteration: <https://psutil.readthedocs.io/>
+- SQLite WAL Windows lock bug: <https://github.com/oven-sh/bun/issues/25964>
+- shutil.move file-in-use on Windows: <https://github.com/python/cpython/issues/120882>
+- WinError 17 cross-drive move: <https://github.com/pypa/pip/issues/2859>
+- uv GitHub Actions integration: <https://docs.astral.sh/uv/guides/integration/github/>
+- astral-sh/setup-uv action: <https://github.com/astral-sh/setup-uv>
+- GitHub Actions CRLF issue: <https://github.com/actions/checkout/issues/135>
+- Lightroom Windows absolutePath format: <https://www.lightroomqueen.com/community/threads/problems-using-same-catalog-in-windows-11-and-macbook-environments.49507/>
+- SQLite URI path confusion Flask/SQLAlchemy: <https://www.pythontutorials.net/blog/confusion-about-uri-path-to-configure-sqlite-database/>
+- pathlib PureWindowsPath comparison: <https://github.com/python/cpython/issues/104947>

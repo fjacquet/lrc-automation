@@ -7,6 +7,7 @@
 **Phases completed:** 1–8 (bootstrapped; phases were implemented ad-hoc before GSD adoption)
 
 **Shipped:**
+
 - Cross-root migration (`--fix root-migrations`): 406 year-in-year photos fixed
 - DDMMYYYY→YYMMDD renames wired into `apply`
 - `cleanup` command (empty dirs + AppleDouble files)
@@ -18,6 +19,7 @@
 ## v0.4.0 — Broadened Scanner (2026-02-17)
 
 **Shipped:**
+
 - ISO YYYY-MM-DD folder pattern detection
 - French date folder detection (`1 avril 2016`)
 - Year-in-root + month-in-path pattern
@@ -26,6 +28,7 @@
 ## v0.3.0 — GPS Location Folders (2026-02-17)
 
 **Shipped:**
+
 - Optional `--location-folders` flag
 - Offline reverse geocoding via `reverse_geocoder`
 - Optional `[geo]` extra
@@ -34,12 +37,14 @@
 ## v0.2.0 — Configurable Layout (2026-02-17)
 
 **Shipped:**
+
 - `LRC_TARGET_LAYOUT` env var / `--target-layout` CLI option
 - 10 new tests
 
 ## v0.1.0 — Foundation (2026-02-17)
 
 **Shipped:**
+
 - Core CLI: scan, plan, apply, validate, restore
 - SQLite + disk move pipeline with full rollback
 - 37 tests, MkDocs site, GitHub Actions CI
