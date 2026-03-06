@@ -73,7 +73,12 @@ Plans:
   2. `ruff format --check` passes on the Windows CI runner with a fresh checkout — no failures caused by CRLF line endings in committed files.
   3. The CI workflow uses `astral-sh/setup-uv@v7`; no warnings about deprecated action versions appear in the CI log.
   4. A GitHub release build automatically attaches an SBOM file as a release artifact; the artifact is visible on the GitHub releases page.
-**Plans**: TBD
+**Plans**: 2 plans
+
+Plans:
+
+- [ ] 03-01-PLAN.md — Add .gitattributes LF enforcement and expand ci.yml to 3-OS matrix with setup-uv@v7 (CI-01, CI-02, CI-03)
+- [ ] 03-02-PLAN.md — Add anchore/sbom-action SBOM generation step to release.yml (CI-04)
 
 ### Phase 4: UX and Docs
 
@@ -98,5 +103,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 |-------|----------------|--------|-----------|
 | 1. Path Safety | 3/3 | Complete   | 2026-03-06 |
 | 2. Write Safety | 2/2 | Complete    | 2026-03-06 |
-| 3. CI Matrix | 0/TBD | Not started | - |
+| 3. CI Matrix | 0/2 | Not started | - |
 | 4. UX and Docs | 0/TBD | Not started | - |
