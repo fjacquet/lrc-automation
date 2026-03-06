@@ -6,6 +6,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-03-06
+
+### Added
+
+- Standalone binary releases: `lrc-auto-windows-x86_64.exe` and `lrc-auto-macos-universal2` built with PyInstaller — no Python installation required
+- Docker image published to `ghcr.io/fjacquet/lrc-automation` with semver tags (mount catalog via `-v /path/to/lightroom:/catalog`)
+- `.dockerignore` to keep container image lean
+
+### Changed
+
+- `release.yml` split into five parallel jobs: `test`, `build-python`, `build-binary`, `build-docker`, `create-release`
+- `pyinstaller>=6.0` added to dev dependencies
+
 ## [0.6.0] - 2026-03-06
 
 ### Added
