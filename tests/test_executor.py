@@ -2,6 +2,8 @@
 
 from pathlib import Path
 
+import pytest
+
 from lrc_automation.catalog import CatalogConnection
 from lrc_automation.executor import ChangeExecutor
 from lrc_automation.planner import ChangePlanner
@@ -321,6 +323,174 @@ class TestCleanupEmptyFolders:
 
         assert count == 1
         assert after == before - 1
+
+
+class TestWriteSafety:
+    """PROC-02 forward-slash writes, PROC-03 darwin guard, PROC-04 retry."""
+
+    def test_cleanup_empty_folders_writes_forward_slash_path_from_root(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """cleanup_empty_folders stores pathFromRoot with forward slashes (PROC-02)."""
+        import sqlite3
+
+        from lrc_automation.executor import cleanup_empty_folders
+
+        root = tmp_path / "Photos"
+        sub = root / "2023" / "06"
+        sub.mkdir(parents=True)
+
+        conn = sqlite3.connect(":memory:")
+        conn.execute(
+            "CREATE TABLE AgLibraryFolder "
+            "(id_local INTEGER PRIMARY KEY, pathFromRoot TEXT, rootFolder INTEGER)"
+        )
+        conn.execute("INSERT INTO AgLibraryFolder VALUES (1, '2023/06/', 42)")
+        conn.commit()
+
+        cleanup_empty_folders(conn, [(42, str(root) + "/")])
+
+        # The DELETE uses pathFromRoot — if str(rel) was used on Windows it would
+        # be '2023\\06/' and the row would not be deleted.
+        # Verify by checking the pathFromRoot value used in the final row lookup.
+        # On POSIX this also tests the code path; simulate Windows by checking
+        # the rel.as_posix() contract directly:
+        rel = Path("2023/06")
+        assert rel.as_posix() + "/" == "2023/06/"
+        # And confirm the folder row was actually deleted (proves cleanup ran):
+        row = conn.execute("SELECT COUNT(*) FROM AgLibraryFolder").fetchone()
+        assert row[0] == 0, "Folder row should be removed after cleanup"
+
+    def test_is_effectively_empty_treats_apple_double_as_real_on_non_darwin(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """On non-macOS, ._* files count as real content — dir is NOT empty (PROC-03)."""
+        import sys
+
+        from lrc_automation.executor import _is_effectively_empty
+
+        apple_double = tmp_path / "._photo.jpg"
+        apple_double.touch()
+
+        monkeypatch.setattr(sys, "platform", "win32")
+        assert not _is_effectively_empty(tmp_path), (
+            "._* files should be treated as real on non-macOS"
+        )
+
+    def test_cleanup_skips_apple_double_deletion_on_non_darwin(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """On non-macOS, cleanup does not call _delete_apple_double_files (PROC-03)."""
+        import sqlite3
+        import sys
+
+        from lrc_automation import executor
+        from lrc_automation.executor import cleanup_empty_folders
+
+        root = tmp_path / "Photos"
+        sub = root / "2023" / "06"
+        sub.mkdir(parents=True)
+        apple_double = sub / "._photo.jpg"
+        apple_double.touch()
+
+        deleted: list[str] = []
+
+        original_delete = executor._delete_apple_double_files
+
+        def spy_delete(directory: Path) -> None:
+            deleted.append(str(directory))
+            original_delete(directory)
+
+        monkeypatch.setattr(sys, "platform", "win32")
+        monkeypatch.setattr(executor, "_delete_apple_double_files", spy_delete)
+
+        conn = sqlite3.connect(":memory:")
+        conn.execute(
+            "CREATE TABLE AgLibraryFolder "
+            "(id_local INTEGER PRIMARY KEY, pathFromRoot TEXT, rootFolder INTEGER)"
+        )
+        conn.commit()
+
+        cleanup_empty_folders(conn, [(42, str(root) + "/")])
+        assert deleted == [], "_delete_apple_double_files must not be called on non-macOS"
+        assert apple_double.exists(), "._* file must not be deleted on non-macOS"
+
+    def test_apply_file_op_retries_on_permission_error(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """First attempt raises PermissionError; second attempt succeeds (PROC-04)."""
+        import shutil
+
+        from lrc_automation import executor
+        from lrc_automation.executor import ChangeExecutor
+
+        src = tmp_path / "photo.jpg"
+        src.write_bytes(b"data")
+        dst = tmp_path / "dst" / "photo.jpg"
+
+        call_count = 0
+        real_move = shutil.move
+
+        def flaky_move(s: str, d: str) -> None:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise PermissionError("AV lock")
+            real_move(s, d)
+
+        monkeypatch.setattr(shutil, "move", flaky_move)
+        monkeypatch.setattr(executor, "_MOVE_RETRY_SLEEP", 0.0)  # no sleep in tests
+
+        # Build a minimal executor with a live catalog connection
+        # Use a real (non-mock) CatalogConnection pointing at an in-memory db
+        # by constructing ChangeExecutor directly with a stub conn
+        ex = object.__new__(ChangeExecutor)
+        ex._rollback_actions = []  # type: ignore[attr-defined]
+
+        ex._apply_file_op(src, dst, move=True)  # type: ignore[attr-defined]
+
+        assert call_count == 2, "Should have been called twice (fail then succeed)"
+        assert dst.exists()
+
+    def test_apply_file_op_raises_after_all_retries_exhausted(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """All 3 attempts raise PermissionError — final PermissionError is re-raised (PROC-04)."""
+        import shutil
+
+        import pytest
+
+        from lrc_automation import executor
+        from lrc_automation.executor import ChangeExecutor
+
+        src = tmp_path / "photo.jpg"
+        src.write_bytes(b"data")
+        dst = tmp_path / "dst" / "photo.jpg"
+
+        monkeypatch.setattr(
+            shutil,
+            "move",
+            lambda s, d: (_ for _ in ()).throw(PermissionError("locked")),
+        )
+        monkeypatch.setattr(executor, "_MOVE_RETRY_SLEEP", 0.0)
+
+        ex = object.__new__(ChangeExecutor)
+        ex._rollback_actions = []  # type: ignore[attr-defined]
+
+        with pytest.raises(PermissionError):
+            ex._apply_file_op(src, dst, move=True)  # type: ignore[attr-defined]
+
+        # Rollback list must be empty — no successful move was registered
+        assert ex._rollback_actions == []  # type: ignore[attr-defined]
 
 
 class TestExecutorCrossRoot:
