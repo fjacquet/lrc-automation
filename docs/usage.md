@@ -1,5 +1,82 @@
 # Usage
 
+## Windows Installation and First Run
+
+### Requirements
+
+- Windows 10 or later
+- Python 3.12+ (from [python.org](https://www.python.org/downloads/) or the Windows Store)
+- `uv` or `pipx`
+
+### Install with uv
+
+```powershell
+pip install uv
+uv tool install lrc-automation
+```
+
+### Install with pipx
+
+```powershell
+pip install pipx
+pipx install lrc-automation
+```
+
+### MAX_PATH Advisory
+
+Windows limits file paths to 260 characters by default. If your Lightroom catalog root paths are deeply nested (e.g. on a NAS or an external drive with a long mount path), enable long-path support before running the tool:
+
+**Option 1 — Group Policy Editor:**
+
+1. Open `gpedit.msc`
+2. Navigate to: Computer Configuration > Administrative Templates > System > Filesystem
+3. Enable "Enable Win32 long paths"
+
+**Option 2 — PowerShell (requires admin):**
+
+```powershell
+New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+  -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+```
+
+### First Run
+
+The `--catalog` / `-c` flag is optional. The tool auto-discovers the default Lightroom Classic catalog at `%USERPROFILE%\Pictures\Lightroom\` when no catalog is specified:
+
+```powershell
+# Auto-discover default Lightroom catalog
+lrc-auto scan
+
+# Or specify explicitly (both slash styles work equally well)
+lrc-auto -c "C:\Users\YourName\Pictures\Lightroom\Catalog.lrcat" scan
+lrc-auto -c "C:/Users/YourName/Pictures/Lightroom/Catalog.lrcat" scan
+```
+
+If discovery fails (default directory doesn't exist or is empty), the tool prints a usage error:
+
+```
+Error: No catalog specified and none found at the default path.
+Use --catalog / -c or set LRC_CATALOG_PATH in your .env file.
+```
+
+### .env File on Windows
+
+Create a `.env` file in the directory where you run `lrc-auto`. Both forward slashes and escaped backslashes work as path separators:
+
+```env
+# Forward slashes (recommended — works on all platforms)
+LRC_CATALOG_PATH=C:/Users/YourName/Pictures/Lightroom/Catalog.lrcat
+LRC_BACKUP_DIR=C:/Users/YourName/Documents/LightroomBackups
+
+# Backslashes also work (Windows-native style)
+LRC_CATALOG_PATH=C:\\Users\\YourName\\Pictures\\Lightroom\\Catalog.lrcat
+```
+
+### Known Limitations on Windows
+
+- **Location folders (`--location-folders`):** The `[geo]` extra (`reverse_geocoder`) has no Windows wheel on PyPI. GPS-based `Country/City/` subfolders are available on macOS and Linux only.
+- **AppleDouble (`._*`) cleanup:** The `cleanup` command's AppleDouble removal step is silently skipped on Windows (those files only appear on macOS-formatted volumes).
+
 ## Configuration
 
 Copy `.env.example` to `.env` and set your catalog path:
