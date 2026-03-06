@@ -14,16 +14,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: astral-sh/setup-uv@v4
+      - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
+          enable-cache: true
 
       - run: uv sync
 
-      - run: make check
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy src/
+      - run: uv run pytest -v
 
       - name: Build package
         run: uv build
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          artifact-name: lrc-automation-sbom.spdx.json
+          format: spdx-json
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
