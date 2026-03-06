@@ -30,11 +30,28 @@ Photos stay at the path their EXIF capture date dictates, so the Lightroom catal
 - ✓ Full disk audit (`validate`) with JSON/CSV output — v0.5.0
 - ✓ `--log-file` debug logging — v0.5.0
 
+## Current Milestone: v0.6.0 Multiplatform
+
+**Goal:** Make lrc-automation run on Windows, Linux, and macOS without platform-specific assumptions in the code.
+
+**Target features:**
+- Cross-platform process detection (replace macOS-only `pgrep` with `psutil`)
+- Windows catalog path handling (backslash paths, drive letters in `absolutePath`)
+- Platform-aware AppleDouble cleanup (no-op or skip on non-macOS)
+- Default catalog path discovery per platform
+- CI matrix expanded to Windows + Linux runners
+- Documentation updated for all platforms
+
 ### Active
 
 <!-- Current scope. Building toward these. -->
 
-(TBD — defined in current milestone)
+- [ ] Cross-platform Lightroom process detection
+- [ ] Windows path handling in catalog absolutePath
+- [ ] Platform-aware cleanup (AppleDouble is macOS-only)
+- [ ] Default catalog path per OS
+- [ ] CI: Windows + Linux in GitHub Actions matrix
+- [ ] Docs: multiplatform install and usage
 
 ### Out of Scope
 

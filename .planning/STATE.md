@@ -12,7 +12,7 @@ See: .planning/PROJECT.md (updated 2026-03-06)
 Phase: Not started (defining requirements)
 Plan: —
 Status: Defining requirements
-Last activity: 2026-03-06 — Milestone v0.6.0 started
+Last activity: 2026-03-06 — Milestone v0.6.0 Multiplatform started
 
 ## Accumulated Context
 
