@@ -139,8 +139,19 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
+          name: python-dist
           path: release-files/
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: binary-*
           merge-multiple: true
+          path: release-files/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: lrc-automation-sbom.spdx.json
+          path: release-files/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
