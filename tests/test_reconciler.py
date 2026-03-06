@@ -206,8 +206,9 @@ class TestCatalogReconciler:
         assert rel.parent.as_posix() + "/" == "2023/06/"
         # Negative: str() on Windows would yield backslashes
         # (on POSIX str == as_posix, but the code must use as_posix explicitly)
-        from lrc_automation import reconciler as rec_mod
         import inspect
+
+        from lrc_automation import reconciler as rec_mod
 
         src = inspect.getsource(rec_mod)
         assert "as_posix()" in src, (

@@ -661,7 +661,7 @@ class TestPlanRootMigrations:
                     "AB",
                     None,
                     None,
-                ),  # noqa: E501
+                ),
             ],
         }
         db_path = tmp_path / "test_intra.lrcat"
