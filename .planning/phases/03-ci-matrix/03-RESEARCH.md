@@ -23,6 +23,7 @@ upload steps.
 `release.yml`.
 
 <phase_requirements>
+
 ## Phase Requirements
 
 | ID | Description | Research Support |
@@ -36,6 +37,7 @@ upload steps.
 ## Standard Stack
 
 ### Core
+
 | Library / Action | Version | Purpose | Why Standard |
 |-----------------|---------|---------|--------------|
 | `astral-sh/setup-uv` | `v7` (latest: v7.3.1) | Install uv and manage Python version in CI | Official action from uv's own team; v7 is current stable |
@@ -43,12 +45,14 @@ upload steps.
 | `.gitattributes` | n/a (Git feature) | Enforce LF on checkout for all text files | Built-in Git mechanism; zero runtime cost; works before any tool runs |
 
 ### Supporting
+
 | Library / Action | Version | Purpose | When to Use |
 |-----------------|---------|---------|-------------|
 | `actions/checkout` | `v4` | Checkout repository | Already in use; no change needed |
 | `cyclonedx-python` | `uv tool` | Alternative Python-specific SBOM generator | If CycloneDX format is preferred over SPDX; syft (used by sbom-action) is format-agnostic |
 
 ### Alternatives Considered
+
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
 | `anchore/sbom-action@v0` | `CycloneDX/gh-python-generate-sbom@v2` | CycloneDX action is deprecated; upstream recommends direct `cyclonedx-py` CLI |
@@ -77,6 +81,7 @@ with individual `uv run` commands.
 default on `windows-latest`).
 
 **Example:**
+
 ```yaml
 # Source: https://docs.astral.sh/uv/guides/integration/github/
 jobs:
@@ -112,6 +117,7 @@ and on checkout.
 `--check` if CRLF appears in committed files on Windows.
 
 **Example:**
+
 ```
 # Source: https://git-scm.com/docs/gitattributes
 # Normalize all text files to LF line endings
@@ -138,6 +144,7 @@ to the release because it detects the `push.tags` trigger context.
 **When to use:** On every tag push that creates a release.
 
 **Example:**
+
 ```yaml
 # Source: https://github.com/anchore/sbom-action
 - name: Generate SBOM
@@ -181,6 +188,7 @@ and Git features. Zero custom tooling is needed.
 ## Common Pitfalls
 
 ### Pitfall 1: `make` not found on Windows runners
+
 **What goes wrong:** `run: make check` exits with code 127 on `windows-latest` because GNU Make
 is not pre-installed on GitHub-hosted Windows runners (unlike ubuntu/macos).
 **Why it happens:** The existing `ci.yml` was written for ubuntu only; Windows runner environment
@@ -190,6 +198,7 @@ differs.
 **Warning signs:** CI log shows "make: command not found" or "The system cannot find the path".
 
 ### Pitfall 2: CRLF in committed files causes ruff format --check to fail
+
 **What goes wrong:** On Windows, `git checkout` converts LF to CRLF for text files (default
 `core.autocrlf=true` in many Windows Git installations). When `ruff format --check` runs, it
 detects the CRLF endings and considers the file "would be reformatted".
@@ -201,6 +210,7 @@ run `git add --renormalize .` after adding `.gitattributes`.
 **Warning signs:** ruff format --check fails only on Windows runner, passes on ubuntu/macos.
 
 ### Pitfall 3: setup-uv cache invalidation between v4 and v7
+
 **What goes wrong:** Bumping from v4 to v7 invalidates the existing CI cache. First runs after
 the bump will be slower (full uv install + dependency download).
 **Why it happens:** v7 changed cache key format to include OS version; this is intentional to
@@ -210,6 +220,7 @@ on the first run.
 **Warning signs:** CI log shows "Cache not found" on first run after bump — this is normal.
 
 ### Pitfall 4: reverse_geocoder [geo] extra fails to build on Windows CI
+
 **What goes wrong:** `uv sync --all-extras` on Windows fails because `reverse_geocoder==1.5.1`
 has only a source distribution on PyPI. Building from source requires `scipy` which requires a
 C compiler that is not reliably available.
@@ -221,6 +232,7 @@ The `[geo]` extra is only needed for live geo lookups, not the test suite (tests
 errors.
 
 ### Pitfall 5: SBOM action duplicate artifact names in matrix builds
+
 **What goes wrong:** If `anchore/sbom-action` is used inside a matrix job, all matrix instances
 try to upload an artifact with the same name, causing an artifact-upload conflict.
 **Why it happens:** Default artifact name is static; matrix runs concurrently.
@@ -233,6 +245,7 @@ try to upload an artifact with the same name, causing an artifact-upload conflic
 Verified patterns from official sources:
 
 ### Complete ci.yml (multi-OS matrix, uv run, no make)
+
 ```yaml
 # Source: https://docs.astral.sh/uv/guides/integration/github/
 name: CI
@@ -268,6 +281,7 @@ jobs:
 ```
 
 ### SBOM step addition to release.yml
+
 ```yaml
 # Source: https://github.com/anchore/sbom-action
 # Add this step BEFORE the softprops/action-gh-release step.
@@ -280,6 +294,7 @@ jobs:
 ```
 
 ### .gitattributes
+
 ```
 # Source: https://git-scm.com/docs/gitattributes
 # Normalise all text files to LF on commit and checkout
@@ -299,6 +314,7 @@ jobs:
 ```
 
 ### Fixing existing files after adding .gitattributes (if needed)
+
 ```bash
 # Only needed if CRLF files are already in the index (not expected here)
 git add --renormalize .
@@ -315,6 +331,7 @@ git commit -m "chore: normalise line endings to LF"
 | `make check` in CI | Direct `uv run` commands | Phase 3 (this phase) | Works on Windows runner without installing GNU Make |
 
 **Deprecated/outdated:**
+
 - `astral-sh/setup-uv@v4`: Outdated; lacks OS-aware cache keys needed for a multi-OS matrix.
 - `CycloneDX/gh-python-generate-sbom@v2`: Officially deprecated by CycloneDX; use `cyclonedx-py` CLI or `anchore/sbom-action` instead.
 
@@ -333,6 +350,7 @@ git commit -m "chore: normalise line endings to LF"
 ## Validation Architecture
 
 ### Test Framework
+
 | Property | Value |
 |----------|-------|
 | Framework | pytest 9.x |
@@ -341,6 +359,7 @@ git commit -m "chore: normalise line endings to LF"
 | Full suite command | `uv run pytest -v` |
 
 ### Phase Requirements → Test Map
+
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
 | CI-01 | CI workflow runs on Windows with `uv run` commands | manual/CI | Push to branch and observe GitHub Actions result | ❌ Wave 0 — no local test possible; verified by CI green badge |
@@ -353,11 +372,13 @@ or inspecting GitHub UI. There are no unit tests to write for these. CI-02 is ve
 via `git check-attr` after adding `.gitattributes`.
 
 ### Sampling Rate
+
 - **Per task commit:** `uv run pytest tests/test_packaging.py -v` (confirm packaging tests still pass)
 - **Per wave merge:** `uv run pytest -v` (full suite)
 - **Phase gate:** Full suite green on local macOS + CI green on all three platforms before `/gsd:verify-work`
 
 ### Wave 0 Gaps
+
 - [ ] No new test files needed — all phase requirements are infrastructure changes (YAML, `.gitattributes`).
 - [ ] CI-01/CI-04 verification is manual (observe GitHub Actions log and releases page).
 - [ ] `git check-attr eol -- src/lrc_automation/cli.py` confirms CI-02 locally after `.gitattributes` is added.
@@ -365,20 +386,24 @@ via `git check-attr` after adding `.gitattributes`.
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - [astral-sh/uv GitHub Actions guide](https://docs.astral.sh/uv/guides/integration/github/) — recommended workflow structure, v7 usage, matrix pattern
 - [astral-sh/setup-uv releases](https://github.com/astral-sh/setup-uv/releases) — v7.3.1 latest; v7 breaking change summary
 - [anchore/sbom-action GitHub](https://github.com/anchore/sbom-action) — v0.23.0 current; `contents: write` permission; release asset auto-upload
 
 ### Secondary (MEDIUM confidence)
+
 - [git-scm.com/docs/gitattributes](https://git-scm.com/docs/gitattributes) — `text=auto eol=lf` syntax confirmed in official Git docs
 - [pypi.org/project/reverse_geocoder/](https://pypi.org/project/reverse_geocoder/) — only tar.gz available (no wheels), last release 2016; Windows build risk confirmed
 
 ### Tertiary (LOW confidence)
+
 - [CycloneDX/gh-python-generate-sbom README](https://github.com/CycloneDX/gh-python-generate-sbom/blob/master/README.md) — self-declared deprecated; mentioned for completeness only
 
 ## Metadata
 
 **Confidence breakdown:**
+
 - Standard stack: HIGH — official docs and action repos consulted directly
 - Architecture: HIGH — patterns derived from official uv docs and sbom-action README
 - Pitfalls: HIGH for make/CRLF (well-known issues); MEDIUM for reverse_geocoder Windows build (confirmed source-dist-only but build environment not tested)
