@@ -91,7 +91,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Path Safety | 1/3 | In Progress|  |
+| 1. Path Safety | 2/3 | In Progress|  |
 | 2. Write Safety | 0/TBD | Not started | - |
 | 3. CI Matrix | 0/TBD | Not started | - |
 | 4. UX and Docs | 0/TBD | Not started | - |

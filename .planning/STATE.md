@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-path-safety-03-PLAN.md (geo extra packaging fix)
-last_updated: "2026-03-06T20:07:21.529Z"
+stopped_at: Completed 01-path-safety plan 02 (PATH-02 backslash normalisation)
+last_updated: "2026-03-06T20:08:17.519Z"
 last_activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 33
 ---
 
@@ -53,6 +53,7 @@ Progress: [███░░░░░░░] 33%
 
 *Updated after each plan completion*
 | Phase 01-path-safety P03 | 198 | 2 tasks | 3 files |
+| Phase 01-path-safety P02 | 12 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - PATH-01 (SQLite URI fix) is Day 1 blocker — without it the tool fails to open any catalog on Windows.
 - UX-03 (geo extra packaging fix) grouped into Phase 1 alongside pyproject.toml changes to keep all packaging edits in one phase.
 - [Phase 01-path-safety]: Remove pycountry from dev group alongside reverse_geocoder: both are geo-only, neither belongs in core dev environment
+- [Phase 01-path-safety]: Normalise backslash at call-site with norm_root variable rather than at PhotoRecord construction for surgical fix
+- [Phase 01-path-safety]: TDD RED-GREEN: commit failing tests before fix, then fix code in separate commit
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:07:21.527Z
-Stopped at: Completed 01-path-safety-03-PLAN.md (geo extra packaging fix)
+Last session: 2026-03-06T20:08:17.516Z
+Stopped at: Completed 01-path-safety plan 02 (PATH-02 backslash normalisation)
 Resume file: None
