@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-path-safety-01-PLAN.md
-last_updated: "2026-03-06T20:08:55.736Z"
+stopped_at: Completed 02-write-safety 02-01-PLAN.md
+last_updated: "2026-03-06T20:34:09.411Z"
 last_activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
 progress:
   total_phases: 4
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
   percent: 33
 ---
 
@@ -55,6 +55,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 01-path-safety P03 | 198 | 2 tasks | 3 files |
 | Phase 01-path-safety P02 | 12 | 2 tasks | 2 files |
 | Phase 01-path-safety P01 | 4 | 2 tasks | 2 files |
+| Phase 02-write-safety P01 | 3 | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,9 @@ Recent decisions affecting current work:
 - [Phase 01-path-safety]: Normalise backslash at call-site with norm_root variable rather than at PhotoRecord construction for surgical fix
 - [Phase 01-path-safety]: TDD RED-GREEN: commit failing tests before fix, then fix code in separate commit
 - [Phase 01-path-safety]: _path_to_sqlite_uri detects Windows drive-letter paths via posix string check because Path.is_absolute() is platform-dependent on macOS
+- [Phase 02-write-safety]: psutil.process_iter replaces pgrep subprocess: cross-platform, no external binary, AccessDenied handling built in
+- [Phase 02-write-safety]: types-psutil added as dev dependency for mypy strict mode compliance
+- [Phase 02-write-safety]: WAL mode not enabled in check_lightroom_not_running — Windows file-locking semantics prohibit it
 
 ### Pending Todos
 
@@ -91,6 +95,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:08:55.734Z
-Stopped at: Completed 01-path-safety-01-PLAN.md
+Last session: 2026-03-06T20:34:09.409Z
+Stopped at: Completed 02-write-safety 02-01-PLAN.md
 Resume file: None
