@@ -5,6 +5,7 @@
 **Confidence:** HIGH
 
 <phase_requirements>
+
 ## Phase Requirements
 
 | ID | Description | Research Support |
@@ -28,6 +29,7 @@ PATH-02 is a silent-wrong-result bug. `scanner.py` line 125 concatenates `photo.
 ## Standard Stack
 
 ### Core
+
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
 | sqlite3 | stdlib | SQLite database connection | Already in use; no change |
@@ -38,12 +40,14 @@ PATH-02 is a silent-wrong-result bug. `scanner.py` line 125 concatenates `photo.
 Note: psutil is NOT required in Phase 1. The pgrep replacement (Pitfall 2) is out of Phase 1 scope per the architecture decision recorded in STATE.md and SUMMARY.md. Phase 1 addresses PATH-01, PATH-02, PATH-03, UX-03 only.
 
 ### Supporting
+
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
 | click | >=8.3.1 | CLI framework (already used) | PATH-03 warning output via `click.echo` to stderr |
 | rich | >=14.3.2 | Terminal output (already used) | Optional — `click.echo` sufficient for warning message |
 
 ### Alternatives Considered
+
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
 | `path.as_posix()` in URI | `str(path).replace("\\\\", "/")` | `as_posix()` is idiomatic pathlib; replacement string is error-prone |
@@ -77,6 +81,7 @@ tests/
 **When to use:** Everywhere `sqlite3.connect(..., uri=True)` is called in `catalog.py` — two locations: `validate_is_lrcat()` (line 35) and `open()` (line 106).
 
 **Example:**
+
 ```python
 # catalog.py — add helper function, replace raw URI strings
 def _path_to_sqlite_uri(path: Path, readonly: bool = False) -> str:
@@ -94,6 +99,7 @@ def _path_to_sqlite_uri(path: Path, readonly: bool = False) -> str:
 ```
 
 Replace in `validate_is_lrcat()`:
+
 ```python
 # Before (line 35):
 conn = sqlite3.connect(f"file:{self.catalog_path}?mode=ro", uri=True)
@@ -103,6 +109,7 @@ conn = sqlite3.connect(_path_to_sqlite_uri(self.catalog_path, readonly=True), ur
 ```
 
 Replace in `open()`:
+
 ```python
 # Before (lines 106-107):
 uri = f"file:{self.catalog_path}?mode=ro"
@@ -115,6 +122,7 @@ self.conn = sqlite3.connect(
 ```
 
 Also fix the case-sensitive suffix check (Pitfall 15 — trivial):
+
 ```python
 # Before (validate_is_lrcat, line 31):
 if self.catalog_path.suffix != ".lrcat":
@@ -130,6 +138,7 @@ if self.catalog_path.suffix.lower() != ".lrcat":
 **When to use:** Any place that builds a "full path" string from `root_absolute_path` + `current_folder_path`. Two sites in `scanner.py` (lines 125, 224).
 
 **Example:**
+
 ```python
 # scanner.py scan_misplaced_photos(), line 125 — before:
 full_folder = photo.root_absolute_path + photo.current_folder_path
@@ -144,6 +153,7 @@ full_folder = (
 `extract_date_from_path()` in `utils.py` already splits only on `/`, so normalising the root portion is sufficient. `current_folder_path` (from `pathFromRoot` in the catalog) always uses forward slashes — confirmed by community research (MEDIUM confidence, multiple sources agree; see Sources).
 
 For `scan_year_in_year_photos()` in `scanner.py` (lines 244, 249), the same normalisation applies:
+
 ```python
 # Before (line 244):
 root_year_str = photo.root_absolute_path.rstrip("/").split("/")[-1]
@@ -159,6 +169,7 @@ root_year_str = photo.root_absolute_path.replace("\\", "/").rstrip("/").split("/
 **When to use:** In `catalog.py` `validate_is_lrcat()` after the `Adobe_images` table check, OR as an early check in `cli.py` after the catalog is opened. The cleanest location is `CatalogConnection.validate_is_lrcat()` since it already does sanity checks.
 
 **Example:**
+
 ```python
 # catalog.py — add to validate_is_lrcat() after table check:
 import sys
@@ -186,6 +197,7 @@ Using `CatalogError` (already defined) means the CLI's existing error handler wi
 **When to use:** This is a packaging fix, not a code change. The `[dependency-groups].dev` section should also be audited — `reverse_geocoder` is listed there directly (line 34 of pyproject.toml) which means `uv sync` in dev mode always installs it even without `--all-extras`. For consistency, remove it from `[dependency-groups].dev` as well and rely on `[geo]` optional deps being installed via `uv sync --all-extras` during dev.
 
 **Example:**
+
 ```toml
 # pyproject.toml — before:
 [project]
@@ -284,6 +296,7 @@ After this change: `pip install lrc-automation` installs only click, python-dote
 Verified patterns from official sources:
 
 ### Complete `_path_to_sqlite_uri()` Helper
+
 ```python
 # Source: SQLite URI filenames spec https://sqlite.org/uri.html
 # + Python pathlib docs https://docs.python.org/3/library/pathlib.html
@@ -306,6 +319,7 @@ def _path_to_sqlite_uri(path: Path, readonly: bool = False) -> str:
 Note: for macOS absolute paths starting with `/`, `file:///` + `/Volumes/...` yields `file:////Volumes/...` (four slashes). SQLite accepts this; the extra slash is treated as an empty path component. Verified: SQLite URI spec section 3.1 states any number of leading slashes after `file:` is valid.
 
 ### Separator Normalisation in scanner.py
+
 ```python
 # Source: Python docs str.replace — no library needed
 # scanner.py — scan_misplaced_photos() line 125
@@ -327,6 +341,7 @@ root_year_str = (
 ```
 
 ### Mac-Origin Catalog Warning in catalog.py
+
 ```python
 # Source: Python docs sys.platform + sqlite3
 import sys
@@ -348,6 +363,7 @@ if sys.platform == "win32":
 ```
 
 ### Test: PATH-01 URI Format
+
 ```python
 # tests/test_catalog.py — new test file
 import pytest
@@ -375,6 +391,7 @@ def test_uri_readonly_false() -> None:
 ```
 
 ### Test: PATH-02 Windows absolutePath in scan
+
 ```python
 # tests/test_scanner.py — add to TestCatalogScanner
 def test_scan_misplaced_windows_style_absolute_path(tmp_path: Path) -> None:
@@ -411,6 +428,7 @@ def test_scan_misplaced_windows_style_absolute_path(tmp_path: Path) -> None:
 ```
 
 ### Test: PATH-03 Mac-origin catalog warning
+
 ```python
 # tests/test_catalog.py — add to TestCatalogConnection
 import sys
@@ -440,6 +458,7 @@ def test_mac_origin_catalog_raises_on_windows(tmp_path: Path) -> None:
 Note: the PATH-03 test uses `pytest.mark.skipif(sys.platform != "win32")` because the Mac-origin warning only fires on Windows. On macOS/Linux the same catalog is valid and the test would falsely fail. This mark is compatible with the project's test runner on macOS CI.
 
 Alternatively, monkeypatch `sys.platform` to `"win32"` so the test runs on all platforms:
+
 ```python
 def test_mac_origin_catalog_warns_monkeypatched(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -460,6 +479,7 @@ This is the preferred approach since `pytest.MonkeyPatch` is the project standar
 | `reverse-geocoder` in core deps | `reverse-geocoder` in `[geo]` extra only | Phase 1 | Fixes UX-03; clean install without geo dependency |
 
 **Deprecated/outdated:**
+
 - `subprocess.run(["pgrep", ...])` process check: NOT addressed in Phase 1 — this is Pitfall 2 / Phase 2 scope (psutil replacement). Phase 1 does NOT touch `check_lightroom_not_running()`.
 
 ## Open Questions
@@ -477,6 +497,7 @@ This is the preferred approach since `pytest.MonkeyPatch` is the project standar
 ## Validation Architecture
 
 ### Test Framework
+
 | Property | Value |
 |----------|-------|
 | Framework | pytest >= 9.0.2 |
@@ -485,6 +506,7 @@ This is the preferred approach since `pytest.MonkeyPatch` is the project standar
 | Full suite command | `uv run pytest -v` |
 
 ### Phase Requirements to Test Map
+
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
 | PATH-01 | `_path_to_sqlite_uri()` returns forward-slash URI with `file:///` prefix | unit | `uv run pytest tests/test_catalog.py::test_uri_uses_forward_slashes_windows_style -x` | Wave 0 |
@@ -497,11 +519,13 @@ This is the preferred approach since `pytest.MonkeyPatch` is the project standar
 | UX-03 | `uv sync` (no extras) does NOT install reverse-geocoder | integration | `uv run python -c "import reverse_geocoder"` exits non-zero | Wave 0 (script check) |
 
 ### Sampling Rate
+
 - **Per task commit:** `uv run pytest tests/test_catalog.py tests/test_scanner.py -x`
 - **Per wave merge:** `uv run pytest -v`
 - **Phase gate:** Full suite green + `uv run ruff check . && uv run mypy src/` before `/gsd:verify-work`
 
 ### Wave 0 Gaps
+
 - [ ] `tests/test_catalog.py` — no test file exists for `catalog.py` today; create with PATH-01 URI tests and PATH-03 Mac-origin warning tests
 - [ ] PATH-02 Windows-style absolutePath fixture — extend `tests/test_scanner.py` with a test that inserts a backslash absolutePath row
 - [ ] UX-03 import guard check — add `tests/test_packaging.py` or inline assertion: `python -c "import lrc_automation; from lrc_automation import cli"` should succeed without `reverse_geocoder` installed
@@ -509,22 +533,26 @@ This is the preferred approach since `pytest.MonkeyPatch` is the project standar
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - [Python pathlib docs](https://docs.python.org/3/library/pathlib.html) — `Path.as_posix()`, `Path.is_absolute()`, drive letter parsing on Windows
 - [SQLite URI filenames spec](https://sqlite.org/uri.html) — `file:///` format for absolute paths, forward-slash requirement
 - [Python sys.platform docs](https://docs.python.org/3/library/sys.html#sys.platform) — `"win32"` on all Windows variants including 64-bit
 - Direct codebase audit — `catalog.py` lines 35, 106 (URI construction); `scanner.py` lines 125, 224, 244 (path concatenation); `pyproject.toml` lines 13, 33 (reverse-geocoder duplication)
 
 ### Secondary (MEDIUM confidence)
+
 - [Lightroom Queen Forums — File path on Windows](https://www.lightroomqueen.com/community/threads/semi-ot-question-re-file-path-on-windows.43010/) — LR stores forward slashes in `pathFromRoot` even on Windows
 - [billlee.photography — Fixing LR catalogs migrated Mac to Windows](https://billlee.photography/fixing-lightroom-catalogs-migrated-from-windows-to-mac/) — `absolutePath` format confirmed; Mac-to-Windows migration behavior documented
 - [Python CPython issue #120882](https://github.com/python/cpython/issues/120882) — `shutil.move` file-in-use on Windows (relevant to future executor phase)
 
 ### Tertiary (LOW confidence)
+
 - None for this phase — all claims grounded in official docs or direct code audit.
 
 ## Metadata
 
 **Confidence breakdown:**
+
 - Standard Stack: HIGH — stdlib only; all patterns verified against official Python docs and SQLite spec
 - Architecture: HIGH — two-line fixes confirmed against actual source code; no new modules, no new dependencies
 - Pitfalls: HIGH — all pitfalls grounded in direct codebase audit with exact line numbers; Windows SQLite behavior confirmed by official SQLite URI spec
