@@ -122,7 +122,8 @@ class CatalogScanner:
                 continue
 
             # Extract year/month from full folder path (root + pathFromRoot)
-            full_folder = photo.root_absolute_path + photo.current_folder_path
+            norm_root = photo.root_absolute_path.replace("\\", "/")
+            full_folder = norm_root + photo.current_folder_path
             actual_ym = extract_date_from_path(full_folder)
             expected_ym = (photo.capture_time.year, photo.capture_time.month)
 
@@ -221,7 +222,8 @@ class CatalogScanner:
             if photo.capture_time is None:
                 continue
             # Check the current folder contains a date matching capture time
-            full_folder = photo.root_absolute_path + photo.current_folder_path
+            norm_root = photo.root_absolute_path.replace("\\", "/")
+            full_folder = norm_root + photo.current_folder_path
             actual_ym = extract_date_from_path(full_folder)
             expected_ym = (photo.capture_time.year, photo.capture_time.month)
             if actual_ym is None or actual_ym != expected_ym:
@@ -241,7 +243,8 @@ class CatalogScanner:
         result = []
         for photo in self._fetch_all_photos():
             # Extract root year from last component of root_absolute_path
-            root_year_str = photo.root_absolute_path.rstrip("/").split("/")[-1]
+            norm_root = photo.root_absolute_path.replace("\\", "/")
+            root_year_str = norm_root.rstrip("/").split("/")[-1]
             if not root_year_str.isdigit():
                 continue
             root_year = int(root_year_str)

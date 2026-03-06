@@ -114,7 +114,7 @@ class TestCatalogScanner:
         conn.close()
 
     def test_scan_misplaced_windows_backslash_root(self) -> None:
-        """Photo correctly placed under Windows-style root is NOT flagged as misplaced."""
+        """Correctly placed photo under Windows root is NOT flagged as misplaced."""
         conn = sqlite3.connect(":memory:")
         conn.row_factory = sqlite3.Row
         conn.executescript(SCHEMA_SQL)
@@ -129,7 +129,10 @@ class TestCatalogScanner:
         )
         conn.execute(
             "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (1, "FILE-WIN-1", "IMG_WIN_1", "JPG", 1, "IMG_WIN_1", None, None, "IMG_WIN_1.JPG", None),
+            (
+                1, "FILE-WIN-1", "IMG_WIN_1", "JPG", 1,
+                "IMG_WIN_1", None, None, "IMG_WIN_1.JPG", None,
+            ),
         )
         conn.execute(
             "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -138,7 +141,7 @@ class TestCatalogScanner:
         conn.commit()
         scanner = CatalogScanner(conn)
         misplaced = scanner.scan_misplaced_photos()
-        # Photo is in 2023/06/ and captured 2023-06 — correctly placed, NOT misplaced
+        # Photo is in 2023/06/ and captured 2023-06 — correctly placed
         assert len(misplaced) == 0
         conn.close()
 
@@ -157,7 +160,10 @@ class TestCatalogScanner:
         )
         conn.execute(
             "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (1, "FILE-WIN-2", "IMG_WIN_2", "JPG", 1, "IMG_WIN_2", None, None, "IMG_WIN_2.JPG", None),
+            (
+                1, "FILE-WIN-2", "IMG_WIN_2", "JPG", 1,
+                "IMG_WIN_2", None, None, "IMG_WIN_2.JPG", None,
+            ),
         )
         conn.execute(
             "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -185,7 +191,10 @@ class TestCatalogScanner:
         )
         conn.execute(
             "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (1, "FILE-WIN-3", "IMG_WIN_3", "JPG", 1, "IMG_WIN_3", None, None, "IMG_WIN_3.JPG", None),
+            (
+                1, "FILE-WIN-3", "IMG_WIN_3", "JPG", 1,
+                "IMG_WIN_3", None, None, "IMG_WIN_3.JPG", None,
+            ),
         )
         conn.execute(
             "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
@@ -200,7 +209,7 @@ class TestCatalogScanner:
         conn.close()
 
     def test_scan_needs_location_folder_windows_backslash_root(self) -> None:
-        """GPS photo under Windows-style root is returned by scan_needs_location_folder."""
+        """GPS photo under Windows root is returned by scan_needs_location_folder."""
         conn = sqlite3.connect(":memory:")
         conn.row_factory = sqlite3.Row
         conn.executescript(SCHEMA_SQL)
@@ -214,7 +223,10 @@ class TestCatalogScanner:
         )
         conn.execute(
             "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (1, "FILE-WIN-4", "IMG_WIN_4", "JPG", 1, "IMG_WIN_4", None, None, "IMG_WIN_4.JPG", None),
+            (
+                1, "FILE-WIN-4", "IMG_WIN_4", "JPG", 1,
+                "IMG_WIN_4", None, None, "IMG_WIN_4.JPG", None,
+            ),
         )
         conn.execute(
             "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
