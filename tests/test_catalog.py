@@ -1,13 +1,17 @@
 """Tests for catalog.py path-safety fixes (PATH-01 and PATH-03)."""
 
 import sqlite3
+import sys
 from pathlib import Path
 
 import pytest
 
-from lrc_automation.catalog import CatalogConnection, CatalogError, _path_to_sqlite_uri
+from lrc_automation.catalog import (
+    CatalogConnection,
+    CatalogError,
+    _path_to_sqlite_uri,
+)
 from tests.conftest import create_test_catalog
-
 
 # ---------------------------------------------------------------------------
 # PATH-01: _path_to_sqlite_uri correctness
@@ -15,7 +19,7 @@ from tests.conftest import create_test_catalog
 
 
 def test_path_to_sqlite_uri_windows_style() -> None:
-    """Windows-style path must produce a URI with no backslash, file:/// prefix, ?mode=ro."""
+    """Windows path: URI has no backslash, file:/// prefix, ends with ?mode=ro."""
     path = Path("C:/Users/Photos/Catalog.lrcat")
     uri = _path_to_sqlite_uri(path, readonly=True)
     assert "\\" not in uri
@@ -24,7 +28,7 @@ def test_path_to_sqlite_uri_windows_style() -> None:
 
 
 def test_path_to_sqlite_uri_posix_absolute() -> None:
-    """POSIX absolute path must start with file:/// and contain ?mode=ro when readonly."""
+    """POSIX absolute path must start with file:/// and contain ?mode=ro."""
     path = Path("/Volumes/photo/Catalog.lrcat")
     uri = _path_to_sqlite_uri(path, readonly=True)
     assert uri.startswith("file:///")
@@ -74,7 +78,7 @@ def test_validate_is_lrcat_accepts_uppercase_extension(tmp_path: Path) -> None:
 def test_mac_origin_catalog_warns_monkeypatched(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """On win32, validate_is_lrcat() must raise CatalogError when absolutePath has /Volumes/."""
+    """On win32, validate_is_lrcat() raises CatalogError for /Volumes/ absolutePath."""
     db_path = tmp_path / "mac_catalog.lrcat"
     create_test_catalog(db_path)
 
@@ -87,8 +91,6 @@ def test_mac_origin_catalog_warns_monkeypatched(
     conn.close()
 
     # Simulate running on Windows
-    import sys
-
     monkeypatch.setattr(sys, "platform", "win32")
 
     cc = CatalogConnection(db_path)
@@ -97,7 +99,7 @@ def test_mac_origin_catalog_warns_monkeypatched(
 
 
 def test_mac_origin_catalog_ok_on_non_windows(tmp_path: Path) -> None:
-    """On non-Windows platforms, validate_is_lrcat() must NOT raise for Mac-origin catalogs."""
+    """On non-Windows, validate_is_lrcat() must NOT raise for Mac-origin catalogs."""
     db_path = tmp_path / "mac_catalog_ok.lrcat"
     create_test_catalog(db_path)
 
