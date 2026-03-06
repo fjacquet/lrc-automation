@@ -1,0 +1,14 @@
+# Normalise all text files to LF on commit and checkout
+* text=auto eol=lf
+
+# Binary files — no line-ending conversion
+*.whl binary
+*.tar.gz binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.lrcat binary
+*.db binary
+*.sqlite binary
