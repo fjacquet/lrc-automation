@@ -1,3 +1,19 @@
+---
+gsd_state_version: 1.0
+milestone: v0.5
+milestone_name: milestone
+status: planning
+stopped_at: Completed 01-path-safety-03-PLAN.md (geo extra packaging fix)
+last_updated: "2026-03-06T20:07:21.529Z"
+last_activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
+progress:
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 3
+  completed_plans: 1
+  percent: 33
+---
+
 # Project State
 
 ## Project Reference
@@ -14,7 +30,7 @@ Plan: 0 of TBD in current phase
 Status: Ready to plan
 Last activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
@@ -36,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01-path-safety P03 | 198 | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -48,6 +65,7 @@ Recent decisions affecting current work:
 - psutil chosen over pgrep subprocess: cross-platform hard dependency; binary wheels available for all target platforms.
 - PATH-01 (SQLite URI fix) is Day 1 blocker — without it the tool fails to open any catalog on Windows.
 - UX-03 (geo extra packaging fix) grouped into Phase 1 alongside pyproject.toml changes to keep all packaging edits in one phase.
+- [Phase 01-path-safety]: Remove pycountry from dev group alongside reverse_geocoder: both are geo-only, neither belongs in core dev environment
 
 ### Pending Todos
 
@@ -68,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06
-Stopped at: Roadmap and STATE created; REQUIREMENTS.md traceability updated. Ready to plan Phase 1.
+Last session: 2026-03-06T20:07:21.527Z
+Stopped at: Completed 01-path-safety-03-PLAN.md (geo extra packaging fix)
 Resume file: None
