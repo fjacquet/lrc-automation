@@ -4,6 +4,7 @@ import sqlite3
 from pathlib import Path
 
 from lrc_automation.scanner import CatalogScanner
+from tests.conftest import SCHEMA_SQL
 
 
 class TestCatalogScanner:
@@ -110,6 +111,169 @@ class TestCatalogScanner:
         gps_misplaced = [p for p in misplaced if p.gps_latitude is not None]
         # Photos 1 and 2 are misplaced (in 2023/07/ but captured 2023-06)
         assert len(gps_misplaced) == 2
+        conn.close()
+
+    def test_scan_misplaced_windows_backslash_root(self) -> None:
+        """Correctly placed photo under Windows root is NOT flagged as misplaced."""
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        conn.executescript(SCHEMA_SQL)
+        # Windows-style absolutePath with backslashes
+        conn.execute(
+            "INSERT INTO AgLibraryRootFolder VALUES (?, ?, ?, ?, ?)",
+            (1, "ROOT-WIN-1", "C:\\Users\\Photos\\", "Photos", None),
+        )
+        conn.execute(
+            "INSERT INTO AgLibraryFolder VALUES (?, ?, ?, ?)",
+            (1, "FOLD-WIN-1", "2023/06/", 1),
+        )
+        conn.execute(
+            "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                1,
+                "FILE-WIN-1",
+                "IMG_WIN_1",
+                "JPG",
+                1,
+                "IMG_WIN_1",
+                None,
+                None,
+                "IMG_WIN_1.JPG",
+                None,
+            ),
+        )
+        conn.execute(
+            "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (1, "IMG-WIN-1", "2023-06-15T12:00:00", 1, "JPG", 0, 3, "AB", None, None),
+        )
+        conn.commit()
+        scanner = CatalogScanner(conn)
+        misplaced = scanner.scan_misplaced_photos()
+        # Photo is in 2023/06/ and captured 2023-06 — correctly placed
+        assert len(misplaced) == 0
+        conn.close()
+
+    def test_scan_misplaced_windows_backslash_root_detects_mismatch(self) -> None:
+        """Photo in wrong month under Windows-style root IS flagged as misplaced."""
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        conn.executescript(SCHEMA_SQL)
+        conn.execute(
+            "INSERT INTO AgLibraryRootFolder VALUES (?, ?, ?, ?, ?)",
+            (1, "ROOT-WIN-2", "C:\\Users\\Photos\\", "Photos", None),
+        )
+        conn.execute(
+            "INSERT INTO AgLibraryFolder VALUES (?, ?, ?, ?)",
+            (1, "FOLD-WIN-2", "2023/07/", 1),
+        )
+        conn.execute(
+            "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                1,
+                "FILE-WIN-2",
+                "IMG_WIN_2",
+                "JPG",
+                1,
+                "IMG_WIN_2",
+                None,
+                None,
+                "IMG_WIN_2.JPG",
+                None,
+            ),
+        )
+        conn.execute(
+            "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (1, "IMG-WIN-2", "2023-06-15T12:00:00", 1, "JPG", 0, 3, "AB", None, None),
+        )
+        conn.commit()
+        scanner = CatalogScanner(conn)
+        misplaced = scanner.scan_misplaced_photos()
+        # Photo is in 2023/07/ but captured 2023-06 — IS misplaced
+        assert len(misplaced) == 1
+        conn.close()
+
+    def test_scan_year_in_year_windows_backslash_root(self) -> None:
+        """Year-in-year photo with Windows backslash root absolutePath is detected."""
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        conn.executescript(SCHEMA_SQL)
+        conn.execute(
+            "INSERT INTO AgLibraryRootFolder VALUES (?, ?, ?, ?, ?)",
+            (1, "ROOT-WIN-3", "C:\\Lightroom\\2022\\", "2022", None),
+        )
+        conn.execute(
+            "INSERT INTO AgLibraryFolder VALUES (?, ?, ?, ?)",
+            (1, "FOLD-WIN-3", "2003/12/", 1),
+        )
+        conn.execute(
+            "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                1,
+                "FILE-WIN-3",
+                "IMG_WIN_3",
+                "JPG",
+                1,
+                "IMG_WIN_3",
+                None,
+                None,
+                "IMG_WIN_3.JPG",
+                None,
+            ),
+        )
+        conn.execute(
+            "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (1, "IMG-WIN-3", "2003-12-15T12:00:00", 1, "JPG", 0, 3, "AB", None, None),
+        )
+        conn.commit()
+        scanner = CatalogScanner(conn)
+        yiy = scanner.scan_year_in_year_photos()
+        file_ids = [p.file_id for p in yiy]
+        # root year (2022) != path year (2003) → year-in-year detected
+        assert 1 in file_ids
+        conn.close()
+
+    def test_scan_needs_location_folder_windows_backslash_root(self) -> None:
+        """GPS photo under Windows root is returned by scan_needs_location_folder."""
+        conn = sqlite3.connect(":memory:")
+        conn.row_factory = sqlite3.Row
+        conn.executescript(SCHEMA_SQL)
+        conn.execute(
+            "INSERT INTO AgLibraryRootFolder VALUES (?, ?, ?, ?, ?)",
+            (1, "ROOT-WIN-4", "C:\\Users\\Photos\\", "Photos", None),
+        )
+        conn.execute(
+            "INSERT INTO AgLibraryFolder VALUES (?, ?, ?, ?)",
+            (1, "FOLD-WIN-4", "2023/06/", 1),
+        )
+        conn.execute(
+            "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (
+                1,
+                "FILE-WIN-4",
+                "IMG_WIN_4",
+                "JPG",
+                1,
+                "IMG_WIN_4",
+                None,
+                None,
+                "IMG_WIN_4.JPG",
+                None,
+            ),
+        )
+        conn.execute(
+            "INSERT INTO Adobe_images VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (1, "IMG-WIN-4", "2023-06-15T12:00:00", 1, "JPG", 0, 3, "AB", None, None),
+        )
+        conn.execute(
+            "INSERT INTO AgHarvestedExifMetadata VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (1, 1, "2023-06-15T12:00:00", None, None, None, 48.8566, 2.3522, 1),
+        )
+        conn.commit()
+        scanner = CatalogScanner(conn, location_folders=True)
+        candidates = scanner.scan_needs_location_folder()
+        file_ids = [p.file_id for p in candidates]
+        # GPS photo in date-matching folder → should be returned
+        assert 1 in file_ids
         conn.close()
 
 

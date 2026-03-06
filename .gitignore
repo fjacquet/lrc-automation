@@ -35,3 +35,22 @@ site/
 # Lightroom catalogs (never commit real catalogs)
 *.lrcat
 *.lrcat-lock
+*.lrcat-wal
+*.lrcat-shm
+*.lrdata
+*.lrprev
+
+# IDE / tool directories
+.vscode/
+.idea/
+.serena/
+.claude/
+
+# Logs
+*.log
+logs/
+
+# Temporary / output files
+all.txt
+findings
+*.tmp

@@ -38,7 +38,7 @@ class LocationResolver:
         """Lazy-load reverse_geocoder on first use."""
         if self._rg is None:
             try:
-                import reverse_geocoder  # type: ignore[import-untyped]
+                import reverse_geocoder
 
                 self._rg = reverse_geocoder
             except ImportError as e:

@@ -96,6 +96,7 @@ LOCK_FILE_SUFFIX = "-lock"
 
 # Lightroom process name on macOS
 LR_PROCESS_NAME = "Adobe Lightroom Classic"
+LR_PROCESS_NAME_WINDOWS = "Lightroom.exe"  # Windows
 
 # Backup file suffix format
 BACKUP_SUFFIX_FORMAT = ".bak-{timestamp}"

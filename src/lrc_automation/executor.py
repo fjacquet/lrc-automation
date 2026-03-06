@@ -5,6 +5,8 @@ import logging
 import os
 import shutil
 import sqlite3
+import sys
+import time
 from collections.abc import Callable
 from functools import partial
 from pathlib import Path
@@ -14,6 +16,9 @@ from .models import ChangePlan, ChangeType, ExecutionReport, FileChange, PhotoRe
 from .utils import generate_uuid, parse_sidecar_extensions
 
 logger = logging.getLogger(__name__)
+
+_MOVE_RETRIES = 3
+_MOVE_RETRY_SLEEP = 0.5  # seconds — antivirus scan lock window
 
 
 class ExecutionError(Exception):
@@ -229,7 +234,23 @@ class ChangeExecutor:
             logger.warning("SKIP (destination exists): %s", dst)
             raise SkippableError(f"Destination already exists: {dst}")
         op = shutil.move if move else os.rename
-        op(str(src), str(dst))
+        last_err: Exception | None = None
+        for attempt in range(_MOVE_RETRIES):
+            try:
+                op(str(src), str(dst))
+                last_err = None
+                break
+            except PermissionError as e:
+                last_err = e
+                logger.debug(
+                    "RETRY %d/%d (PermissionError): %s",
+                    attempt + 1,
+                    _MOVE_RETRIES,
+                    src,
+                )
+                time.sleep(_MOVE_RETRY_SLEEP)
+        if last_err is not None:
+            raise last_err
         if move:
             logger.info("MOVE    %s  →  %s", src, dst)
         else:
@@ -295,14 +316,13 @@ class ChangeExecutor:
 def _is_effectively_empty(directory: Path) -> bool:
     """Return True if a directory contains no real files.
 
-    macOS creates ``._<name>`` AppleDouble resource-fork files alongside
-    folders on non-HFS+ volumes (ExFAT, FAT32).  A directory that contains
-    only these metadata files — and no actual photos or subdirectories with
-    content — is considered empty for cleanup purposes.
+    On macOS, ``._<name>`` AppleDouble resource-fork files are skipped because
+    they are metadata artefacts, not real content.  On other platforms ``._*``
+    names are treated as real files.
     """
     for entry in directory.iterdir():
-        if entry.name.startswith("._"):
-            continue  # AppleDouble metadata — not real content
+        if sys.platform == "darwin" and entry.name.startswith("._"):
+            continue  # AppleDouble metadata — macOS only
         return False  # real file or subdirectory found
     return True
 
@@ -353,8 +373,9 @@ def cleanup_empty_folders(
             if not _is_effectively_empty(full_dir):
                 continue
 
-            # Delete AppleDouble files so rmdir succeeds
-            _delete_apple_double_files(full_dir)
+            # Delete AppleDouble files so rmdir succeeds (macOS only)
+            if sys.platform == "darwin":
+                _delete_apple_double_files(full_dir)
 
             try:
                 full_dir.rmdir()
@@ -366,7 +387,7 @@ def cleanup_empty_folders(
                 rel = full_dir.relative_to(root_path)
             except ValueError:
                 continue
-            path_from_root = str(rel) + "/"
+            path_from_root = rel.as_posix() + "/"
 
             conn.execute(
                 "DELETE FROM AgLibraryFolder WHERE rootFolder = ? AND pathFromRoot = ?",

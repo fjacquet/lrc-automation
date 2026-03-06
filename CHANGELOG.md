@@ -1,4 +1,4 @@
-# Changelog
+s# Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -6,9 +6,52 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-03-06
+
+### Added
+
+- Standalone binary releases: `lrc-auto-windows-x86_64.exe` and `lrc-auto-macos-universal2` built with PyInstaller — no Python installation required
+- Docker image published to `ghcr.io/fjacquet/lrc-automation` with semver tags (mount catalog via `-v /path/to/lightroom:/catalog`)
+- `.dockerignore` to keep container image lean
+
+### Changed
+
+- `release.yml` split into five parallel jobs: `test`, `build-python`, `build-binary`, `build-docker`, `create-release`
+- `pyinstaller>=6.0` added to dev dependencies
+
+## [0.6.0] - 2026-03-06
+
+### Added
+
+- **Windows support**: macOS and Windows are now both primary target platforms
+- `--catalog` / `-c` flag is now optional; the tool auto-discovers the default Lightroom Classic catalog at `~/Pictures/Lightroom/` (macOS) or `%USERPROFILE%\Pictures\Lightroom\` (Windows) when not specified
+- Cross-platform Lightroom process detection via `psutil`: detects `Adobe Lightroom Classic` (macOS) and `Lightroom.exe` (Windows), replacing the macOS-only `pgrep` subprocess
+- `pathFromRoot` SQL writes now always use forward slashes (`path.as_posix()`) so Lightroom can locate folders after a move on Windows
+- `PermissionError` retry loop in `executor.py` for transient antivirus scan locks on Windows
+- `.gitattributes` with `* text=auto eol=lf` to prevent CRLF failures on Windows CI checkout
+- CI matrix expanded to `ubuntu-latest`, `macos-latest`, and `windows-latest` runners for Python 3.12 and 3.13
+- SBOM (Software Bill of Materials) generated at release time via `anchore/sbom-action@v0` and attached to GitHub releases
+- ADR-007 documenting multiplatform decisions: psutil process detection, `as_posix()` SQL writes, darwin-only AppleDouble guard, SBOM generation, SQLite URI forward-slash fix, catalog auto-discovery
+- Windows installation and first-run section in README and `docs/usage.md`
+- `docs/prd.md` updated to name macOS and Windows as target platforms
+
+### Fixed
+
+- `CatalogConnection.open()`: SQLite URI now uses forward slashes on Windows (`_path_to_sqlite_uri` converts `Path.as_posix()` result), fixing "unable to open database" error on Windows
+- Opening a Mac-origin catalog (with `/Volumes/` absolute paths) on Windows now prints a human-readable warning and exits rather than crashing
+- `AppleDouble` (`._*`) file cleanup silently skipped on non-macOS platforms (no errors, no spurious log entries)
+- `reverse_geocoder` moved back to optional `[geo]` extra dependency (fixes packaging regression from v0.5.0)
+
+### Changed
+
+- `setup-uv` bumped to v7 with `enable-cache: true` in both `ci.yml` and `release.yml`
+- `ci.yml`: individual `uv run` steps replace `make check` (make unavailable on Windows runners)
+- `release.yml`: individual `uv run` steps replace `make check` for consistent CI step visibility
+
 ## [0.5.0] - 2026-02-28
 
 ### Added
+
 - **Cross-root migration** (`--fix root-migrations`): detect and fix 406 "year-in-year"
   photos (e.g. root=2013, pathFromRoot=2012/08/) that live in the wrong year root.
   Strips the spurious leading year from `pathFromRoot` and moves the file to the correct
@@ -34,6 +77,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - 12 new tests for cross-root migration (models, planner, executor)
 
 ### Fixed
+
 - `Reporter.print_prefix_format_summary()`: target folder no longer doubles CC/City
   segments (e.g. `CH/Aubonne/CH/Aubonne/`) — now uses `get_expected_folder_path_with_location()`
 - `executor._execute_move()`: uses `target_root_absolute_path` when set, so cross-root
@@ -46,6 +90,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.4.0] - 2026-02-17
 
 ### Added
+
 - Broadened scanner date detection: ISO `YYYY-MM-DD` folders, French date folders (`1 avril 2016`), and year-in-root + month-in-path patterns now recognized
 - New `extract_date_from_path()` function scans full path (root + pathFromRoot) right-to-left for date segments
 - `FOLDER_ISO_DATE_PATTERN`, `FOLDER_FRENCH_DATE_PATTERN`, `FOLDER_BARE_YEAR_PATTERN` regex constants
@@ -54,11 +99,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - 23 new tests: `extract_date_from_path` (18), scanner broadened detection (5)
 
 ### Changed
+
 - `scan_misplaced_photos()` now uses `extract_date_from_path(root + pathFromRoot)` instead of `extract_yyyy_mm(pathFromRoot)`, detecting ~2,600 additional date folder patterns from real catalogs
 
 ## [0.3.0] - 2026-02-17
 
 ### Added
+
 - Optional GPS-based location subfolders via `--location-folders` flag or `LRC_LOCATION_FOLDERS` env var
 - New `geocoder.py` module with `LocationResolver` class for offline reverse geocoding (uses `reverse_geocoder` K-D tree)
 - Optional `[geo]` dependency group: `pip install lrc-automation[geo]`
@@ -71,6 +118,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Documentation for location folders in `docs/usage.md` and `CLAUDE.md`
 
 ### Changed
+
 - `CatalogScanner`, `ChangePlanner` now accept `location_folders` parameter (default `False`)
 - `AgHarvestedExifMetadata` test schema updated with GPS columns (`gpsLatitude`, `gpsLongitude`, `hasGPS`)
 - `Reporter.print_scan_summary()` accepts `location_folders` flag to show GPS info
@@ -79,6 +127,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.2.0] - 2026-02-17
 
 ### Added
+
 - Configurable target folder layout via `LRC_TARGET_LAYOUT` env var or `--target-layout` CLI option
 - `layout_to_regex()` helper to convert strftime layouts to regex patterns
 - `PhotoRecord.get_expected_folder_path(layout)` method for layout-aware path computation
@@ -86,6 +135,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Documentation for target layout configuration in `docs/usage.md`
 
 ### Changed
+
 - `CatalogScanner`, `ChangePlanner` now accept `target_layout` parameter (default `%Y/%m/`)
 - `extract_yyyy_mm()` accepts optional `layout` parameter for pattern matching
 - `Reporter.print_scan_summary()` displays configured target layout
@@ -93,6 +143,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [0.1.0] - 2026-02-17
 
 ### Added
+
 - CLI with 5 commands: `scan`, `plan`, `apply`, `validate`, `restore`
 - `CatalogScanner`: detect misplaced photos (folder date vs EXIF captureTime) and duplicate date prefixes in filenames
 - `ChangePlanner`: build change plans with target folder resolution and collision handling

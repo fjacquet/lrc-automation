@@ -50,6 +50,57 @@ cd lrc-automation
 uv sync
 ```
 
+### Windows
+
+**Requirements:** Windows 10 or later, Python 3.12+ ([python.org](https://www.python.org/downloads/) or Windows Store), and `uv` or `pipx`.
+
+**Install with uv:**
+
+```powershell
+pip install uv
+uv tool install lrc-automation
+```
+
+**Install with pipx:**
+
+```powershell
+pip install pipx
+pipx install lrc-automation
+```
+
+**MAX_PATH advisory:** Windows limits file paths to 260 characters by default. If your catalog root paths are deep, enable long-path support:
+
+1. Open Group Policy Editor (`gpedit.msc`)
+2. Navigate to: Computer Configuration > Administrative Templates > System > Filesystem
+3. Enable "Enable Win32 long paths"
+
+Or via PowerShell (requires admin):
+
+```powershell
+New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
+  -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+```
+
+**First run:** The `--catalog` / `-c` flag is optional. The tool auto-discovers the default Lightroom catalog at `%USERPROFILE%\Pictures\Lightroom\`:
+
+```powershell
+# Auto-discover default Lightroom catalog
+lrc-auto scan
+
+# Or specify explicitly (both slash styles work)
+lrc-auto -c "C:\Users\YourName\Pictures\Lightroom\Catalog.lrcat" scan
+lrc-auto -c "C:/Users/YourName/Pictures/Lightroom/Catalog.lrcat" scan
+```
+
+**.env file on Windows** — both forward slashes and escaped backslashes work:
+
+```env
+LRC_CATALOG_PATH=C:/Users/YourName/Pictures/Lightroom/Catalog.lrcat
+LRC_BACKUP_DIR=C:/Users/YourName/Documents/LightroomBackups
+```
+
+**Known limitations:** The `[geo]` extra (`reverse_geocoder`) has no Windows wheel on PyPI. Location-folder features (`--location-folders`) are macOS/Linux only.
+
 ## Configuration
 
 Copy `.env.example` to `.env` and set your catalog path:

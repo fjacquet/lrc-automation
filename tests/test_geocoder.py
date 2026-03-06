@@ -33,6 +33,9 @@ class TestSanitizeFolderName:
         assert _sanitize_folder_name("") == ""
 
 
+rg = pytest.importorskip("reverse_geocoder", reason="requires [geo] extra")
+
+
 class TestLocationResolver:
     def test_resolve_known_coordinates(self) -> None:
         """Zurich coords should return a valid country/city pair."""

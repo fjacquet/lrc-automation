@@ -47,12 +47,17 @@ Lightroom Classic's Lua SDK provides no `moveToFolder()` API and cannot be used 
 
 ## 4. Users
 
-**Primary user:** Solo photographer managing a large personal archive (10K–200K photos) with Lightroom Classic on macOS.
+**Primary user:** Solo photographer managing a large personal archive (10K–200K photos) with Lightroom Classic on macOS or Windows.
 
 Assumed context:
 - Comfortable with a terminal
 - Unwilling to manually relocate thousands of files
 - Needs confidence (dry-run, backup, rollback) before trusting an automated tool with a 1 GB catalog
+
+**Platform support:**
+- Primary platform: macOS. Full feature set including the `[geo]` extra (offline reverse geocoding).
+- Secondary platform: Windows. All core features are supported. The `[geo]` extra (offline reverse geocoding) is macOS/Linux only due to a missing Windows wheel for `reverse_geocoder`.
+- Linux: CI-only. Lightroom Classic does not run on Linux; Linux support exists solely for automated testing.
 
 ---
 
@@ -159,7 +164,7 @@ Assumed context:
 |----|------------|
 | NF-1 | All operations on the real catalog (92 K photos) must complete in < 5 minutes on typical hardware |
 | NF-2 | Offline-only — no network calls in the default or `[geo]` configurations |
-| NF-3 | Python 3.12+, tested on macOS; should work on Linux |
+| NF-3 | Python 3.12+; target platforms are macOS and Windows. Linux is supported as CI-only (Lightroom Classic does not run on Linux). |
 | NF-4 | Type-checked with mypy strict mode; linted with ruff |
 | NF-5 | Test coverage via pytest; no `unittest.mock` (use `pytest.MonkeyPatch`) |
 | NF-6 | The tool must never leave the catalog in a partially-updated state |
@@ -218,5 +223,5 @@ See [ADR-001](adr/001-lightroom-classic-catalog-automation.md) for the full desi
 | ~~OQ-2~~ | ~~Should the tool support renaming (stripping duplicate date prefixes)?~~ **Resolved:** duplicate-prefix removal and DDMMYYYY→YYMMDD normalisation both implemented in the scanner (F-SCAN-6, F-PREFIX-1…6). |
 | OQ-3 | Should a `--dry-run` flag on `apply` replace the separate `plan` command? |
 | OQ-4 | MCP server wrapper — expose `scan` and `plan` results to AI assistants? |
-| OQ-5 | Support for Windows paths (backslash separators in `AgLibraryFolder.pathFromRoot`)? |
+| ~~OQ-5~~ | ~~Support for Windows paths (backslash separators in `AgLibraryFolder.pathFromRoot`)?~~ **Resolved in v0.6.0:** full Windows support shipped. SQLite URI uses forward slashes (`as_posix()`), process detection uses `psutil`, and catalog auto-discovery supports `%USERPROFILE%\Pictures\Lightroom\`. |
 | OQ-6 | **Volume-offline handling** — should `validate` and `reconcile` skip roots whose `absolutePath` is not mounted, instead of reporting all their files as missing? |

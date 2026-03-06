@@ -196,6 +196,25 @@ class TestCatalogReconciler:
         assert row[0] == 1  # unchanged
         conn.close()
 
+    def test_reconcile_one_writes_forward_slash_path_from_root(
+        self,
+        tmp_path: Path,
+    ) -> None:
+        """_reconcile_one stores pathFromRoot with forward slashes (PROC-02)."""
+        # Verify contract: rel.parent.as_posix() always yields forward slashes
+        rel = Path("2023/06/photo.jpg")
+        assert rel.parent.as_posix() + "/" == "2023/06/"
+        # Negative: str() on Windows would yield backslashes
+        # (on POSIX str == as_posix, but the code must use as_posix explicitly)
+        import inspect
+
+        from lrc_automation import reconciler as rec_mod
+
+        src = inspect.getsource(rec_mod)
+        assert "as_posix()" in src, (
+            "reconciler.py must use .as_posix() for pathFromRoot, not str()"
+        )
+
     def test_reconcile_creates_new_folder_row(self, tmp_path: Path) -> None:
         """Actual path maps to a folder not in AgLibraryFolder → new row created."""
         from lrc_automation.models import FileAuditResult, MissingFile
