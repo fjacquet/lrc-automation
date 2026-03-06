@@ -319,10 +319,8 @@ dev = [
     { name = "mkdocs" },
     { name = "mkdocs-material" },
     { name = "mypy" },
-    { name = "pycountry" },
     { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "reverse-geocoder" },
     { name = "ruff" },
 ]
 
@@ -341,10 +339,8 @@ dev = [
     { name = "mkdocs", specifier = ">=1.6" },
     { name = "mkdocs-material", specifier = ">=9.6" },
     { name = "mypy", specifier = ">=1.14" },
-    { name = "pycountry", specifier = ">=24.6.1" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "pytest-cov", specifier = ">=6.0" },
-    { name = "reverse-geocoder", specifier = ">=1.5.1" },
     { name = "ruff", specifier = ">=0.15.1" },
 ]
 
