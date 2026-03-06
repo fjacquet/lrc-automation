@@ -6,6 +6,35 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-03-06
+
+### Added
+
+- **Windows support**: macOS and Windows are now both primary target platforms
+- `--catalog` / `-c` flag is now optional; the tool auto-discovers the default Lightroom Classic catalog at `~/Pictures/Lightroom/` (macOS) or `%USERPROFILE%\Pictures\Lightroom\` (Windows) when not specified
+- Cross-platform Lightroom process detection via `psutil`: detects `Adobe Lightroom Classic` (macOS) and `Lightroom.exe` (Windows), replacing the macOS-only `pgrep` subprocess
+- `pathFromRoot` SQL writes now always use forward slashes (`path.as_posix()`) so Lightroom can locate folders after a move on Windows
+- `PermissionError` retry loop in `executor.py` for transient antivirus scan locks on Windows
+- `.gitattributes` with `* text=auto eol=lf` to prevent CRLF failures on Windows CI checkout
+- CI matrix expanded to `ubuntu-latest`, `macos-latest`, and `windows-latest` runners for Python 3.12 and 3.13
+- SBOM (Software Bill of Materials) generated at release time via `anchore/sbom-action@v0` and attached to GitHub releases
+- ADR-007 documenting multiplatform decisions: psutil process detection, `as_posix()` SQL writes, darwin-only AppleDouble guard, SBOM generation, SQLite URI forward-slash fix, catalog auto-discovery
+- Windows installation and first-run section in README and `docs/usage.md`
+- `docs/prd.md` updated to name macOS and Windows as target platforms
+
+### Fixed
+
+- `CatalogConnection.open()`: SQLite URI now uses forward slashes on Windows (`_path_to_sqlite_uri` converts `Path.as_posix()` result), fixing "unable to open database" error on Windows
+- Opening a Mac-origin catalog (with `/Volumes/` absolute paths) on Windows now prints a human-readable warning and exits rather than crashing
+- `AppleDouble` (`._*`) file cleanup silently skipped on non-macOS platforms (no errors, no spurious log entries)
+- `reverse_geocoder` moved back to optional `[geo]` extra dependency (fixes packaging regression from v0.5.0)
+
+### Changed
+
+- `setup-uv` bumped to v7 with `enable-cache: true` in both `ci.yml` and `release.yml`
+- `ci.yml`: individual `uv run` steps replace `make check` (make unavailable on Windows runners)
+- `release.yml`: individual `uv run` steps replace `make check` for consistent CI step visibility
+
 ## [0.5.0] - 2026-02-28
 
 ### Added
