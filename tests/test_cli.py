@@ -7,7 +7,6 @@ from click.testing import CliRunner
 
 from lrc_automation.cli import _discover_default_catalog, cli
 
-
 # ---------------------------------------------------------------------------
 # Unit tests for _discover_default_catalog()
 # ---------------------------------------------------------------------------
@@ -65,15 +64,20 @@ def test_discover_returns_first_when_multiple(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_cli_auto_discovers_catalog(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """When no --catalog given and discovery returns a path, cli proceeds past discovery."""
+def test_cli_auto_discovers_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """cli proceeds past discovery when no --catalog and a path is found."""
     fake_catalog = tmp_path / "Test.lrcat"
     fake_catalog.touch()
 
     # Monkeypatch the module-level function so the CLI uses our fake path
     import lrc_automation.cli as cli_module
 
-    monkeypatch.setattr(cli_module, "_discover_default_catalog", lambda: str(fake_catalog))
+    monkeypatch.setattr(
+        cli_module, "_discover_default_catalog", lambda: str(fake_catalog)
+    )
+    monkeypatch.delenv("LRC_CATALOG_PATH", raising=False)
 
     runner = CliRunner()
     # The catalog exists but is not a real LR catalog; CatalogConnection will fail,
@@ -85,11 +89,14 @@ def test_cli_auto_discovers_catalog(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert "No catalog specified" not in result.output
 
 
-def test_cli_errors_when_no_catalog(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """When no --catalog given and discovery returns None, cli raises UsageError."""
+def test_cli_errors_when_no_catalog(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """cli raises UsageError when no --catalog and discovery returns None."""
     import lrc_automation.cli as cli_module
 
     monkeypatch.setattr(cli_module, "_discover_default_catalog", lambda: None)
+    monkeypatch.delenv("LRC_CATALOG_PATH", raising=False)
 
     runner = CliRunner()
     result = runner.invoke(cli, ["scan"])
@@ -98,7 +105,7 @@ def test_cli_errors_when_no_catalog(tmp_path: Path, monkeypatch: pytest.MonkeyPa
 
 
 def test_cli_explicit_catalog_not_found(tmp_path: Path) -> None:
-    """When --catalog points to a non-existent file, raises BadParameter with 'Catalog not found'."""
+    """BadParameter with 'Catalog not found' when --catalog path does not exist."""
     nonexistent = tmp_path / "ghost.lrcat"
     runner = CliRunner()
     result = runner.invoke(cli, ["--catalog", str(nonexistent), "scan"])
@@ -107,7 +114,7 @@ def test_cli_explicit_catalog_not_found(tmp_path: Path) -> None:
 
 
 def test_cli_explicit_catalog_still_works(tmp_path: Path) -> None:
-    """Explicit --catalog path that exists proceeds past the auto-discovery logic (no regression)."""
+    """Explicit --catalog path that exists proceeds past the auto-discovery logic."""
     fake_catalog = tmp_path / "MyLR.lrcat"
     fake_catalog.touch()
 

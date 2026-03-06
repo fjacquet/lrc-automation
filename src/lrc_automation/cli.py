@@ -14,14 +14,46 @@ load_dotenv()
 console = Console()
 
 
+def _discover_default_catalog(home_dir: Path | None = None) -> str | None:
+    """Return the path to the first .lrcat file in the default Lightroom directory.
+
+    Checks ~/Pictures/Lightroom/ (macOS/Linux) or
+    %USERPROFILE%\\Pictures\\Lightroom\\ (Windows).
+
+    Args:
+        home_dir: Override for the home directory (used in tests).
+
+    Returns:
+        Absolute path string to the first catalog found, or None.
+    """
+    base = home_dir or Path.home()
+    default_dir = base / "Pictures" / "Lightroom"
+    if not default_dir.is_dir():
+        return None
+    candidates = sorted(default_dir.glob("*.lrcat"))
+    if not candidates:
+        return None
+    if len(candidates) > 1:
+        console.print(
+            f"[dim]Auto-selected catalog: {candidates[0]}[/dim]"
+        )
+    return str(candidates[0])
+
+
 @click.group()
 @click.option(
     "--catalog",
     "-c",
-    type=click.Path(exists=True),
+    type=click.Path(),
     envvar="LRC_CATALOG_PATH",
-    required=True,
-    help="Path to .lrcat catalog file",
+    required=False,
+    default=None,
+    help=(
+        "Path to .lrcat catalog file. "
+        "If omitted, auto-discovered from ~/Pictures/Lightroom/ "
+        "(macOS/Linux) or %%USERPROFILE%%\\Pictures\\Lightroom\\ (Windows). "
+        "Override with LRC_CATALOG_PATH env var."
+    ),
 )
 @click.option("--verbose", "-v", is_flag=True)
 @click.option(
@@ -56,7 +88,7 @@ console = Console()
 @click.pass_context
 def cli(
     ctx: click.Context,
-    catalog: str,
+    catalog: str | None,
     verbose: bool,
     target_layout: str,
     location_folders: bool,
@@ -67,7 +99,19 @@ def cli(
     from .constants import LocationOrder
 
     ctx.ensure_object(dict)
+
+    if catalog is None:
+        catalog = _discover_default_catalog()
+    if catalog is None:
+        raise click.UsageError(
+            "No catalog specified and none found at the default path.\n"
+            "Use --catalog / -c or set LRC_CATALOG_PATH in your .env file."
+        )
     catalog_path = Path(catalog)
+    if not catalog_path.exists():
+        raise click.BadParameter(
+            f"Catalog not found: {catalog_path}", param_hint="--catalog"
+        )
     if catalog_path.suffix != ".lrcat":
         raise click.BadParameter(
             "File must have .lrcat extension", param_hint="--catalog"
