@@ -1,0 +1,14 @@
+.git
+.github
+.planning
+.venv
+__pycache__
+*.pyc
+dist/
+build/
+docs/
+tests/
+*.md
+.env
+.env.*
+Makefile

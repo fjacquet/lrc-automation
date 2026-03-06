@@ -7,9 +7,11 @@ on:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
-  release:
+  # ── 1. Lint + test (gate for all other jobs) ──────────────────────────────
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +28,19 @@ jobs:
       - run: uv run mypy src/
       - run: uv run pytest -v
 
-      - name: Build package
+  # ── 2. Python wheel + sdist ────────────────────────────────────────────────
+  build-python:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Build wheel and sdist
         run: uv build
 
       - name: Generate SBOM
@@ -35,10 +49,103 @@ jobs:
           artifact-name: lrc-automation-sbom.spdx.json
           format: spdx-json
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+
+  # ── 3. Standalone binaries (PyInstaller) ──────────────────────────────────
+  build-binary:
+    needs: test
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: lrc-auto-windows-x86_64.exe
+            binary: dist/lrc-auto.exe
+          - os: macos-latest
+            artifact: lrc-auto-macos-universal2
+            binary: dist/lrc-auto
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install package + PyInstaller
+        run: uv sync && uv pip install pyinstaller
+
+      - name: Build binary (Windows)
+        if: runner.os == 'Windows'
+        run: uv run pyinstaller --onefile --name lrc-auto --console src/lrc_automation/cli.py
+
+      - name: Build binary (macOS universal2)
+        if: runner.os == 'macOS'
+        run: uv run pyinstaller --onefile --name lrc-auto --console --target-arch universal2 src/lrc_automation/cli.py
+
+      - name: Rename artifact
+        shell: bash
+        run: cp "${{ matrix.binary }}" "${{ matrix.artifact }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: binary-${{ matrix.os }}
+          path: ${{ matrix.artifact }}
+
+  # ── 4. Docker image ────────────────────────────────────────────────────────
+  build-docker:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/lrc-automation
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ── 5. GitHub Release (collects all artifacts) ────────────────────────────
+  create-release:
+    needs: [build-python, build-binary, build-docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Flatten artifacts
+        run: find artifacts/ -type f | xargs -I{} cp {} release-files/ 2>/dev/null; mkdir -p release-files && find artifacts/ -type f -exec cp {} release-files/ \;
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: |
-            dist/*.whl
-            dist/*.tar.gz
+          files: release-files/*
