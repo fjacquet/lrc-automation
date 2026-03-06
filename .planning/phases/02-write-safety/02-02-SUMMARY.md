@@ -75,7 +75,7 @@ Each task was committed atomically:
 1. **Task 1: RED — Add failing tests for as_posix, darwin guard, and retry** - `a1ddfd4` (test)
 2. **Task 2: GREEN — Fix as_posix writes, darwin guard, and retry loop** - `afc8d4d` (feat)
 
-**Plan metadata:** pending docs commit
+**Plan metadata:** `e1ff274` (docs: complete plan)
 
 _Note: TDD tasks have two commits: test (RED) then feat (GREEN)_
 
@@ -109,6 +109,15 @@ None — no external service configuration required.
 - PROC-02, PROC-03, PROC-04 requirements fulfilled
 - Phase 03 (CI Windows) can proceed: executor and reconciler write-safety fixes are in place
 - No blockers
+
+## Self-Check: PASSED
+
+- executor.py: FOUND
+- reconciler.py: FOUND
+- 02-02-SUMMARY.md: FOUND
+- RED commit a1ddfd4: FOUND
+- GREEN commit afc8d4d: FOUND
+- Metadata commit e1ff274: FOUND
 
 ---
 _Phase: 02-write-safety_
