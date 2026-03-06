@@ -44,6 +44,9 @@ def test_path_to_sqlite_uri_readonly_false() -> None:
     assert "?mode=ro" not in uri
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="POSIX path not absolute on Windows"
+)
 def test_path_to_sqlite_uri_is_absolute_prefix() -> None:
     """Any absolute path must produce a URI that starts with file:///."""
     path = Path("/some/absolute/path/catalog.lrcat")
@@ -98,6 +101,9 @@ def test_mac_origin_catalog_warns_monkeypatched(
         cc.validate_is_lrcat()
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32", reason="macOS-origin check fires on Windows"
+)
 def test_mac_origin_catalog_ok_on_non_windows(tmp_path: Path) -> None:
     """On non-Windows, validate_is_lrcat() must NOT raise for Mac-origin catalogs."""
     db_path = tmp_path / "mac_catalog_ok.lrcat"

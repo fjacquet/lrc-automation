@@ -22,13 +22,13 @@ def _path_to_sqlite_uri(path: Path, readonly: bool = False) -> str:
     SQLite URI spec s.3.1: extra leading slashes after file: are valid.
 
     The is_absolute() check is cross-platform: on Windows a drive-letter path is
-    absolute; on POSIX we also detect Windows-style "X:/..." posix representations
-    so that Windows paths work correctly even when constructed cross-platform.
+    absolute; POSIX-style paths (/...) and Windows drive letters (X:/...) are also
+    detected so that macOS-origin absolutePaths work correctly on all platforms.
     """
     posix = path.as_posix()
     # Detect absolute paths: POSIX absolute (/...) or Windows drive letter (X:/...)
     has_drive = len(posix) >= 3 and posix[1] == ":" and posix[2] == "/"
-    is_abs = path.is_absolute() or has_drive
+    is_abs = path.is_absolute() or has_drive or posix.startswith("/")
     uri = f"file:///{posix}" if is_abs else f"file:{posix}"
     if readonly:
         uri += "?mode=ro"

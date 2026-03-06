@@ -137,7 +137,7 @@ class ChangePlanner:
         """Return the RootFolder whose absolutePath ends with the given year."""
         year_str = str(year)
         for root in roots:
-            tail = root.absolute_path.rstrip("/").split("/")[-1]
+            tail = root.absolute_path.rstrip("/\\").replace("\\", "/").split("/")[-1]
             if tail == year_str:
                 return root
         return None
