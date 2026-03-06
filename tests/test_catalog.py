@@ -3,6 +3,7 @@
 import sqlite3
 import sys
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -130,7 +131,7 @@ def test_check_lightroom_running_detects_macos_process(
     import psutil
 
     class FakeProc:
-        info = {"name": "Adobe Lightroom Classic"}
+        info: ClassVar[dict[str, str]] = {"name": "Adobe Lightroom Classic"}
 
     monkeypatch.setattr(psutil, "process_iter", lambda attrs: iter([FakeProc()]))
     conn = CatalogConnection(tmp_catalog)
@@ -145,7 +146,7 @@ def test_check_lightroom_running_detects_windows_process(
     import psutil
 
     class FakeProc:
-        info = {"name": "Lightroom.exe"}
+        info: ClassVar[dict[str, str]] = {"name": "Lightroom.exe"}
 
     monkeypatch.setattr(psutil, "process_iter", lambda attrs: iter([FakeProc()]))
     conn = CatalogConnection(tmp_catalog)

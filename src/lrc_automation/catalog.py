@@ -2,12 +2,13 @@
 
 import shutil
 import sqlite3
-import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 
-from .constants import LOCK_FILE_SUFFIX, LR_PROCESS_NAME
+import psutil
+
+from .constants import LOCK_FILE_SUFFIX, LR_PROCESS_NAME, LR_PROCESS_NAME_WINDOWS
 
 
 def _path_to_sqlite_uri(path: Path, readonly: bool = False) -> str:
@@ -87,28 +88,36 @@ class CatalogConnection:
             conn.close()
 
     def check_lightroom_not_running(self) -> None:
-        """Verify Lightroom is not running and catalog is not locked."""
+        """Verify Lightroom is not running and catalog is not locked.
+
+        Uses psutil.process_iter for cross-platform process detection.
+        Detects 'Adobe Lightroom Classic' (macOS) and 'Lightroom.exe' (Windows).
+
+        Note: WAL mode is NOT enabled here. WAL mode must NOT be enabled on
+        Windows (file-locking semantics differ); the lock-file + process check
+        is the correct write-safety mechanism on all platforms.
+        """
         lock_path = Path(str(self.catalog_path) + LOCK_FILE_SUFFIX)
         if lock_path.exists():
             raise LightroomRunningError(
                 f"Catalog is locked (found {lock_path.name}). Close Lightroom first."
             )
 
-        # Check for running Lightroom process on macOS
+        lr_names = {LR_PROCESS_NAME, LR_PROCESS_NAME_WINDOWS}
         try:
-            result = subprocess.run(
-                ["pgrep", "-f", LR_PROCESS_NAME],
-                capture_output=True,
-                text=True,
-                timeout=5,
-            )
-            if result.returncode == 0:
-                raise LightroomRunningError(
-                    "Lightroom Classic appears to be running. "
-                    "Close it before modifying the catalog."
-                )
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            pass  # pgrep not available or timed out, skip process check
+            for proc in psutil.process_iter(["name"]):
+                try:
+                    if proc.info["name"] in lr_names:
+                        raise LightroomRunningError(
+                            "Lightroom Classic appears to be running. "
+                            "Close it before modifying the catalog."
+                        )
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+        except LightroomRunningError:
+            raise
+        except Exception:
+            pass  # psutil unavailable or OS error — fall through
 
     def backup(self, backup_dir: Path | None = None) -> Path:
         """Create a timestamped backup of the catalog.
