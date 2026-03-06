@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Path Safety** - Catalog opens and scans correctly on Windows (SQLite URI, psutil, packaging) (completed 2026-03-06)
 - [x] **Phase 2: Write Safety** - Apply/reconcile/cleanup write correct paths and handle Windows file-system edge cases (completed 2026-03-06)
 - [x] **Phase 3: CI Matrix** - Green CI on Windows + Linux runners, SBOM generation at release (completed 2026-03-06)
-- [ ] **Phase 4: UX and Docs** - Zero-config catalog discovery, Windows onboarding documentation, ADR, PRD, CHANGELOG
+- [x] **Phase 4: UX and Docs** - Zero-config catalog discovery, Windows onboarding documentation, ADR, PRD, CHANGELOG (completed 2026-03-06)
 
 ## Phase Details
 
@@ -110,4 +110,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Path Safety | 3/3 | Complete   | 2026-03-06 |
 | 2. Write Safety | 2/2 | Complete    | 2026-03-06 |
 | 3. CI Matrix | 2/2 | Complete    | 2026-03-06 |
-| 4. UX and Docs | 2/3 | In Progress|  |
+| 4. UX and Docs | 3/3 | Complete   | 2026-03-06 |

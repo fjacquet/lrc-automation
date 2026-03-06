@@ -33,8 +33,8 @@ Requirements for the multiplatform milestone (Mac + Windows support).
 - [x] **UX-02**: README and `docs/usage.md` include a Windows installation and first-run section
 - [x] **UX-03**: `reverse_geocoder` is moved back to optional `[geo]` extra dependency (fixes pre-existing packaging regression from v0.5.0)
 - [x] **UX-04**: ADR written documenting the multiplatform approach and decisions (process detection, path normalisation, SBOM)
-- [ ] **UX-05**: `docs/prd.md` updated to reflect multiplatform scope (Mac + Windows target platforms)
-- [ ] **UX-06**: `CHANGELOG.md` updated for v0.6.0 with all changes documented
+- [x] **UX-05**: `docs/prd.md` updated to reflect multiplatform scope (Mac + Windows target platforms)
+- [x] **UX-06**: `CHANGELOG.md` updated for v0.6.0 with all changes documented
 
 ## Future Requirements
 
@@ -73,8 +73,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | UX-01 | Phase 4 | Complete |
 | UX-02 | Phase 4 | Complete |
 | UX-04 | Phase 4 | Complete |
-| UX-05 | Phase 4 | Pending |
-| UX-06 | Phase 4 | Pending |
+| UX-05 | Phase 4 | Complete |
+| UX-06 | Phase 4 | Complete |
 
 **Coverage:**
 

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-ux-and-docs-01-PLAN.md
-last_updated: "2026-03-06T21:37:08.473Z"
+stopped_at: Completed 04-ux-and-docs-03-PLAN.md
+last_updated: "2026-03-06T21:40:23.747Z"
 last_activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 10
-  completed_plans: 9
+  completed_plans: 10
   percent: 33
 ---
 
@@ -61,6 +61,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 03-ci-matrix P01 | 5 | 2 tasks | 2 files |
 | Phase 04-ux-and-docs P02 | 2 | 2 tasks | 3 files |
 | Phase 04-ux-and-docs P01 | 2 | 2 tasks | 2 files |
+| Phase 04-ux-and-docs P03 | 94 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Recent decisions affecting current work:
 - [Phase 04-ux-and-docs]: home_dir parameter on _discover_default_catalog() for testability — avoids monkeypatching Path.home()
 - [Phase 04-ux-and-docs]: type=click.Path() (no exists=True) allows None through to manual existence check in cli() body
 - [Phase 04-ux-and-docs]: monkeypatch.delenv('LRC_CATALOG_PATH') required in no-catalog tests since dev machine has env var set
+- [Phase 04-ux-and-docs]: PRD Section 4 names macOS and Windows as primary platforms; Linux documented as CI-only
+- [Phase 04-ux-and-docs]: v0.6.0 CHANGELOG entry covers all Phase 1-4 changes: 11 Added, 4 Fixed, 3 Changed items
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T21:37:08.470Z
-Stopped at: Completed 04-ux-and-docs-01-PLAN.md
+Last session: 2026-03-06T21:40:23.745Z
+Stopped at: Completed 04-ux-and-docs-03-PLAN.md
 Resume file: None
