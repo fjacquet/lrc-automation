@@ -7,6 +7,7 @@
 ---
 
 <phase_requirements>
+
 ## Phase Requirements
 
 | ID | Description | Research Support |
@@ -33,6 +34,7 @@ The documentation work is well-bounded: the ADR template is established by six p
 ## Standard Stack
 
 ### Core
+
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
 | click | 8.3.1 | CLI option handling, `default` callbacks, `required=False` | Already the CLI framework; supports callable defaults natively |
@@ -40,11 +42,13 @@ The documentation work is well-bounded: the ADR template is established by six p
 | os / sys | stdlib | `sys.platform` for OS detection if needed; `os.environ` for `USERPROFILE` (Windows) | No new dependency needed |
 
 ### Supporting
+
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
 | pytest + monkeypatch | 9.0.2 | Test auto-discovery with mocked home dirs | All UX-01 tests |
 
 ### Alternatives Considered
+
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
 | `Path.home() / "Pictures" / "Lightroom"` | `os.path.expanduser("~")` | pathlib is already used throughout; `Path.home()` is cleaner |
@@ -129,6 +133,7 @@ CHANGELOG.md         # Add v0.6.0 entry for UX-06
 ### ADR Pattern (UX-04)
 
 The existing ADR format (ADR-001 through ADR-006) is the template. The new ADR-007 must document:
+
 - `psutil` for cross-platform Lightroom process detection (replaces `pgrep` subprocess)
 - `path.as_posix()` for all SQL writes of `pathFromRoot` on Windows
 - `sys.platform == 'darwin'` guard for AppleDouble (`._*`) cleanup
@@ -159,25 +164,30 @@ Standard ADR sections: Status, Context, Decision, Consequences.
 ## Common Pitfalls
 
 ### Pitfall 1: USERPROFILE vs Path.home() on Windows
+
 **What goes wrong:** On some Windows setups, `USERPROFILE` differs from `HOMEDRIVE + HOMEPATH`. `Path.home()` handles this correctly by checking `USERPROFILE` first.
 **Why it happens:** Historical Windows multi-user setup differences.
 **How to avoid:** Use `Path.home()` directly — don't construct the Windows path manually from env vars.
 **Warning signs:** Discovery works on dev machine but fails on CI Windows runner.
 
 ### Pitfall 2: click.Path(exists=True) With Optional Catalog
+
 **What goes wrong:** If `--catalog` is omitted and discovery returns `None`, Click's path validator fires before the function body and raises a confusing internal error.
 **How to avoid:** Drop `exists=True` from the type; validate path existence manually inside `cli()` after calling `_discover_default_catalog()`.
 
 ### Pitfall 3: Globbing Returns .lrcat.bak Files
+
 **What goes wrong:** `Path.glob("*.lrcat")` matches `Catalog.lrcat.bak-20260101` because `*.lrcat` is not anchored to extension end in all glob implementations. However, `pathlib.Path.glob` matches only the stem+extension — `*.lrcat` does NOT match `Catalog.lrcat.bak-20260101` because the full filename is `Catalog.lrcat.bak-20260101`, not ending in `.lrcat`.
 **Confirmation (HIGH confidence):** Python's `pathlib.glob("*.lrcat")` matches filenames whose suffix is `.lrcat`, not files that merely contain `.lrcat` in the name. Backup files like `Catalog.lrcat.bak-20260306` have suffix `.bak-20260306`, so they are excluded.
 **How to avoid:** No special handling needed — use `glob("*.lrcat")` directly.
 
 ### Pitfall 4: Missing Windows Section in .env Example
+
 **What goes wrong:** Windows users copy the macOS-style path with forward slashes in `.env.example` and it works (the SQLite URI fix handles this), but the path with backslashes also needs documentation.
 **How to avoid:** Document in README/usage.md that both `/` and `\` separators work.
 
 ### Pitfall 5: CHANGELOG Missing Intermediate Commits
+
 **What goes wrong:** The CHANGELOG summarizes features by phase but omits fixes applied mid-phase (e.g., CI fixup commits: `fix(ci): skip geo/darwin tests when extras absent on CI`).
 **How to avoid:** Review `git log --oneline` from the Phase 1 branch point to now before writing the CHANGELOG entry.
 
@@ -314,6 +324,7 @@ This keeps the function pure and testable with monkeypatch.
 All changes for the `## [0.6.0]` CHANGELOG block, assembled from git log and STATE.md decisions:
 
 ### Added
+
 - **Windows support** (macOS + Windows now both primary target platforms)
 - `--catalog` / `-c` flag is now optional; tool auto-discovers the default Lightroom Classic catalog at `~/Pictures/Lightroom/` (macOS) or `%USERPROFILE%\Pictures\Lightroom\` (Windows) when not specified
 - Cross-platform Lightroom process detection via `psutil` (replaces macOS-only `pgrep`): detects both `Adobe Lightroom Classic` (macOS) and `Lightroom.exe` (Windows)
@@ -327,12 +338,14 @@ All changes for the `## [0.6.0]` CHANGELOG block, assembled from git log and STA
 - `docs/prd.md` updated to name macOS and Windows as target platforms
 
 ### Fixed
+
 - `CatalogConnection.open()`: SQLite URI now uses forward slashes on Windows (`_path_to_sqlite_uri` converts `Path.as_posix()` result), fixing "unable to open database" error on Windows
 - Opening a Mac-origin catalog (with `/Volumes/` absolute paths) on Windows now prints a human-readable warning and exits rather than crashing
 - `AppleDouble` (`._*`) file cleanup silently skipped on non-macOS platforms (no errors, no spurious log entries)
 - `reverse_geocoder` moved back to optional `[geo]` extra dependency (fixes packaging regression from v0.5.0)
 
 ### Changed
+
 - `setup-uv` bumped to v7 with `enable-cache: true` in both `ci.yml` and `release.yml`
 - `ci.yml`: individual `uv run` steps replace `make check` (make unavailable on Windows runners)
 - `release.yml`: individual `uv run` steps replace `make check` for consistent CI step visibility
@@ -364,34 +377,40 @@ Content for the new Windows section in README and docs/usage.md:
 ### Installation on Windows
 
 **Requirements:**
+
 - Windows 10 or later
 - Python 3.12+ (from python.org or Windows Store)
 - `uv` or `pipx`
 
 **Install with uv:**
+
 ```powershell
 pip install uv
 uv tool install lrc-automation
 ```
 
 **Install with pipx:**
+
 ```powershell
 pip install pipx
 pipx install lrc-automation
 ```
 
 **MAX_PATH advisory:** Windows limits file paths to 260 characters by default. If your catalog root paths are deep, enable long-path support:
+
 1. Open Group Policy Editor (`gpedit.msc`)
 2. Navigate to: Computer Configuration > Administrative Templates > System > Filesystem
 3. Enable "Enable Win32 long paths"
 
 Or via PowerShell (requires admin):
+
 ```powershell
 New-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem" `
   -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
 ```
 
 **First run:**
+
 ```powershell
 # Auto-discover default Lightroom catalog
 lrc-auto scan
@@ -402,6 +421,7 @@ lrc-auto -c "C:/Users/YourName/Pictures/Lightroom/Catalog.lrcat" scan
 ```
 
 **.env file on Windows** (use forward slashes or escaped backslashes):
+
 ```env
 LRC_CATALOG_PATH=C:/Users/YourName/Pictures/Lightroom/Catalog.lrcat
 LRC_BACKUP_DIR=C:/Users/YourName/Documents/LightroomBackups
@@ -471,6 +491,7 @@ Date: 2026-03-06
 ## Validation Architecture
 
 ### Test Framework
+
 | Property | Value |
 |----------|-------|
 | Framework | pytest 9.0.2 |
@@ -492,11 +513,13 @@ Date: 2026-03-06
 | UX-06 | `CHANGELOG.md` has `## [0.6.0]` entry | manual | `grep "0.6.0" CHANGELOG.md` | ❌ Wave 0 |
 
 ### Sampling Rate
+
 - **Per task commit:** `uv run pytest tests/test_cli.py -x`
 - **Per wave merge:** `uv run pytest -v`
 - **Phase gate:** Full suite green + `make check` before `/gsd:verify-work`
 
 ### Wave 0 Gaps
+
 - [ ] `tests/test_cli.py` — covers UX-01 auto-discovery (new file needed)
 - [ ] `tests/test_cli.py` should use `click.testing.CliRunner` for integration tests
 - [ ] No framework install needed — pytest already installed
@@ -506,6 +529,7 @@ Date: 2026-03-06
 ## Sources
 
 ### Primary (HIGH confidence)
+
 - `cli.py` — existing Click option definitions and cli() function body (read directly)
 - `catalog.py` — `_path_to_sqlite_uri`, `CatalogConnection` (read directly)
 - `pyproject.toml` — current version (0.5.0), dependencies, optional extras (read directly)
@@ -518,10 +542,12 @@ Date: 2026-03-06
 - `git log --oneline -30` — all v0.6.0 commits (read directly)
 
 ### Secondary (MEDIUM confidence)
+
 - Click 8.x docs: `required=False` with `default=None` and callable support — verified by inspecting `cli.py` existing patterns and Click version installed
 - Python `pathlib.Path.home()` on Windows: uses `USERPROFILE` env var — standard Python docs behavior
 
 ### Tertiary (LOW confidence)
+
 - Windows MAX_PATH limit of 260 characters — widely documented; relevant when catalog paths are deep on Windows
 
 ---
@@ -529,6 +555,7 @@ Date: 2026-03-06
 ## Metadata
 
 **Confidence breakdown:**
+
 - UX-01 code change: HIGH — pattern is straightforward Click + pathlib, no new libraries
 - ADR writing (UX-04): HIGH — template established by 6 prior ADRs; content from STATE.md
 - PRD update (UX-05): HIGH — specific paragraphs identified; changes are narrow
