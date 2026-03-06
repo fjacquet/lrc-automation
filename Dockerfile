@@ -10,8 +10,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-# Copy project files
-COPY pyproject.toml .
+# Copy project files (README.md required by pyproject.toml build metadata)
+COPY pyproject.toml README.md ./
 COPY src/ src/
 
 # Install the package (no geo extra — reverse_geocoder has no Linux wheel in CI)
