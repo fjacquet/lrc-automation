@@ -16,9 +16,9 @@ Requirements for the multiplatform milestone (Mac + Windows support).
 ### PROC — Process Detection & Write Safety
 
 - [x] **PROC-01**: Tool detects Lightroom Classic running on Windows via `psutil` (replaces the silent `pgrep` no-op, checks `Lightroom.exe`)
-- [ ] **PROC-02**: `pathFromRoot` SQL column is always written with forward slashes on Windows so Lightroom can locate folders after a move
-- [ ] **PROC-03**: AppleDouble (`._*`) file cleanup is skipped silently on non-macOS platforms (no errors, no spurious log entries)
-- [ ] **PROC-04**: File moves retry on `PermissionError` to handle transient antivirus scan locks on Windows
+- [x] **PROC-02**: `pathFromRoot` SQL column is always written with forward slashes on Windows so Lightroom can locate folders after a move
+- [x] **PROC-03**: AppleDouble (`._*`) file cleanup is skipped silently on non-macOS platforms (no errors, no spurious log entries)
+- [x] **PROC-04**: File moves retry on `PermissionError` to handle transient antivirus scan locks on Windows
 
 ### CI — CI & Dev Tooling
 
@@ -63,9 +63,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PATH-03 | Phase 1 | Complete |
 | UX-03 | Phase 1 | Complete |
 | PROC-01 | Phase 2 | Complete |
-| PROC-02 | Phase 2 | Pending |
-| PROC-03 | Phase 2 | Pending |
-| PROC-04 | Phase 2 | Pending |
+| PROC-02 | Phase 2 | Complete |
+| PROC-03 | Phase 2 | Complete |
+| PROC-04 | Phase 2 | Complete |
 | CI-01 | Phase 3 | Pending |
 | CI-02 | Phase 3 | Pending |
 | CI-03 | Phase 3 | Pending |
