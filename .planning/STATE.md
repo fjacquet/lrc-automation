@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v0.5
 milestone_name: milestone
 status: planning
-stopped_at: Completed 02-write-safety-02-PLAN.md
-last_updated: "2026-03-06T20:39:52.120Z"
+stopped_at: Completed 03-ci-matrix-02-PLAN.md
+last_updated: "2026-03-06T20:54:35.853Z"
 last_activity: 2026-03-06 — Roadmap created for v0.6.0 Multiplatform milestone
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
   percent: 33
 ---
 
@@ -57,6 +57,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 01-path-safety P01 | 4 | 2 tasks | 2 files |
 | Phase 02-write-safety P01 | 3 | 2 tasks | 5 files |
 | Phase 02-write-safety P02 | 4 | 2 tasks | 4 files |
+| Phase 03-ci-matrix P02 | 5 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,9 @@ Recent decisions affecting current work:
 - [Phase 02-write-safety]: sys.platform == 'darwin' is the guard for all AppleDouble logic
 - [Phase 02-write-safety]: Rollback action appended AFTER successful file op completes to prevent ghost rollbacks
 - [Phase 02-write-safety]: _MOVE_RETRY_SLEEP is a module-level constant so tests can zero it via monkeypatch
+- [Phase 03-ci-matrix]: anchore/sbom-action@v0 chosen over actions/attest-sbom: produces downloadable release artifact visible on releases page
+- [Phase 03-ci-matrix]: setup-uv bumped to v7 with enable-cache: true in release.yml for consistency with ci.yml
+- [Phase 03-ci-matrix]: make check replaced by individual uv run commands in release.yml for explicit CI step visibility
 
 ### Pending Todos
 
@@ -99,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-06T20:35:10.354Z
-Stopped at: Completed 02-write-safety-02-PLAN.md
+Last session: 2026-03-06T20:54:35.850Z
+Stopped at: Completed 03-ci-matrix-02-PLAN.md
 Resume file: None
