@@ -92,7 +92,13 @@ Plans:
   3. An ADR document exists in `docs/adr/` documenting the multiplatform decisions: `psutil` for process detection, `path.as_posix()` for SQL writes, `sys.platform` for AppleDouble guard, and SBOM generation.
   4. `docs/prd.md` names macOS and Windows as the two target platforms and describes the constraints that keep Linux as CI-only.
   5. `CHANGELOG.md` has a complete v0.6.0 entry listing every shipped change from all four phases.
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+
+- [ ] 04-01-PLAN.md — Make --catalog optional with auto-discovery in cli.py + tests/test_cli.py (UX-01)
+- [ ] 04-02-PLAN.md — Windows docs in README/usage.md and ADR-007 (UX-02, UX-04)
+- [ ] 04-03-PLAN.md — Update docs/prd.md for Windows scope and write CHANGELOG v0.6.0 entry (UX-05, UX-06)
 
 ## Progress
 
@@ -104,4 +110,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 | 1. Path Safety | 3/3 | Complete   | 2026-03-06 |
 | 2. Write Safety | 2/2 | Complete    | 2026-03-06 |
 | 3. CI Matrix | 2/2 | Complete    | 2026-03-06 |
-| 4. UX and Docs | 0/TBD | Not started | - |
+| 4. UX and Docs | 0/3 | Not started | - |
