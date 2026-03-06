@@ -1,6 +1,6 @@
 [project]
 name = "lrc-automation"
-version = "0.5.0"
+version = "0.6.0"
 description = "Lightroom Classic catalog automation - fix misplaced photos and duplicate filenames"
 readme = "README.md"
 authors = [
