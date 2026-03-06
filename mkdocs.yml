@@ -37,3 +37,9 @@ nav:
   - PRD: prd.md
   - ADR:
       - "001 - Catalog Automation": adr/001-lightroom-classic-catalog-automation.md
+      - "002 - Executor Safety": adr/002-executor-safety-and-error-handling.md
+      - "003 - Filesystem Reliability": adr/003-filesystem-reliability-year-root-empty-folder.md
+      - "004 - Disk Audit": adr/004-disk-audit-file-search-logging.md
+      - "005 - Reconcile Command": adr/005-reconcile-command.md
+      - "006 - Cross-Root Migration": adr/006-cross-root-year-in-year-migration.md
+      - "007 - Multiplatform Support": adr/007-multiplatform-windows-support.md
