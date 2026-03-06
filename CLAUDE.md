@@ -86,6 +86,7 @@ Copy `.env.example` to `.env`. Key variables: `LRC_CATALOG_PATH`, `LRC_BACKUP_DI
 ## Known Issue: Scanner Date Detection
 
 The scanner currently only matches `YYYY/MM/` in `pathFromRoot`. The real catalog (92K photos, 4K folders) also uses:
+
 - `YYYY-MM-DD` date subfolders (1,663 folders)
 - French date folders like `1 avril 2016` (978 folders)
 - Dates in root folder paths, not just pathFromRoot

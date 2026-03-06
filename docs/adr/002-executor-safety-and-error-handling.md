@@ -66,7 +66,9 @@ Exception       → record_error, rollback all, return
 ## Alternatives Considered
 
 ### Strict mode (abort on any missing file)
+
 Keep the original rollback-all behaviour but surface a clear error. Rejected: too disruptive for large catalogs with occasional desync.
 
 ### Skip silently without reporting
+
 Skip missing files without telling the user. Rejected: the user needs to know about catalog/disk desyncs so they can reconcile them via Lightroom's "Find Missing Photos" or the `validate` command.
