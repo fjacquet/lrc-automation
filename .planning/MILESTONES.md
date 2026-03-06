@@ -1,5 +1,14 @@
 # Milestones
 
+## v0.6.0 Multiplatform (Shipped: 2026-03-06)
+
+**Phases completed:** 4 phases, 10 plans, 4 tasks
+
+**Key accomplishments:**
+- (none recorded)
+
+---
+
 ## v0.5.0 — Cross-Root & Reconcile (2026-02-28)
 
 **Goal:** Complete the repair pipeline: cross-root year migrations, reconcile found-elsewhere files, full disk audit, cleanup utilities.

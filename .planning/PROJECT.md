@@ -29,36 +29,38 @@ Photos stay at the path their EXIF capture date dictates, so the Lightroom catal
 - ✓ Reconcile command (fix folder pointers for found-elsewhere files) — v0.5.0
 - ✓ Full disk audit (`validate`) with JSON/CSV output — v0.5.0
 - ✓ `--log-file` debug logging — v0.5.0
-
-## Current Milestone: v0.6.0 Multiplatform
-
-**Goal:** Make lrc-automation run on Windows, Linux, and macOS without platform-specific assumptions in the code.
-
-**Target features:**
-
-- Cross-platform process detection (replace macOS-only `pgrep` with `psutil`)
-- Windows catalog path handling (backslash paths, drive letters in `absolutePath`)
-- Platform-aware AppleDouble cleanup (no-op or skip on non-macOS)
-- Default catalog path discovery per platform
-- CI matrix expanded to Windows + Linux runners
-- Documentation updated for all platforms
+- ✓ Windows catalog open via SQLite URI (`_path_to_sqlite_uri`) — v0.6.0
+- ✓ Windows backslash normalisation in scanner (`norm_root`) — v0.6.0
+- ✓ `geo` extra decoupled from core install — v0.6.0
+- ✓ Cross-platform process detection via `psutil` — v0.6.0
+- ✓ `path.as_posix()` SQL writes for `pathFromRoot` — v0.6.0
+- ✓ `sys.platform` guard for AppleDouble cleanup — v0.6.0
+- ✓ `PermissionError` retry loop for transient Windows locks — v0.6.0
+- ✓ 3-OS CI matrix (ubuntu/macos/windows) + `.gitattributes` LF enforcement — v0.6.0
+- ✓ SBOM artifact attached to every GitHub release — v0.6.0
+- ✓ Zero-config catalog discovery (`_discover_default_catalog`) — v0.6.0
+- ✓ Windows onboarding docs (README + docs/usage.md) + ADR-007 — v0.6.0
+- ✓ `docs/prd.md` updated for macOS/Windows targets — v0.6.0
+- ✓ Complete v0.6.0 CHANGELOG entry — v0.6.0
 
 ### Active
 
-<!-- Current scope. Building toward these. -->
+<!-- Current scope for next milestone. Planning in progress. -->
 
-- [ ] Cross-platform Lightroom process detection
-- [ ] Windows path handling in catalog absolutePath
-- [ ] Platform-aware cleanup (AppleDouble is macOS-only)
-- [ ] Default catalog path per OS
-- [ ] CI: Windows + Linux in GitHub Actions matrix
-- [ ] Docs: multiplatform install and usage
+*(No active requirements — planning next milestone)*
 
 ### Out of Scope
 
 - Lightroom Lua SDK integration — SQLite direct access is the only viable approach (ADR-001)
 - Real-time sync / daemon mode — safety requires explicit user invocation
 - GUI — CLI tool for power users
+
+## Constraints
+
+- **Safety**: Never write to catalog while Lightroom is open (lock file check + process detection)
+- **Atomicity**: All writes in a single SQLite transaction with disk rollback on failure
+- **Compatibility**: Must support Lightroom Classic catalog schema (AgLibraryFile, AgLibraryFolder, AgLibraryRootFolder, Adobe_images)
+- **Python**: 3.12+ only; uv for dependency management
 
 ## Context
 
@@ -67,14 +69,8 @@ Photos stay at the path their EXIF capture date dictates, so the Lightroom catal
 - 20,178 photos (22%) have GPS coordinates
 - Photo library spans decades with mixed folder naming conventions (YYYY/MM, YYYY-MM-DD, French dates, topical)
 - Python 3.12/3.13, uv, ruff, mypy strict, pytest; no `unittest.mock`
-- 83+ tests using in-memory SQLite catalogs
-
-## Constraints
-
-- **Safety**: Never write to catalog while Lightroom is open (lock file check + process detection)
-- **Atomicity**: All writes in a single SQLite transaction with disk rollback on failure
-- **Compatibility**: Must support Lightroom Classic catalog schema (AgLibraryFile, AgLibraryFolder, AgLibraryRootFolder, Adobe_images)
-- **Python**: 3.12+ only; uv for dependency management
+- 215 tests using in-memory SQLite catalogs; 7,815 lines Python (src + tests)
+- Shipped v0.6.0 with full Windows + macOS support; Linux CI-only
 
 ## Key Decisions
 
@@ -85,6 +81,12 @@ Photos stay at the path their EXIF capture date dictates, so the Lightroom catal
 | Single transaction for all writes | Ensures atomicity; any failure rolls back completely | ✓ Good |
 | Target layout `YYYY/MM/` as default | Matches existing majority of catalog structure | ✓ Good |
 | Strip bogus 1904 Lightroom epoch dates | Avoids misdetecting old imports as misplaced | ✓ Good |
+| `psutil` for process detection (v0.6.0) | Cross-platform hard dependency; replaces macOS-only pgrep | ✓ Good |
+| `path.as_posix()` for SQL path writes (v0.6.0) | Lightroom expects forward slashes on all platforms | ✓ Good |
+| `sys.platform == 'darwin'` guard for AppleDouble (v0.6.0) | AppleDouble files only exist on macOS | ✓ Good |
+| SQLite URI via `_path_to_sqlite_uri()` (v0.6.0) | Windows drive-letter paths need `file:///C:/...` format | ✓ Good |
+| `home_dir` param on `_discover_default_catalog` (v0.6.0) | Testability without patching `Path.home()` | ✓ Good |
+| Linux as CI-only target (v0.6.0) | `reverse_geocoder` has no Windows wheel; Linux servers don't use LR | ✓ Good |
 
 ---
-*Last updated: 2026-03-06 after bootstrapping .planning from CHANGELOG (v0.5.0 shipped)*
+*Last updated: 2026-03-06 after v0.6.0 Multiplatform milestone*
