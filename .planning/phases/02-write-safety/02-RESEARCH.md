@@ -7,6 +7,7 @@
 ---
 
 <phase_requirements>
+
 ## Phase Requirements
 
 | ID | Description | Research Support |
@@ -34,6 +35,7 @@ The tests follow the project's established patterns: `monkeypatch` for `sys.plat
 ## Standard Stack
 
 ### Core
+
 | Library | Version | Purpose | Why Standard |
 |---------|---------|---------|--------------|
 | `psutil` | >=5.x (latest: 7.x) | Cross-platform process enumeration | Locked project decision; binary wheels for all platforms |
@@ -43,11 +45,13 @@ The tests follow the project's established patterns: `monkeypatch` for `sys.plat
 | `time` | stdlib | `time.sleep` for retry backoff | Standard retry idiom |
 
 ### Supporting
+
 | Library | Version | Purpose | When to Use |
 |---------|---------|---------|-------------|
 | `pytest.MonkeyPatch` | pytest >=9 | Patch `sys.platform`, `psutil.process_iter`, `shutil.move` in tests | All cross-platform behaviour tests |
 
 ### Alternatives Considered
+
 | Instead of | Could Use | Tradeoff |
 |------------|-----------|----------|
 | `psutil.process_iter` | `subprocess.run(['pgrep', ...])` | `pgrep` is macOS/Linux only — silent no-op on Windows; psutil is cross-platform |
@@ -55,6 +59,7 @@ The tests follow the project's established patterns: `monkeypatch` for `sys.plat
 | `time.sleep` retry | `tenacity` library | `tenacity` is a heavy dependency for a two-line retry loop; stdlib sufficient |
 
 **Installation:**
+
 ```bash
 # psutil must be added to pyproject.toml core dependencies
 # (not already present — it was used in a test but not in core deps)
@@ -87,6 +92,7 @@ src/lrc_automation/
 **Current code location:** `catalog.py` lines 98-111
 
 **Fix pattern:**
+
 ```python
 # Source: psutil official docs https://psutil.readthedocs.io/en/latest/#processes
 import psutil
@@ -116,6 +122,7 @@ def check_lightroom_not_running(self) -> None:
 ```
 
 **Constants needed in `constants.py`:**
+
 ```python
 LR_PROCESS_NAME = "Adobe Lightroom Classic"     # macOS
 LR_PROCESS_NAME_WINDOWS = "Lightroom.exe"       # Windows
@@ -128,6 +135,7 @@ LR_PROCESS_NAME_WINDOWS = "Lightroom.exe"       # Windows
 **Affected locations:**
 
 1. `executor.py` — `cleanup_empty_folders()` function, line 369:
+
    ```python
    # BEFORE (writes backslashes on Windows)
    path_from_root = str(rel) + "/"
@@ -136,6 +144,7 @@ LR_PROCESS_NAME_WINDOWS = "Lightroom.exe"       # Windows
    ```
 
 2. `reconciler.py` — `_reconcile_one()` method, line 94:
+
    ```python
    # BEFORE (writes backslashes on Windows)
    path_from_root = str(rel.parent) + "/"
@@ -154,6 +163,7 @@ LR_PROCESS_NAME_WINDOWS = "Lightroom.exe"       # Windows
 **Current location:** `executor.py`, `_is_effectively_empty()` and `cleanup_empty_folders()`.
 
 **Fix pattern:**
+
 ```python
 import sys
 
@@ -237,30 +247,35 @@ def _apply_file_op(self, src: Path, dst: Path, move: bool) -> None:
 ## Common Pitfalls
 
 ### Pitfall 1: `psutil.AccessDenied` During Process Iteration
+
 **What goes wrong:** On Windows, certain system processes raise `AccessDenied` when their name is queried; unguarded code crashes mid-iteration.
 **Why it happens:** Windows security model restricts cross-user process inspection.
 **How to avoid:** Wrap each `proc.info["name"]` access in a try/except for `(psutil.NoSuchProcess, psutil.AccessDenied)` inside the `process_iter` loop.
 **Warning signs:** CI failure on Windows with `psutil.AccessDenied` traceback.
 
 ### Pitfall 2: `str(rel)` Writes Backslashes on Windows
+
 **What goes wrong:** `cleanup_empty_folders` and `reconciler._reconcile_one` derive `pathFromRoot` from `Path.relative_to()`. On Windows, `str()` of a `WindowsPath` uses backslashes. Lightroom then cannot find the folders.
 **Why it happens:** `Path.__str__` is OS-dependent; `Path.as_posix()` is always forward-slash.
 **How to avoid:** Use `rel.as_posix()` (and `rel.parent.as_posix()`) everywhere `pathFromRoot` is written.
 **Warning signs:** Post-apply Lightroom shows moved folders as "missing"; pathFromRoot column contains `\` characters.
 
 ### Pitfall 3: AppleDouble `._` Check Breaks on Windows
+
 **What goes wrong:** `_is_effectively_empty` treats a directory containing `._Thumbnail.jpg` as empty and tries to delete it; on Windows this could either fail (file is real content, not AppleDouble) or succeed unexpectedly.
 **Why it happens:** `._*` naming convention is macOS-specific; on Windows these may be legitimate filenames.
 **How to avoid:** Gate the `._` prefix check and deletion behind `sys.platform == "darwin"`.
 **Warning signs:** Test `test_removes_apple_double_files_before_rmdir` passes on macOS but produces unexpected behaviour on Windows.
 
 ### Pitfall 4: Retry Loop Registers Rollback Before Success
+
 **What goes wrong:** If rollback is registered before a successful move, a failed-then-retried-then-succeeded move could create a duplicate rollback entry pointing to a stale path.
 **Why it happens:** Rollback registration placed before the success check.
 **How to avoid:** Only append to `_rollback_actions` after confirming the operation succeeded (i.e., after the loop exits without error).
 **Warning signs:** Double-move during rollback; file ends up at unexpected location.
 
 ### Pitfall 5: `psutil` Not in `pyproject.toml` Core Dependencies
+
 **What goes wrong:** Tool installs fine but crashes on first `apply` run with `ModuleNotFoundError: No module named 'psutil'`.
 **Why it happens:** `psutil` is a locked dependency choice but has not yet been added to `pyproject.toml`.
 **How to avoid:** Add `psutil>=5.9` to `[project] dependencies` in the same plan that modifies `catalog.py`.
@@ -273,6 +288,7 @@ def _apply_file_op(self, src: Path, dst: Path, move: bool) -> None:
 Verified patterns from official sources and codebase inspection:
 
 ### psutil Safe Process Iteration
+
 ```python
 # Source: https://psutil.readthedocs.io/en/latest/#processes
 import psutil
@@ -287,6 +303,7 @@ for proc in psutil.process_iter(["name"]):
 ```
 
 ### Path.as_posix() for pathFromRoot SQL writes
+
 ```python
 # Source: Python stdlib pathlib docs
 # Before storing a relative Path as pathFromRoot in SQLite:
@@ -295,6 +312,7 @@ path_from_root = rel.as_posix() + "/"   # Always "2023/06/" — never "2023\\06\
 ```
 
 ### sys.platform AppleDouble Guard
+
 ```python
 import sys
 
@@ -304,6 +322,7 @@ if sys.platform == "darwin":
 ```
 
 ### PermissionError Retry
+
 ```python
 import time
 
@@ -335,6 +354,7 @@ if last_err is not None:
 | Single-attempt shutil.move | Retry loop with sleep | Phase 2 | Survives transient AV locks on Windows |
 
 **Deprecated/outdated:**
+
 - `subprocess.run(['pgrep', ...])` in `catalog.py`: replaced by psutil; will be removed entirely.
 - `LR_PROCESS_NAME` string: still valid for macOS; `LR_PROCESS_NAME_WINDOWS` constant added alongside it.
 
@@ -357,6 +377,7 @@ if last_err is not None:
 ## Validation Architecture
 
 ### Test Framework
+
 | Property | Value |
 |----------|-------|
 | Framework | pytest 9.x |
@@ -379,32 +400,37 @@ if last_err is not None:
 | PROC-04 | All retries exhausted → PermissionError raised, no partial disk state | unit | `uv run pytest tests/test_executor.py -k "retry_exhausted" -x` | ❌ Wave 0 |
 
 ### Sampling Rate
+
 - **Per task commit:** `uv run pytest tests/test_catalog.py tests/test_executor.py tests/test_reconciler.py -x`
 - **Per wave merge:** `uv run pytest -v`
 - **Phase gate:** Full suite green + `make check` before `/gsd:verify-work`
 
 ### Wave 0 Gaps
+
 - [ ] New test functions in `tests/test_catalog.py` — covers PROC-01 (psutil detection, AccessDenied handling)
 - [ ] New test functions in `tests/test_executor.py` — covers PROC-02 (as_posix), PROC-03 (darwin guard), PROC-04 (retry)
 - [ ] New test functions in `tests/test_reconciler.py` — covers PROC-02 (reconciler forward-slash write)
 - [ ] `psutil` added to `pyproject.toml` core deps: `uv add psutil`
 
-*(All tests use existing conftest fixtures; no new fixtures needed.)*
+_(All tests use existing conftest fixtures; no new fixtures needed.)_
 
 ---
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- psutil official docs https://psutil.readthedocs.io/en/latest/#processes — process_iter API, exception hierarchy
+
+- psutil official docs <https://psutil.readthedocs.io/en/latest/#processes> — process_iter API, exception hierarchy
 - Python stdlib `pathlib.Path.as_posix()` documentation — always returns forward-slash string
 - Direct codebase inspection (`catalog.py`, `executor.py`, `reconciler.py`, `constants.py`) — exact line numbers of all write sites
 
 ### Secondary (MEDIUM confidence)
-- psutil GitHub https://github.com/giampaolo/psutil — Windows process name `Lightroom.exe` verified as standard `.exe` naming
+
+- psutil GitHub <https://github.com/giampaolo/psutil> — Windows process name `Lightroom.exe` verified as standard `.exe` naming
 - Python `sys.platform` documentation — `"darwin"` on macOS, `"win32"` on Windows regardless of 32/64-bit
 
 ### Tertiary (LOW confidence)
+
 - Windows AV scan lock timing (0.5s sleep estimate) — based on general knowledge; specific timing needs empirical validation on target hardware
 
 ---
@@ -412,6 +438,7 @@ if last_err is not None:
 ## Metadata
 
 **Confidence breakdown:**
+
 - Standard stack: HIGH — psutil is locked decision; stdlib only otherwise
 - Architecture: HIGH — three exact file locations identified; fix patterns are single-line changes
 - Pitfalls: HIGH — all derived from direct code inspection, not speculation
