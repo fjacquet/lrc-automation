@@ -258,6 +258,10 @@ class TestCleanupEmptyFolders:
         # Non-empty dir must survive
         assert (root_dir / "2016" / "06" / "IMG.JPG").exists()
 
+    @pytest.mark.skipif(
+        __import__("sys").platform != "darwin",
+        reason="AppleDouble cleanup is macOS-only",
+    )
     def test_removes_apple_double_files_before_rmdir(self, tmp_path: Path) -> None:
         """Directories containing only ._* files are cleaned and removed."""
         import sqlite3

@@ -1,5 +1,6 @@
 """Tests for planner module."""
 
+import importlib.util
 import sqlite3
 from pathlib import Path
 
@@ -87,6 +88,10 @@ class TestChangePlanner:
                 assert change.target_folder_path == "2023/06/"
         conn.close()
 
+    @pytest.mark.skipif(
+        importlib.util.find_spec("reverse_geocoder") is None,
+        reason="requires [geo] extra",
+    )
     def test_plan_moves_with_location(self, tmp_catalog_with_gps: Path) -> None:
         """With location_folders, GPS photos get Country/City subfolder."""
         conn = sqlite3.connect(str(tmp_catalog_with_gps))
@@ -105,6 +110,10 @@ class TestChangePlanner:
             assert len(parts) == 4, f"Expected 4 parts, got {parts}"
         conn.close()
 
+    @pytest.mark.skipif(
+        importlib.util.find_spec("reverse_geocoder") is None,
+        reason="requires [geo] extra",
+    )
     def test_plan_moves_mixed_gps(self, tmp_catalog_with_gps: Path) -> None:
         """Photos without GPS get date-only path even when location is enabled."""
         conn = sqlite3.connect(str(tmp_catalog_with_gps))
@@ -119,6 +128,10 @@ class TestChangePlanner:
             assert move.target_folder_path == "2023/06/"
         conn.close()
 
+    @pytest.mark.skipif(
+        importlib.util.find_spec("reverse_geocoder") is None,
+        reason="requires [geo] extra",
+    )
     def test_folders_to_create_with_location(self, tmp_catalog_with_gps: Path) -> None:
         """Folder chain includes Country and City folders."""
         conn = sqlite3.connect(str(tmp_catalog_with_gps))
@@ -132,6 +145,10 @@ class TestChangePlanner:
         assert len(location_paths) > 0
         conn.close()
 
+    @pytest.mark.skipif(
+        importlib.util.find_spec("reverse_geocoder") is None,
+        reason="requires [geo] extra",
+    )
     def test_plan_no_duplicate_folders(self, tmp_catalog_with_gps: Path) -> None:
         """Two photos in same location should not create duplicate folders."""
         conn = sqlite3.connect(str(tmp_catalog_with_gps))
