@@ -9,6 +9,7 @@ import pytest
 from lrc_automation.catalog import (
     CatalogConnection,
     CatalogError,
+    LightroomRunningError,
     _path_to_sqlite_uri,
 )
 from tests.conftest import create_test_catalog
@@ -115,3 +116,54 @@ def test_mac_origin_catalog_ok_on_non_windows(tmp_path: Path) -> None:
     cc = CatalogConnection(db_path)
     # Must NOT raise on non-Windows
     cc.validate_is_lrcat()
+
+
+# ---------------------------------------------------------------------------
+# PROC-01: psutil cross-platform Lightroom process detection
+# ---------------------------------------------------------------------------
+
+
+def test_check_lightroom_running_detects_macos_process(
+    tmp_catalog: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """psutil finds 'Adobe Lightroom Classic' — raises LightroomRunningError."""
+    import psutil
+
+    class FakeProc:
+        info = {"name": "Adobe Lightroom Classic"}
+
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs: iter([FakeProc()]))
+    conn = CatalogConnection(tmp_catalog)
+    with pytest.raises(LightroomRunningError):
+        conn.check_lightroom_not_running()
+
+
+def test_check_lightroom_running_detects_windows_process(
+    tmp_catalog: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """psutil finds 'Lightroom.exe' — raises LightroomRunningError."""
+    import psutil
+
+    class FakeProc:
+        info = {"name": "Lightroom.exe"}
+
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs: iter([FakeProc()]))
+    conn = CatalogConnection(tmp_catalog)
+    with pytest.raises(LightroomRunningError):
+        conn.check_lightroom_not_running()
+
+
+def test_check_lightroom_running_tolerates_access_denied(
+    tmp_catalog: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """AccessDenied during process_iter is silently skipped — no crash."""
+    import psutil
+
+    class DeniedProc:
+        @property
+        def info(self) -> dict[str, str]:
+            raise psutil.AccessDenied(pid=99)
+
+    monkeypatch.setattr(psutil, "process_iter", lambda attrs: iter([DeniedProc()]))
+    conn = CatalogConnection(tmp_catalog)
+    conn.check_lightroom_not_running()  # must not raise
