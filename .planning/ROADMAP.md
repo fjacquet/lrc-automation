@@ -33,7 +33,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Scan output correctly shows dates extracted from a catalog whose root uses a drive-letter `absolutePath` (e.g., `C:/Photos/`) — no photos wrongly classified as misplaced due to path separator confusion.
   3. Opening a Mac-origin catalog (one whose `absolutePath` contains `/Volumes/`) on Windows prints a human-readable warning and exits cleanly rather than crashing.
   4. `pip install lrc-automation` installs successfully without pulling in `reverse_geocoder` as a core dependency; `pip install "lrc-automation[geo]"` still provides geocoding.
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Fix SQLite URI backslash bug and Mac-origin catalog warning in catalog.py (PATH-01, PATH-03)
+- [ ] 01-02-PLAN.md — Fix path separator normalisation in scanner.py for Windows absolutePath (PATH-02)
+- [ ] 01-03-PLAN.md — Remove reverse-geocoder from core dependencies in pyproject.toml (UX-03)
 
 ### Phase 2: Write Safety
 **Goal**: Apply, reconcile, and cleanup operations execute correctly on Windows: pathFromRoot values are stored with forward slashes so Lightroom can locate folders, and disk operations handle Windows-specific file-system failures gracefully.
@@ -76,7 +81,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Path Safety | 0/TBD | Not started | - |
+| 1. Path Safety | 0/3 | Planning done | - |
 | 2. Write Safety | 0/TBD | Not started | - |
 | 3. CI Matrix | 0/TBD | Not started | - |
 | 4. UX and Docs | 0/TBD | Not started | - |
