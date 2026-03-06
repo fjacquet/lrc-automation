@@ -86,9 +86,7 @@ def test_mac_origin_catalog_warns_monkeypatched(
 
     # Update the root folder path to simulate a Mac-origin catalog
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        "UPDATE AgLibraryRootFolder SET absolutePath = '/Volumes/photo/2023/'"
-    )
+    conn.execute("UPDATE AgLibraryRootFolder SET absolutePath = '/Volumes/photo/2023/'")
     conn.commit()
     conn.close()
 
@@ -107,9 +105,7 @@ def test_mac_origin_catalog_ok_on_non_windows(tmp_path: Path) -> None:
 
     # Update the root folder path to simulate a Mac-origin catalog
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        "UPDATE AgLibraryRootFolder SET absolutePath = '/Volumes/photo/2023/'"
-    )
+    conn.execute("UPDATE AgLibraryRootFolder SET absolutePath = '/Volumes/photo/2023/'")
     conn.commit()
     conn.close()
 

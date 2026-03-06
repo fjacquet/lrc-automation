@@ -130,8 +130,16 @@ class TestCatalogScanner:
         conn.execute(
             "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                1, "FILE-WIN-1", "IMG_WIN_1", "JPG", 1,
-                "IMG_WIN_1", None, None, "IMG_WIN_1.JPG", None,
+                1,
+                "FILE-WIN-1",
+                "IMG_WIN_1",
+                "JPG",
+                1,
+                "IMG_WIN_1",
+                None,
+                None,
+                "IMG_WIN_1.JPG",
+                None,
             ),
         )
         conn.execute(
@@ -161,8 +169,16 @@ class TestCatalogScanner:
         conn.execute(
             "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                1, "FILE-WIN-2", "IMG_WIN_2", "JPG", 1,
-                "IMG_WIN_2", None, None, "IMG_WIN_2.JPG", None,
+                1,
+                "FILE-WIN-2",
+                "IMG_WIN_2",
+                "JPG",
+                1,
+                "IMG_WIN_2",
+                None,
+                None,
+                "IMG_WIN_2.JPG",
+                None,
             ),
         )
         conn.execute(
@@ -192,8 +208,16 @@ class TestCatalogScanner:
         conn.execute(
             "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                1, "FILE-WIN-3", "IMG_WIN_3", "JPG", 1,
-                "IMG_WIN_3", None, None, "IMG_WIN_3.JPG", None,
+                1,
+                "FILE-WIN-3",
+                "IMG_WIN_3",
+                "JPG",
+                1,
+                "IMG_WIN_3",
+                None,
+                None,
+                "IMG_WIN_3.JPG",
+                None,
             ),
         )
         conn.execute(
@@ -224,8 +248,16 @@ class TestCatalogScanner:
         conn.execute(
             "INSERT INTO AgLibraryFile VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (
-                1, "FILE-WIN-4", "IMG_WIN_4", "JPG", 1,
-                "IMG_WIN_4", None, None, "IMG_WIN_4.JPG", None,
+                1,
+                "FILE-WIN-4",
+                "IMG_WIN_4",
+                "JPG",
+                1,
+                "IMG_WIN_4",
+                None,
+                None,
+                "IMG_WIN_4.JPG",
+                None,
             ),
         )
         conn.execute(

@@ -367,7 +367,7 @@ class TestWriteSafety:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """On non-macOS, ._* files count as real content — dir is NOT empty (PROC-03)."""
+        """On non-macOS, ._* files count as real content — NOT empty (PROC-03)."""
         import sys
 
         from lrc_automation.executor import _is_effectively_empty
@@ -417,7 +417,9 @@ class TestWriteSafety:
         conn.commit()
 
         cleanup_empty_folders(conn, [(42, str(root) + "/")])
-        assert deleted == [], "_delete_apple_double_files must not be called on non-macOS"
+        assert deleted == [], (
+            "_delete_apple_double_files must not be called on non-macOS"
+        )
         assert apple_double.exists(), "._* file must not be deleted on non-macOS"
 
     def test_apply_file_op_retries_on_permission_error(
@@ -464,7 +466,7 @@ class TestWriteSafety:
         tmp_path: Path,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """All 3 attempts raise PermissionError — final PermissionError is re-raised (PROC-04)."""
+        """All 3 attempts raise PermissionError — re-raised on exhaustion (PROC-04)."""
         import shutil
 
         import pytest

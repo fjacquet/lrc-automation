@@ -91,7 +91,7 @@ class CatalogReconciler:
 
         # Derive pathFromRoot: directory portion relative to the root
         rel = actual_path.relative_to(matched_root_path)
-        path_from_root = str(rel.parent) + "/"
+        path_from_root = rel.parent.as_posix() + "/"
         if path_from_root == "./":
             path_from_root = ""
 
