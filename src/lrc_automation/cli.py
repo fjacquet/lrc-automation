@@ -34,9 +34,7 @@ def _discover_default_catalog(home_dir: Path | None = None) -> str | None:
     if not candidates:
         return None
     if len(candidates) > 1:
-        console.print(
-            f"[dim]Auto-selected catalog: {candidates[0]}[/dim]"
-        )
+        console.print(f"[dim]Auto-selected catalog: {candidates[0]}[/dim]")
     return str(candidates[0])
 
 
