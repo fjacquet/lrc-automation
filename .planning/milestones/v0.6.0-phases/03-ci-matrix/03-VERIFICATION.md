@@ -62,7 +62,7 @@ None. Scanned `.gitattributes`, `.github/workflows/ci.yml`, `.github/workflows/r
 
 #### 1. CI Matrix Actually Passes on All Runners
 
-**Test:** Push a branch to `maincd` or open a PR and observe the GitHub Actions CI run.
+**Test:** Push a branch to `main` or open a PR and observe the GitHub Actions CI run.
 **Expected:** Six matrix jobs (ubuntu/macos/windows x 3.12/3.13) all show green; no CRLF-related ruff failures on windows-latest.
 **Why human:** Cannot trigger a live GitHub Actions run or inspect real runner logs from the local filesystem.
 

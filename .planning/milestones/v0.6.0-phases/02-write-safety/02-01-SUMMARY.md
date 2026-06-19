@@ -132,7 +132,7 @@ None - no external service configuration required.
 
 - PROC-01 complete: Lightroom process detection is now cross-platform
 - `psutil>=5.9` established as core dependency — available to PROC-02, PROC-03, PROC-04 if needed
-- Pre-existing `test_executor.py` lint failures should be resolved before merging to maincd
+- Pre-existing `test_executor.py` lint failures should be resolved before merging to main
 
 ---
 _Phase: 02-write-safety_
