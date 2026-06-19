@@ -252,9 +252,9 @@ name: CI
 
 on:
   push:
-    branches: [maincd]
+    branches: [main]
   pull_request:
-    branches: [maincd]
+    branches: [main]
 
 jobs:
   check:
