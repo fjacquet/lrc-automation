@@ -1,0 +1,1633 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Lightroom Classic catalog automation tool">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../architecture/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>Usage - lrc-automation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#usage-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="lrc-automation" class="md-header__button md-logo" aria-label="lrc-automation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            lrc-automation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Usage
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/fjacquet/lrc-automation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="lrc-automation" class="md-nav__button md-logo" aria-label="lrc-automation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    lrc-automation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/fjacquet/lrc-automation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-python-recommended-for-full-feature-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1 — Python (recommended for full feature set)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-standalone-binary-no-python-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2 — Standalone binary (no Python required)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3 — Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#windows-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Windows Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#max_path-advisory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAX_PATH advisory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#env-file-on-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .env file on Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-limitations-on-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known limitations on Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#target-folder-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target folder layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log file
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scan-read-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scan (read-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plan-read-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plan (read-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apply-modifies-catalog-disk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        apply (modifies catalog + disk)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        validate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reconcile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reconcile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        restore
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-location-based-subfolders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced: location-based subfolders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-folder-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported folder structures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported folder structures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#path-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../prd/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PRD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ADR
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/001-lightroom-classic-catalog-automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    001 - Catalog Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/002-executor-safety-and-error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    002 - Executor Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/003-filesystem-reliability-year-root-empty-folder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    003 - Filesystem Reliability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/004-disk-audit-file-search-logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    004 - Disk Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/005-reconcile-command/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    005 - Reconcile Command
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/006-cross-root-year-in-year-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    006 - Cross-Root Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/007-multiplatform-windows-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    007 - Multiplatform Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#quick-start" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick Start
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Installation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-python-recommended-for-full-feature-set" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1 — Python (recommended for full feature set)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-standalone-binary-no-python-required" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2 — Standalone binary (no Python required)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3 — Docker
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#windows-notes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Windows Notes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Windows Notes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#max_path-advisory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MAX_PATH advisory
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#env-file-on-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        .env file on Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#known-limitations-on-windows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Known limitations on Windows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Configuration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#target-folder-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Target folder layout
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#log-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Log file
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Commands
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#scan-read-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        scan (read-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#plan-read-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        plan (read-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apply-modifies-catalog-disk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        apply (modifies catalog + disk)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#validate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        validate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reconcile" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        reconcile
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restore" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        restore
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#advanced-location-based-subfolders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advanced: location-based subfolders
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-folder-structures" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Supported folder structures
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Supported folder structures">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#path-examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Path examples
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="usage-guide">Usage Guide</h1>
+<h2 id="quick-start">Quick Start</h2>
+<p>Close Lightroom Classic, then run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># macOS — auto-discovers catalog at ~/Pictures/Lightroom/</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>lrc-auto<span class="w"> </span>scan
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Windows — auto-discovers catalog at %USERPROFILE%\Pictures\Lightroom\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>lrc-auto<span class="w"> </span>scan
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Or point at a specific catalog</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>lrc-auto<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;/path/to/Lightroom Catalog.lrcat&quot;</span><span class="w"> </span>scan
+</code></pre></div>
+<p>The recommended workflow is always <strong>scan → plan → apply → validate</strong>.</p>
+<hr />
+<h2 id="installation">Installation</h2>
+<h3 id="option-1-python-recommended-for-full-feature-set">Option 1 — Python (recommended for full feature set)</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># macOS / Linux / Windows</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>pip<span class="w"> </span>install<span class="w"> </span>uv
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>lrc-automation
+</code></pre></div>
+<p>Or with <code>pipx</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pipx<span class="w"> </span>install<span class="w"> </span>lrc-automation
+</code></pre></div>
+<p>To include GPS-based location folders (macOS / Linux only):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;lrc-automation[geo]&quot;</span>
+</code></pre></div>
+<h3 id="option-2-standalone-binary-no-python-required">Option 2 — Standalone binary (no Python required)</h3>
+<p>Download the pre-built binary from the <a href="https://github.com/fjacquet/lrc-automation/releases/latest">GitHub Releases</a> page:</p>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>macOS (Apple Silicon + Intel)</td>
+<td><code>lrc-auto-macos-universal2</code></td>
+</tr>
+<tr>
+<td>Windows x86-64</td>
+<td><code>lrc-auto-windows-x86_64.exe</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>macOS:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>chmod<span class="w"> </span>+x<span class="w"> </span>lrc-auto-macos-universal2
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>sudo<span class="w"> </span>mv<span class="w"> </span>lrc-auto-macos-universal2<span class="w"> </span>/usr/local/bin/lrc-auto
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>lrc-auto<span class="w"> </span>--help
+</code></pre></div>
+<div class="admonition note">
+<p class="admonition-title">macOS Gatekeeper</p>
+<p>On first run macOS may block the binary. Open <strong>System Settings → Privacy &amp; Security</strong> and click <strong>Allow Anyway</strong>, or run:
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>xattr<span class="w"> </span>-d<span class="w"> </span>com.apple.quarantine<span class="w"> </span>/usr/local/bin/lrc-auto
+</code></pre></div></p>
+</div>
+<p><strong>Windows:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c"># Rename and place somewhere on your PATH (e.g. C:\Tools\)</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="nb">Rename-Item</span> <span class="n">lrc-auto-windows-x86_64</span><span class="p">.</span><span class="n">exe</span> <span class="n">lrc-auto</span><span class="p">.</span><span class="n">exe</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">lrc-auto</span> <span class="p">-</span><span class="n">-help</span>
+</code></pre></div>
+<h3 id="option-3-docker">Option 3 — Docker</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Scan a catalog mounted from the host</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="w">  </span>-v<span class="w"> </span><span class="s2">&quot;/path/to/Lightroom:/catalog&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="w">  </span>ghcr.io/fjacquet/lrc-automation:latest<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="w">  </span>scan<span class="w"> </span>-c<span class="w"> </span>/catalog/Catalog.lrcat
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a><span class="c1"># Apply fixes (mount every volume root the catalog references)</span>
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>docker<span class="w"> </span>run<span class="w"> </span>--rm<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a><span class="w">  </span>-v<span class="w"> </span><span class="s2">&quot;/Volumes/photo:/photo&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a><span class="w">  </span>-v<span class="w"> </span><span class="s2">&quot;/path/to/Lightroom:/catalog&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="w">  </span>ghcr.io/fjacquet/lrc-automation:latest<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="w">  </span>apply<span class="w"> </span>-c<span class="w"> </span>/catalog/Catalog.lrcat<span class="w"> </span>-y
+</code></pre></div>
+<div class="admonition warning">
+<p class="admonition-title">Docker and disk moves</p>
+<p>For <code>apply</code> to move files, the container needs read-write access to <strong>every volume root</strong> referenced in the catalog, not just the catalog directory.</p>
+</div>
+<hr />
+<h2 id="windows-notes">Windows Notes</h2>
+<h3 id="max_path-advisory">MAX_PATH advisory</h3>
+<p>Windows limits paths to 260 characters by default. If your catalog roots are deeply nested (NAS, external drive), enable long paths first:</p>
+<p><strong>Group Policy Editor:</strong></p>
+<ol>
+<li>Open <code>gpedit.msc</code></li>
+<li>Navigate to: Computer Configuration &gt; Administrative Templates &gt; System &gt; Filesystem</li>
+<li>Enable "Enable Win32 long paths"</li>
+</ol>
+<p><strong>PowerShell (run as Administrator):</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">New-ItemProperty</span> <span class="n">-Path</span> <span class="s2">&quot;HKLM:\SYSTEM\CurrentControlSet\Control\FileSystem&quot;</span> <span class="p">`</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>  <span class="n">-Name</span> <span class="s2">&quot;LongPathsEnabled&quot;</span> <span class="n">-Value</span> <span class="n">1</span> <span class="n">-PropertyType</span> <span class="n">DWORD</span> <span class="n">-Force</span>
+</code></pre></div>
+<h3 id="env-file-on-windows">.env file on Windows</h3>
+<p>Both forward slashes and escaped backslashes work:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a># Forward slashes (recommended — works on all platforms)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>LRC_CATALOG_PATH=C:/Users/YourName/Pictures/Lightroom/Catalog.lrcat
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>LRC_BACKUP_DIR=C:/Users/YourName/Documents/LightroomBackups
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a># Backslashes also work
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>LRC_CATALOG_PATH=C:\\Users\\YourName\\Pictures\\Lightroom\\Catalog.lrcat
+</code></pre></div>
+<h3 id="known-limitations-on-windows">Known limitations on Windows</h3>
+<ul>
+<li><strong>Location folders (<code>--location-folders</code>):</strong> The <code>[geo]</code> extra has no Windows wheel. GPS-based <code>Country/City/</code> subfolders are macOS / Linux only.</li>
+<li><strong>AppleDouble (<code>._*</code>) cleanup:</strong> Silently skipped on Windows — those files only appear on macOS-formatted volumes.</li>
+</ul>
+<hr />
+<h2 id="configuration">Configuration</h2>
+<p>Copy <code>.env.example</code> to <code>.env</code> and edit:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>cp<span class="w"> </span>.env.example<span class="w"> </span>.env
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>LRC_CATALOG_PATH=/path/to/Lightroom Catalog.lrcat
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>LRC_BACKUP_DIR=                  # optional — defaults to catalog directory
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>LRC_TARGET_LAYOUT=%Y/%m/         # optional — strftime format for target folders
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>LRC_LOCATION_FOLDERS=false       # optional — enable GPS-based Country/City subfolders
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>LRC_LOG_FILE=                    # optional — defaults to &lt;catalog&gt;.log alongside catalog
+</code></pre></div>
+<p>All variables can also be passed as CLI flags; flags take precedence over env vars.</p>
+<h3 id="target-folder-layout">Target folder layout</h3>
+<p>Controls the target folder structure using Python <code>strftime</code> codes. Defaults to <code>%Y/%m/</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Layout</th>
+<th>Example</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>%Y/%m/</code></td>
+<td><code>2023/06/</code></td>
+<td>Year/Month (default)</td>
+</tr>
+<tr>
+<td><code>%Y/%m/%d/</code></td>
+<td><code>2023/06/15/</code></td>
+<td>Year/Month/Day</td>
+</tr>
+<tr>
+<td><code>%Y-%m/</code></td>
+<td><code>2023-06/</code></td>
+<td>Year-Month with dash</td>
+</tr>
+<tr>
+<td><code>%Y/</code></td>
+<td><code>2023/</code></td>
+<td>Flat yearly</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>lrc-auto<span class="w"> </span>--target-layout<span class="w"> </span><span class="s2">&quot;%Y/%m/%d/&quot;</span><span class="w"> </span>-c<span class="w"> </span>catalog.lrcat<span class="w"> </span>scan
+</code></pre></div>
+<h3 id="log-file">Log file</h3>
+<p>A debug-level log is written alongside the catalog as <code>&lt;catalog&gt;.log</code> by default. The console shows only warnings unless <code>-v</code> is set.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="c1"># Override the log path</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>lrc-auto<span class="w"> </span>--log-file<span class="w"> </span>/tmp/lrc-debug.log<span class="w"> </span>-c<span class="w"> </span>catalog.lrcat<span class="w"> </span>apply
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a>
+<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="c1"># Also print debug to the terminal</span>
+<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>lrc-auto<span class="w"> </span>-v<span class="w"> </span>--log-file<span class="w"> </span>/tmp/lrc-debug.log<span class="w"> </span>apply
+</code></pre></div>
+<hr />
+<h2 id="commands">Commands</h2>
+<h3 id="scan-read-only">scan (read-only)</h3>
+<p>Detects misplaced photos (EXIF date does not match folder date) and duplicate / malformed filename prefixes.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>lrc-auto<span class="w"> </span>scan
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>lrc-auto<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;/path/to/catalog.lrcat&quot;</span><span class="w"> </span>scan
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>lrc-auto<span class="w"> </span>--location-folders<span class="w"> </span>scan<span class="w">        </span><span class="c1"># show GPS-aware target paths</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a>
+<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a><span class="c1"># Export results</span>
+<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a>lrc-auto<span class="w"> </span>scan<span class="w"> </span>-o<span class="w"> </span>results.json
+<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a>lrc-auto<span class="w"> </span>scan<span class="w"> </span>-o<span class="w"> </span>results.csv
+</code></pre></div>
+<h3 id="plan-read-only">plan (read-only)</h3>
+<p>Generates a move plan from scan results. Prints a table of all proposed changes and optionally exports it for review before touching anything.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a>lrc-auto<span class="w"> </span>plan
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>lrc-auto<span class="w"> </span>plan<span class="w"> </span>--fix<span class="w"> </span>moves<span class="w">               </span><span class="c1"># moves only</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>lrc-auto<span class="w"> </span>plan<span class="w"> </span>--fix<span class="w"> </span>renames<span class="w">             </span><span class="c1"># prefix renames only</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a>lrc-auto<span class="w"> </span>plan<span class="w"> </span>-o<span class="w"> </span>plan.json<span class="w">              </span><span class="c1"># export as JSON</span>
+</code></pre></div>
+<h3 id="apply-modifies-catalog-disk">apply (modifies catalog + disk)</h3>
+<p>Executes the plan: moves files on disk and updates the catalog in a single atomic transaction. Always creates a timestamped backup first.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>lrc-auto<span class="w"> </span>apply<span class="w">                          </span><span class="c1"># prompts for confirmation</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>lrc-auto<span class="w"> </span>apply<span class="w"> </span>-y<span class="w">                       </span><span class="c1"># skip confirmation prompt</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>lrc-auto<span class="w"> </span>apply<span class="w"> </span>--fix<span class="w"> </span>moves
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a>lrc-auto<span class="w"> </span>apply<span class="w"> </span>--fix<span class="w"> </span>renames
+</code></pre></div>
+<p>On any error all disk moves are reversed automatically (rollback stack).</p>
+<h3 id="validate">validate</h3>
+<p>Runs <code>PRAGMA integrity_check</code>, checks every catalog record against disk, and reports missing / misplaced files.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>lrc-auto<span class="w"> </span>validate
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="c1"># Export audit results</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>lrc-auto<span class="w"> </span>validate<span class="w"> </span>-o<span class="w"> </span>audit.json
+<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a>lrc-auto<span class="w"> </span>validate<span class="w"> </span>-o<span class="w"> </span>audit.csv
+</code></pre></div>
+<h3 id="cleanup">cleanup</h3>
+<p>Removes empty directories left behind by <code>apply</code> runs and deletes macOS AppleDouble (<code>._*</code>) metadata files. Safe to run at any time — never touches photo files.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a>lrc-auto<span class="w"> </span>cleanup
+</code></pre></div>
+<p>What it does, in order:</p>
+<ol>
+<li>Walks every catalog root bottom-up</li>
+<li>On macOS: deletes <code>._*</code> files before attempting <code>rmdir</code></li>
+<li>Removes now-empty directories from disk</li>
+<li>Removes orphaned <code>AgLibraryFolder</code> rows from the catalog</li>
+</ol>
+<h3 id="reconcile">reconcile</h3>
+<p>Runs a full disk audit, then fixes catalog pointers for files that exist on disk but are registered at the wrong path. <strong>No files are moved</strong> — only catalog metadata is updated.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>lrc-auto<span class="w"> </span>reconcile
+</code></pre></div>
+<p>Useful after a partial <code>apply</code> run or an out-of-band file move left catalog pointers stale. Ambiguous matches (same filename found in multiple locations) are skipped and printed for manual resolution.</p>
+<p>Output reports: reconciled count, skipped-ambiguous count, truly-missing count.</p>
+<h3 id="restore">restore</h3>
+<p>Rolls back the catalog from a timestamped backup created by <code>apply</code> or <code>reconcile</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>lrc-auto<span class="w"> </span>restore<span class="w"> </span>--backup-path<span class="w"> </span>/path/to/Catalog.lrcat.bak-20260306-120000
+</code></pre></div>
+<hr />
+<h2 id="advanced-location-based-subfolders">Advanced: location-based subfolders</h2>
+<p>Requires the <code>[geo]</code> extra (macOS / Linux only):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;lrc-automation[geo]&quot;</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="c1"># or</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;lrc-automation[geo]&quot;</span>
+</code></pre></div>
+<p>When enabled, photos with GPS data land in subfolders like <code>2023/06/CH/Zurich/</code> instead of <code>2023/06/</code>. Photos without GPS fall back to the date-only path.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>lrc-auto<span class="w"> </span>--location-folders<span class="w"> </span>scan
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a>lrc-auto<span class="w"> </span>--location-folders<span class="w"> </span>plan
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a>lrc-auto<span class="w"> </span>--location-folders<span class="w"> </span>apply
+</code></pre></div>
+<p>Control the ordering of month and location within the path:</p>
+<table>
+<thead>
+<tr>
+<th><code>--location-order</code></th>
+<th>Example path</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>month_cc_city</code> (default)</td>
+<td><code>2023/06/CH/Zurich/</code></td>
+</tr>
+<tr>
+<td><code>cc_city_month</code></td>
+<td><code>CH/Zurich/2023/06/</code></td>
+</tr>
+<tr>
+<td><code>cc_month_city</code></td>
+<td><code>CH/2023/06/Zurich/</code></td>
+</tr>
+</tbody>
+</table>
+<p>Lookups are performed offline using the <code>reverse_geocoder</code> K-D tree — no network calls. Country codes follow ISO 3166-1 alpha-2 (<code>CH</code>, <code>FR</code>, <code>NZ</code>, …).</p>
+<hr />
+<h2 id="supported-folder-structures">Supported folder structures</h2>
+<p>The scanner reads dates from the <strong>full path</strong> (root + pathFromRoot) right-to-left, so the deepest recognisable date segment wins.</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Example</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>YYYY/MM/</code></td>
+<td><code>2023/06/</code></td>
+<td>Classic Lightroom hierarchy</td>
+</tr>
+<tr>
+<td><code>YYYY-MM-DD</code></td>
+<td><code>2023-12-24/</code></td>
+<td>ISO date folders — day ignored, year+month extracted</td>
+</tr>
+<tr>
+<td>French dates</td>
+<td><code>1 avril 2016/</code></td>
+<td>Apple Photos / iPhoto exports; accented forms (<code>février</code>, <code>août</code>, <code>décembre</code>) and case-insensitive</td>
+</tr>
+<tr>
+<td>Year in root + month</td>
+<td>Root <code>/photos/2021/</code>, path <code>06/</code></td>
+<td>Year from root, month from immediate subfolder</td>
+</tr>
+</tbody>
+</table>
+<p>Filtered out automatically:</p>
+<ul>
+<li><strong>1904</strong> — Lightroom's "no date" epoch value</li>
+<li><strong>Topical folders</strong> — no recognisable date pattern (e.g. <code>Vacances/</code>, <code>Family/</code>) — silently skipped</li>
+<li>Years outside 1900–2100</li>
+</ul>
+<h3 id="path-examples">Path examples</h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a>/Volumes/photo/Weekends/2023/2023-12-24/IMG_1234.CR2  → 2023/12
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>/Volumes/photo/iphone/1 avril 2016/IMG_5678.JPG       → 2016/04
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>/Volumes/photo/2021/06/DSC_9012.NEF                   → 2021/06
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>/Volumes/photo/Vacances/Summer/IMG_3456.JPG            → skipped (no date)
+</code></pre></div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.sections"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

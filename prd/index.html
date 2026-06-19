@@ -1,0 +1,1822 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Lightroom Classic catalog automation tool">
+      
+      
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../adr/001-lightroom-classic-catalog-automation/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.4">
+    
+    
+      
+        <title>PRD - lrc-automation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#product-requirements-document-lrc-automation" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="lrc-automation" class="md-header__button md-logo" aria-label="lrc-automation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            lrc-automation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              PRD
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/fjacquet/lrc-automation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="lrc-automation" class="md-nav__button md-logo" aria-label="lrc-automation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    lrc-automation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/fjacquet/lrc-automation" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PRD
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    PRD
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Problem Statement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Non-Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Users
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-functional-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Functional Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Functional Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-catalog-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Catalog Connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-scanning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Scanning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-planning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Planning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-prefix-format-normalisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 Prefix Format Normalisation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#58-location-folders-optional-geo-extra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.8 Location Folders (optional [geo] extra)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#59-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.9 Logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#510-reconciliation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.10 Reconciliation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#511-distribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.11 Distribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-non-functional-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Non-Functional Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-cli-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. CLI Surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-architecture-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Architecture Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-open-questions-future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Open Questions / Future Work
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    ADR
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/001-lightroom-classic-catalog-automation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    001 - Catalog Automation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/002-executor-safety-and-error-handling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    002 - Executor Safety
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/003-filesystem-reliability-year-root-empty-folder/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    003 - Filesystem Reliability
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/004-disk-audit-file-search-logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    004 - Disk Audit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/005-reconcile-command/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    005 - Reconcile Command
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/006-cross-root-year-in-year-migration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    006 - Cross-Root Migration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr/007-multiplatform-windows-support/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    007 - Multiplatform Support
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Problem Statement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-non-goals" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Non-Goals
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-users" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Users
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-functional-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Functional Requirements
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Functional Requirements">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#51-catalog-connection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.1 Catalog Connection
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#52-scanning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.2 Scanning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#53-planning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.3 Planning
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#54-execution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.4 Execution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#55-validation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.5 Validation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#56-cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.6 Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#57-prefix-format-normalisation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.7 Prefix Format Normalisation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#58-location-folders-optional-geo-extra" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.8 Location Folders (optional [geo] extra)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#59-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.9 Logging
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#510-reconciliation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.10 Reconciliation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#511-distribution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5.11 Distribution
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-non-functional-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Non-Functional Requirements
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-cli-surface" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. CLI Surface
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-architecture-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Architecture Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-open-questions-future-work" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Open Questions / Future Work
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="product-requirements-document-lrc-automation">Product Requirements Document: lrc-automation</h1>
+<p><strong>Version:</strong> 0.6.1
+<strong>Date:</strong> 2026-03-07
+<strong>Author:</strong> fjacquet
+<strong>Status:</strong> Living document</p>
+<hr />
+<h2 id="1-problem-statement">1. Problem Statement</h2>
+<p>Adobe Lightroom Classic stores photo metadata in a SQLite catalog (<code>.lrcat</code>) and organises files on disk in date-based folder hierarchies. Over years of use three classes of disorder accumulate:</p>
+<ol>
+<li><strong>Misplaced photos</strong> — photos filed in the wrong date folder because the import used file-system modification date rather than EXIF <code>DateTimeOriginal</code>.</li>
+<li><strong>Duplicate date prefixes in filenames</strong> — camera utilities prepend a date to filenames that already carry a date, producing names like <code>29122012-29122012-IMG_131334.jpg</code>.</li>
+<li><strong>Loss of location context</strong> — GPS-tagged photos land in anonymous date folders with no indication of where they were taken.</li>
+<li><strong>Inconsistent filename date prefix format</strong> — some files carry a European-order <code>DDMMYYYY</code> prefix (e.g. <code>02052002-volcan</code>) while the rest of the archive uses <code>YYMMDD</code>. This makes chronological sorting unreliable.</li>
+</ol>
+<p>Lightroom Classic's Lua SDK provides no <code>moveToFolder()</code> API and cannot be used to fix these problems programmatically. Adobe's cloud APIs target Lightroom CC (cloud) and do not interact with local <code>.lrcat</code> catalogs.</p>
+<hr />
+<h2 id="2-goals">2. Goals</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Goal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>G1</td>
+<td>Detect misplaced photos by comparing EXIF <code>captureTime</code> against the folder the photo currently lives in</td>
+</tr>
+<tr>
+<td>G2</td>
+<td>Generate a dry-run plan so the user can review all proposed moves before anything is changed</td>
+</tr>
+<tr>
+<td>G3</td>
+<td>Apply changes atomically: move files on disk and update the SQLite catalog in a single transaction</td>
+</tr>
+<tr>
+<td>G4</td>
+<td>Keep the catalog link-complete at all times — no "missing photos" after a run</td>
+</tr>
+<tr>
+<td>G5</td>
+<td>Optionally enrich target paths with <code>Country/City</code> subfolders derived from embedded GPS coordinates</td>
+</tr>
+<tr>
+<td>G6</td>
+<td>Never lose data — mandatory backup before writes, full rollback on any error</td>
+</tr>
+<tr>
+<td>G7</td>
+<td>Detect and propose normalisation of DDMMYYYY filename prefixes to YYMMDD, with GPS-based target folder suggestions</td>
+</tr>
+<tr>
+<td>G8</td>
+<td>Audit every catalog record against disk and surface misplaced or missing files with a persistent log</td>
+</tr>
+<tr>
+<td>G9</td>
+<td>Clean up empty directories and AppleDouble metadata files left behind after apply runs</td>
+</tr>
+<tr>
+<td>G10</td>
+<td>Distribute as a standalone binary (no Python required) and as a Docker image, in addition to a Python package</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-non-goals">3. Non-Goals</h2>
+<ul>
+<li>Real-time / background monitoring (run on demand only)</li>
+<li>Lightroom Classic plugin / in-app UI</li>
+<li>Support for Lightroom CC (cloud) catalogs</li>
+<li>Duplicate photo detection / deduplication</li>
+<li>AI-based photo tagging or scene classification</li>
+</ul>
+<hr />
+<h2 id="4-users">4. Users</h2>
+<p><strong>Primary user:</strong> Solo photographer managing a large personal archive (10K–200K photos) with Lightroom Classic on macOS or Windows.</p>
+<p>Assumed context:
+- Comfortable with a terminal
+- Unwilling to manually relocate thousands of files
+- Needs confidence (dry-run, backup, rollback) before trusting an automated tool with a 1 GB catalog</p>
+<p><strong>Platform support:</strong>
+- Primary platform: macOS. Full feature set including the <code>[geo]</code> extra (offline reverse geocoding).
+- Secondary platform: Windows. All core features are supported. The <code>[geo]</code> extra (offline reverse geocoding) is macOS/Linux only due to a missing Windows wheel for <code>reverse_geocoder</code>.
+- Linux: CI-only. Lightroom Classic does not run on Linux; Linux support exists solely for automated testing.</p>
+<hr />
+<h2 id="5-functional-requirements">5. Functional Requirements</h2>
+<h3 id="51-catalog-connection">5.1 Catalog Connection</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-CAT-1</td>
+<td>Accept catalog path via <code>--catalog</code> / <code>-c</code> CLI flag or <code>LRC_CATALOG_PATH</code> env var; when omitted, auto-discover the default catalog at <code>~/Pictures/Lightroom/</code> (macOS/Linux) or <code>%USERPROFILE%\Pictures\Lightroom\</code> (Windows)</td>
+</tr>
+<tr>
+<td>F-CAT-2</td>
+<td>Detect if Lightroom is open (<code>.lrcat-lock</code> file + process name check via <code>psutil</code>) and abort with a clear error</td>
+</tr>
+<tr>
+<td>F-CAT-3</td>
+<td>Create a timestamped backup of the catalog before any write operation</td>
+</tr>
+<tr>
+<td>F-CAT-4</td>
+<td>Expose a <code>restore</code> command to replace the catalog from a backup</td>
+</tr>
+</tbody>
+</table>
+<h3 id="52-scanning">5.2 Scanning</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-SCAN-1</td>
+<td>Parse capture dates from the <strong>full path</strong> (root + pathFromRoot), not just the leaf folder</td>
+</tr>
+<tr>
+<td>F-SCAN-2</td>
+<td>Recognise <code>YYYY/MM/</code>, <code>YYYY-MM-DD/</code>, and French date patterns (<code>D mois YYYY</code>)</td>
+</tr>
+<tr>
+<td>F-SCAN-3</td>
+<td>Skip photos with no parseable date in their path (topical folders)</td>
+</tr>
+<tr>
+<td>F-SCAN-4</td>
+<td>Filter bogus dates (1904-01-01, dates outside 1900–2100)</td>
+</tr>
+<tr>
+<td>F-SCAN-5</td>
+<td>Report the count and list of misplaced photos</td>
+</tr>
+<tr>
+<td>F-SCAN-6</td>
+<td>Detect duplicate date prefixes in filenames</td>
+</tr>
+</tbody>
+</table>
+<h3 id="53-planning">5.3 Planning</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-PLAN-1</td>
+<td>Compute the correct target path for each misplaced photo using <code>captureTime</code> and the configured <code>LRC_TARGET_LAYOUT</code> pattern (default <code>%Y/%m/</code>)</td>
+</tr>
+<tr>
+<td>F-PLAN-2</td>
+<td>Resolve target folders, creating new <code>AgLibraryFolder</code> rows as needed</td>
+</tr>
+<tr>
+<td>F-PLAN-3</td>
+<td>Handle filename collisions in the target folder by appending <code>_1</code>, <code>_2</code>, etc.</td>
+</tr>
+<tr>
+<td>F-PLAN-4</td>
+<td>Export the plan as JSON for external inspection</td>
+</tr>
+</tbody>
+</table>
+<h3 id="54-execution">5.4 Execution</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-EXEC-1</td>
+<td>Move physical files on disk (including RAW+JPG pairs and XMP sidecars)</td>
+</tr>
+<tr>
+<td>F-EXEC-2</td>
+<td>Update <code>AgLibraryFile.folder</code> in a single <code>BEGIN IMMEDIATE … COMMIT</code> transaction</td>
+</tr>
+<tr>
+<td>F-EXEC-3</td>
+<td>Maintain a rollback stack: reverse all disk moves on any error</td>
+</tr>
+<tr>
+<td>F-EXEC-4</td>
+<td>Support cross-filesystem moves (copy + delete) transparently</td>
+</tr>
+<tr>
+<td>F-EXEC-5</td>
+<td>Skip virtual copies (they share the master's physical file)</td>
+</tr>
+<tr>
+<td>F-EXEC-6</td>
+<td>After the main transaction commits, sweep source directories; <code>rmdir</code> any now-empty directory and delete its <code>AgLibraryFolder</code> DB row</td>
+</tr>
+<tr>
+<td>F-EXEC-7</td>
+<td>Report <code>folders_removed</code> count in the execution summary</td>
+</tr>
+<tr>
+<td>F-EXEC-8</td>
+<td>Retry on <code>PermissionError</code> for transient antivirus scan locks on Windows</td>
+</tr>
+</tbody>
+</table>
+<h3 id="55-validation">5.5 Validation</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-VAL-1</td>
+<td>Run <code>PRAGMA integrity_check</code> before and after every write session</td>
+</tr>
+<tr>
+<td>F-VAL-2</td>
+<td>Verify all moved files exist at their new paths after <code>apply</code></td>
+</tr>
+<tr>
+<td>F-VAL-3</td>
+<td><code>audit_files_on_disk()</code>: check every catalog record against disk (no cap); return a typed <code>FileAuditResult</code> with all missing entries</td>
+</tr>
+<tr>
+<td>F-VAL-4</td>
+<td>For each missing file, rglob the root's parent directory (one pass per unique parent) to locate where the file actually lives on disk</td>
+</tr>
+<tr>
+<td>F-VAL-5</td>
+<td>Export audit results as JSON or CSV via <code>validate --output FILE</code></td>
+</tr>
+<tr>
+<td>F-VAL-6</td>
+<td>Detect year-in-year folder anomalies (<code>check_year_in_year</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="56-cleanup">5.6 Cleanup</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-CLEAN-1</td>
+<td><code>lrc-auto cleanup</code> walks every catalog root bottom-up and removes directories that contain no real files</td>
+</tr>
+<tr>
+<td>F-CLEAN-2</td>
+<td>On macOS, delete AppleDouble (<code>._*</code>) files before attempting <code>rmdir</code></td>
+</tr>
+<tr>
+<td>F-CLEAN-3</td>
+<td>Remove orphaned <code>AgLibraryFolder</code> rows for deleted directories</td>
+</tr>
+<tr>
+<td>F-CLEAN-4</td>
+<td>Never touch photo files — cleanup is always safe to run</td>
+</tr>
+</tbody>
+</table>
+<h3 id="57-prefix-format-normalisation">5.7 Prefix Format Normalisation</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-PREFIX-1</td>
+<td>Detect filenames carrying a DDMMYYYY prefix: <code>^(\d{2})(\d{2})(\d{4})-(.+)$</code></td>
+</tr>
+<tr>
+<td>F-PREFIX-2</td>
+<td>Propose a YYMMDD equivalent: strip century, reorder to <code>YYMMDD-rest</code></td>
+</tr>
+<tr>
+<td>F-PREFIX-3</td>
+<td>Validate that the embedded date is real before proposing a rename (reject bogus dates such as 1904-01-01)</td>
+</tr>
+<tr>
+<td>F-PREFIX-4</td>
+<td>For GPS-tagged files, include a <code>Country/City/</code> target-folder suggestion alongside the proposed name</td>
+</tr>
+<tr>
+<td>F-PREFIX-5</td>
+<td>Location belongs in the <strong>folder hierarchy</strong>, not in the filename</td>
+</tr>
+<tr>
+<td>F-PREFIX-6</td>
+<td>Sort GPS-tagged proposals first in the scan report</td>
+</tr>
+</tbody>
+</table>
+<h3 id="58-location-folders-optional-geo-extra">5.8 Location Folders (optional <code>[geo]</code> extra)</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-GEO-1</td>
+<td>When <code>--location-folders</code> is set, append <code>Country/City/</code> to the target path</td>
+</tr>
+<tr>
+<td>F-GEO-2</td>
+<td>Resolve GPS coordinates offline using <code>reverse-geocoder</code> (no network calls)</td>
+</tr>
+<tr>
+<td>F-GEO-3</td>
+<td>Convert ISO 3166-1 alpha-2 country codes to full country names using <code>pycountry</code></td>
+</tr>
+<tr>
+<td>F-GEO-4</td>
+<td>Sanitize country and city names for use as folder names (strip <code>/ \ : * ? " &lt; &gt; |</code>)</td>
+</tr>
+<tr>
+<td>F-GEO-5</td>
+<td>Cache resolved coordinates in-memory; support batch resolution for efficiency</td>
+</tr>
+<tr>
+<td>F-GEO-6</td>
+<td>Fall back gracefully (omit location suffix) if coordinates cannot be resolved</td>
+</tr>
+</tbody>
+</table>
+<h3 id="59-logging">5.9 Logging</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-LOG-1</td>
+<td>All operations write to a log file at DEBUG level alongside the catalog (<code>&lt;catalog&gt;.log</code>) by default</td>
+</tr>
+<tr>
+<td>F-LOG-2</td>
+<td>Override log path with <code>--log-file PATH</code> / <code>LRC_LOG_FILE</code> env var</td>
+</tr>
+<tr>
+<td>F-LOG-3</td>
+<td>Console handler stays at WARNING unless <code>-v</code> is set; file handler always at DEBUG</td>
+</tr>
+<tr>
+<td>F-LOG-4</td>
+<td>Logged events: every <code>MOVE</code>, <code>RENAME</code>, <code>SKIP</code>, <code>REMOVED empty folder</code> in executor; audit start/summary and every <code>MISSING</code> file in validate; <code>RECONCILE</code> entries in reconcile</td>
+</tr>
+</tbody>
+</table>
+<h3 id="510-reconciliation">5.10 Reconciliation</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-REC-1</td>
+<td><code>lrc-auto reconcile</code> runs <code>audit_files_on_disk()</code> then updates <code>AgLibraryFile.folder</code> for each unambiguous <code>found_elsewhere</code> file</td>
+</tr>
+<tr>
+<td>F-REC-2</td>
+<td>Find or create the <code>AgLibraryFolder</code> row matching the file's actual disk location</td>
+</tr>
+<tr>
+<td>F-REC-3</td>
+<td>Skip ambiguous matches (<code>found_at</code> has more than one candidate); log a warning</td>
+</tr>
+<tr>
+<td>F-REC-4</td>
+<td>Require a catalog backup before writing (same guard as <code>apply</code>)</td>
+</tr>
+<tr>
+<td>F-REC-5</td>
+<td>Report reconciled count, skipped-ambiguous count, and truly-missing count</td>
+</tr>
+</tbody>
+</table>
+<h3 id="511-distribution">5.11 Distribution</h3>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>F-DIST-1</td>
+<td>Publish a Python wheel and sdist to GitHub Releases on every version tag</td>
+</tr>
+<tr>
+<td>F-DIST-2</td>
+<td>Build and publish a standalone Windows <code>.exe</code> (PyInstaller, no Python install required)</td>
+</tr>
+<tr>
+<td>F-DIST-3</td>
+<td>Build and publish a standalone macOS universal2 binary (PyInstaller, Apple Silicon + Intel)</td>
+</tr>
+<tr>
+<td>F-DIST-4</td>
+<td>Build and push a Docker image to <code>ghcr.io/fjacquet/lrc-automation</code> with semver tags</td>
+</tr>
+<tr>
+<td>F-DIST-5</td>
+<td>Attach an SBOM (SPDX-JSON) to every GitHub Release</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="6-non-functional-requirements">6. Non-Functional Requirements</h2>
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Requirement</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NF-1</td>
+<td>All operations on the real catalog (92 K photos) must complete in &lt; 5 minutes on typical hardware</td>
+</tr>
+<tr>
+<td>NF-2</td>
+<td>Offline-only — no network calls in the default or <code>[geo]</code> configurations</td>
+</tr>
+<tr>
+<td>NF-3</td>
+<td>Python 3.12+; target platforms are macOS and Windows. Linux is supported as CI-only (Lightroom Classic does not run on Linux).</td>
+</tr>
+<tr>
+<td>NF-4</td>
+<td>Type-checked with mypy strict mode; linted with ruff</td>
+</tr>
+<tr>
+<td>NF-5</td>
+<td>Test coverage via pytest; no <code>unittest.mock</code> (use <code>pytest.MonkeyPatch</code>)</td>
+</tr>
+<tr>
+<td>NF-6</td>
+<td>The tool must never leave the catalog in a partially-updated state</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="7-configuration">7. Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>CLI flag</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LRC_CATALOG_PATH</code></td>
+<td><code>-c</code> / <code>--catalog</code></td>
+<td>auto-discovered</td>
+<td>Path to <code>.lrcat</code> file</td>
+</tr>
+<tr>
+<td><code>LRC_BACKUP_DIR</code></td>
+<td><code>--backup-dir</code></td>
+<td>same dir as catalog</td>
+<td>Backup destination</td>
+</tr>
+<tr>
+<td><code>LRC_TARGET_LAYOUT</code></td>
+<td><code>--target-layout</code></td>
+<td><code>%Y/%m/</code></td>
+<td><code>strftime</code> pattern for target folder</td>
+</tr>
+<tr>
+<td><code>LRC_LOCATION_FOLDERS</code></td>
+<td><code>--location-folders</code></td>
+<td><code>false</code></td>
+<td>Append <code>Country/City/</code> from GPS</td>
+</tr>
+<tr>
+<td><code>LRC_LOG_FILE</code></td>
+<td><code>--log-file</code></td>
+<td><code>&lt;catalog&gt;.log</code></td>
+<td>Log file path</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="8-cli-surface">8. CLI Surface</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>lrc-auto scan       [-c PATH] [-o FILE]              # Read-only: list misplaced photos
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>lrc-auto plan       [-c PATH] [-o FILE]              # Generate move plan
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>lrc-auto apply      [-c PATH] [-y] [--fix SCOPE]     # Execute plan (backup created first)
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>lrc-auto validate   [-c PATH] [-o FILE]              # Integrity check + full disk audit
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>lrc-auto cleanup    [-c PATH]                        # Remove empty dirs + AppleDouble files
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>lrc-auto reconcile  [-c PATH]                        # Fix catalog pointers for found-elsewhere files
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>lrc-auto restore    [-c PATH] --backup-path PATH     # Roll back to backup
+</code></pre></div>
+<hr />
+<h2 id="9-architecture-summary">9. Architecture Summary</h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>CLI (cli.py)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>  └─ CatalogConnection (catalog.py)       ← SQLite open/close/backup/lock
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>       ├─ CatalogScanner (scanner.py)     ← build PhotoRecord list
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>       ├─ ChangePlanner (planner.py)      ← build ChangePlan
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>       ├─ ChangeExecutor (executor.py)    ← disk moves + SQL updates + cleanup
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>       ├─ CatalogValidator (validators.py)← integrity checks + full disk audit
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>       ├─ CatalogReconciler (reconciler.py) ← fix catalog pointers for misplaced files
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>       ├─ LocationResolver (geocoder.py)  ← GPS → Country/City [geo]
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>       ├─ Reporter (reporter.py)          ← Rich terminal output + JSON/CSV export
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>       └─ log.py                          ← configure_logging (stdlib logging, no deps)
+</code></pre></div>
+<p>See <a href="../adr/001-lightroom-classic-catalog-automation/">ADR-001</a> for the full design rationale.</p>
+<hr />
+<h2 id="10-open-questions-future-work">10. Open Questions / Future Work</h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Question</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>OQ-1</td>
+<td>Should topical (non-date) folders be preserved as-is or given a configurable default target?</td>
+</tr>
+<tr>
+<td>~~OQ-2~~</td>
+<td>~~Should the tool support renaming (stripping duplicate date prefixes)?~~ <strong>Resolved:</strong> duplicate-prefix removal and DDMMYYYY→YYMMDD normalisation both implemented (F-SCAN-6, F-PREFIX-1…6).</td>
+</tr>
+<tr>
+<td>OQ-3</td>
+<td>Should a <code>--dry-run</code> flag on <code>apply</code> replace the separate <code>plan</code> command?</td>
+</tr>
+<tr>
+<td>OQ-4</td>
+<td>MCP server wrapper — expose <code>scan</code> and <code>plan</code> results to AI assistants?</td>
+</tr>
+<tr>
+<td>~~OQ-5~~</td>
+<td>~~Support for Windows paths?~~ <strong>Resolved in v0.6.0:</strong> full Windows support shipped. SQLite URI uses forward slashes (<code>as_posix()</code>), process detection uses <code>psutil</code>, catalog auto-discovery supports <code>%USERPROFILE%\Pictures\Lightroom\</code>.</td>
+</tr>
+<tr>
+<td>OQ-6</td>
+<td><strong>Volume-offline handling</strong> — should <code>validate</code> and <code>reconcile</code> skip roots whose <code>absolutePath</code> is not mounted, instead of reporting all their files as missing?</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["content.code.copy", "navigation.sections"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
