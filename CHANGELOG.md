@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-06-20
+
 ### Changed
 
 - CI: `release.yml` is now a thin caller of the central
