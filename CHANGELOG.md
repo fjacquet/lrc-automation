@@ -6,6 +6,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- CI: `release.yml` is now a thin caller of the central
+  `fjacquet/ci/.github/workflows/python-app-release.yml@v1` reusable workflow
+  (wheel/sdist + SBOM + GitHub Release + GHCR image, no PyPI). Removes the
+  self-contained release jobs and the Node 20 deprecation warnings.
+
 ## [0.6.4] - 2026-06-20
 
 ### Fixed
