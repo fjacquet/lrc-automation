@@ -1,6 +1,7 @@
 site_name: lrc-automation
 site_description: Lightroom Classic catalog automation tool
 repo_url: https://github.com/fjacquet/lrc-automation
+repo_name: fjacquet/lrc-automation
 
 theme:
   name: material
@@ -43,3 +44,6 @@ nav:
       - "005 - Reconcile Command": adr/005-reconcile-command.md
       - "006 - Cross-Root Migration": adr/006-cross-root-year-in-year-migration.md
       - "007 - Multiplatform Support": adr/007-multiplatform-windows-support.md
+
+extra:
+  version: v0.6.2
