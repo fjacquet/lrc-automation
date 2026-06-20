@@ -1,10 +1,19 @@
-s# Changelog
+# Changelog
 
 All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+## [0.6.4] - 2026-06-20
+
+### Fixed
+
+- Release workflow: `create-release` no longer fails when the Buildx build-record
+  artifact (`*.dockerbuild`) can't be downloaded. The build record is now disabled
+  on `build-docker` (`DOCKER_BUILD_SUMMARY`/`DOCKER_BUILD_RECORD_UPLOAD`) and
+  `download-artifact` filters it out as defense-in-depth.
 
 ## [0.6.1] - 2026-03-06
 
