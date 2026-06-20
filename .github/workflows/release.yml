@@ -99,6 +99,11 @@ jobs:
   build-docker:
     needs: test
     runs-on: ubuntu-latest
+    # Don't upload the Buildx build record (*.dockerbuild artifact). It's useless
+    # for the release and its flaky blob download was failing create-release.
+    env:
+      DOCKER_BUILD_SUMMARY: "false"
+      DOCKER_BUILD_RECORD_UPLOAD: "false"
     steps:
       - uses: actions/checkout@v4
 
@@ -141,6 +146,8 @@ jobs:
         with:
           path: release-files/
           merge-multiple: true
+          # Only the real release assets; never block on stray artifacts.
+          pattern: "!*.dockerbuild"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
