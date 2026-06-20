@@ -5,6 +5,7 @@
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-0.5.0-orange.svg)](https://github.com/fjacquet/lrc-automation/releases)
+[![Release](https://img.shields.io/github/v/release/fjacquet/lrc-automation?sort=semver)](https://github.com/fjacquet/lrc-automation/releases/latest)
 
 A Python CLI tool for automating Lightroom Classic catalog maintenance. It directly manipulates the `.lrcat` SQLite catalog and moves/renames files on disk, keeping Lightroom's catalog links intact.
 
