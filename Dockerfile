@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM docker.io/library/python:3.12-slim
 
 LABEL org.opencontainers.image.title="lrc-automation" \
       org.opencontainers.image.description="Lightroom Classic catalog automation — scan, plan, apply, validate, reconcile" \
