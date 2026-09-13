@@ -144,10 +144,7 @@ if self.catalog_path.suffix.lower() != ".lrcat":
 full_folder = photo.root_absolute_path + photo.current_folder_path
 
 # After — normalise to forward slashes for extract_date_from_path():
-full_folder = (
-    photo.root_absolute_path.replace("\\", "/")
-    + photo.current_folder_path
-)
+full_folder = photo.root_absolute_path.replace("\\", "/") + photo.current_folder_path
 ```
 
 `extract_date_from_path()` in `utils.py` already splits only on `/`, so normalising the root portion is sufficient. `current_folder_path` (from `pathFromRoot` in the catalog) always uses forward slashes — confirmed by community research (MEDIUM confidence, multiple sources agree; see Sources).
@@ -175,9 +172,7 @@ root_year_str = photo.root_absolute_path.replace("\\", "/").rstrip("/").split("/
 import sys
 
 if sys.platform == "win32":
-    cursor2 = conn.execute(
-        "SELECT absolutePath FROM AgLibraryRootFolder LIMIT 10"
-    )
+    cursor2 = conn.execute("SELECT absolutePath FROM AgLibraryRootFolder LIMIT 10")
     for row in cursor2:
         if row[0] and "/Volumes/" in row[0]:
             raise CatalogError(
@@ -323,21 +318,13 @@ Note: for macOS absolute paths starting with `/`, `file:///` + `/Volumes/...` yi
 ```python
 # Source: Python docs str.replace — no library needed
 # scanner.py — scan_misplaced_photos() line 125
-full_folder = (
-    photo.root_absolute_path.replace("\\", "/")
-    + photo.current_folder_path
-)
+full_folder = photo.root_absolute_path.replace("\\", "/") + photo.current_folder_path
 
 # scanner.py — scan_needs_location_folder() line 224 (same pattern)
-full_folder = (
-    photo.root_absolute_path.replace("\\", "/")
-    + photo.current_folder_path
-)
+full_folder = photo.root_absolute_path.replace("\\", "/") + photo.current_folder_path
 
 # scanner.py — scan_year_in_year_photos() line 244
-root_year_str = (
-    photo.root_absolute_path.replace("\\", "/").rstrip("/").split("/")[-1]
-)
+root_year_str = photo.root_absolute_path.replace("\\", "/").rstrip("/").split("/")[-1]
 ```
 
 ### Mac-Origin Catalog Warning in catalog.py
@@ -348,9 +335,7 @@ import sys
 
 # Inside validate_is_lrcat(), after the Adobe_images table check:
 if sys.platform == "win32":
-    cursor2 = conn.execute(
-        "SELECT absolutePath FROM AgLibraryRootFolder LIMIT 10"
-    )
+    cursor2 = conn.execute("SELECT absolutePath FROM AgLibraryRootFolder LIMIT 10")
     for row in cursor2:
         abs_path = row[0] or ""
         if "/Volumes/" in abs_path:
@@ -370,6 +355,7 @@ import pytest
 from pathlib import Path
 from lrc_automation.catalog import _path_to_sqlite_uri
 
+
 def test_uri_uses_forward_slashes_windows_style() -> None:
     # Simulate what Path.resolve() returns on Windows
     p = Path("C:/Users/Photos/Catalog.lrcat")
@@ -378,11 +364,13 @@ def test_uri_uses_forward_slashes_windows_style() -> None:
     assert uri.startswith("file:///")
     assert uri.endswith("?mode=ro")
 
+
 def test_uri_posix_absolute_path() -> None:
     p = Path("/Volumes/photo/Catalog.lrcat")
     uri = _path_to_sqlite_uri(p, readonly=True)
     assert uri.startswith("file:///")
     assert "?mode=ro" in uri
+
 
 def test_uri_readonly_false() -> None:
     p = Path("/tmp/test.lrcat")
@@ -406,9 +394,7 @@ def test_scan_misplaced_windows_style_absolute_path(tmp_path: Path) -> None:
     conn.execute(
         "INSERT INTO AgLibraryRootFolder VALUES (99, 'g1', 'C:\\\\Users\\\\Photos\\\\', 'Photos', NULL)"
     )
-    conn.execute(
-        "INSERT INTO AgLibraryFolder VALUES (99, 'gf1', '2023/06/', 99)"
-    )
+    conn.execute("INSERT INTO AgLibraryFolder VALUES (99, 'gf1', '2023/06/', 99)")
     conn.execute(
         "INSERT INTO AgLibraryFile VALUES (99, 'gfile1', 'IMG_9999', 'jpg', 99, NULL, NULL, NULL, 'IMG_9999.jpg', NULL)"
     )
@@ -419,6 +405,7 @@ def test_scan_misplaced_windows_style_absolute_path(tmp_path: Path) -> None:
     conn.row_factory = sqlite3.Row
 
     from lrc_automation.scanner import CatalogScanner
+
     scanner = CatalogScanner(conn)
     misplaced = scanner.scan_misplaced_photos()
     # Photo is correctly placed — should NOT appear in misplaced
@@ -437,16 +424,16 @@ from pathlib import Path
 from lrc_automation.catalog import CatalogConnection, CatalogError
 from tests.conftest import create_test_catalog
 
+
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only behavior")
 def test_mac_origin_catalog_raises_on_windows(tmp_path: Path) -> None:
     db = tmp_path / "test.lrcat"
     create_test_catalog(db)
     # Override absolutePath to look like a Mac catalog
     import sqlite3
+
     conn = sqlite3.connect(str(db))
-    conn.execute(
-        "UPDATE AgLibraryRootFolder SET absolutePath = '/Volumes/photo/2023/'"
-    )
+    conn.execute("UPDATE AgLibraryRootFolder SET absolutePath = '/Volumes/photo/2023/'")
     conn.commit()
     conn.close()
 

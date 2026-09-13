@@ -63,6 +63,7 @@ class ReconcileChange:
     actual_path: Path
     expected_path: Path
 
+
 @dataclass
 class ReconcileReport:
     reconciled: list[ReconcileChange]

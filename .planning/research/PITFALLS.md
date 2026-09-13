@@ -74,6 +74,7 @@ for v0.6.0:
 ```python
 import psutil
 
+
 def _is_lightroom_running() -> bool:
     lr_names = {"Adobe Lightroom Classic", "Lightroom.exe", "lightroom"}
     return any(
@@ -383,6 +384,7 @@ removed.
 
 ```python
 _SKIP_NAMES = frozenset({"Thumbs.db", "desktop.ini", ".DS_Store"})
+
 
 def _is_effectively_empty(directory: Path) -> bool:
     for entry in directory.iterdir():

@@ -63,7 +63,9 @@ scale. Keep each concern in its natural home.
 ```python
 result = subprocess.run(
     ["pgrep", "-f", LR_PROCESS_NAME],
-    capture_output=True, text=True, timeout=5,
+    capture_output=True,
+    text=True,
+    timeout=5,
 )
 ```
 
@@ -71,6 +73,7 @@ result = subprocess.run(
 
 ```python
 import psutil
+
 
 def _lightroom_running() -> bool:
     """Return True if any Lightroom Classic process is running."""
@@ -111,14 +114,14 @@ LR_PROCESS_NAME = "Adobe Lightroom Classic"
 ```python
 # Lightroom process names per platform (as reported by psutil proc.info["name"])
 LR_PROCESS_NAME_MACOS = "Adobe Lightroom Classic"
-LR_PROCESS_NAME_WIN   = "Lightroom.exe"
-LR_PROCESS_NAME_LINUX = "Lightroom"          # hypothetical; LR does not run natively on Linux
+LR_PROCESS_NAME_WIN = "Lightroom.exe"
+LR_PROCESS_NAME_LINUX = "Lightroom"  # hypothetical; LR does not run natively on Linux
 
 # Default catalog paths per platform (used only for help text / discovery)
 DEFAULT_CATALOG_PATHS: dict[str, str] = {
-    "darwin":  "~/Pictures/Lightroom/Lightroom Catalog.lrcat",
-    "win32":   "~/Pictures/Lightroom/Lightroom Catalog.lrcat",
-    "linux":   "",   # not applicable
+    "darwin": "~/Pictures/Lightroom/Lightroom Catalog.lrcat",
+    "win32": "~/Pictures/Lightroom/Lightroom Catalog.lrcat",
+    "linux": "",  # not applicable
 }
 ```
 
@@ -173,12 +176,14 @@ import sys
 
 _IS_MACOS = sys.platform == "darwin"
 
+
 def _is_effectively_empty(directory: Path) -> bool:
     for entry in directory.iterdir():
         if _IS_MACOS and entry.name.startswith("._"):
             continue  # AppleDouble metadata — macOS only
         return False
     return True
+
 
 def _delete_apple_double_files(directory: Path) -> None:
     if not _IS_MACOS:
@@ -213,6 +218,7 @@ specific hint for the `--catalog` help string or for auto-discovery fallback:
 ```python
 import sys
 from pathlib import Path
+
 
 def _default_catalog_path() -> Path | None:
     """Return platform default LR Classic catalog location, or None."""
@@ -352,6 +358,7 @@ when it depends on runtime configuration.
 ```python
 # executor.py (top of file)
 import sys
+
 _IS_MACOS = sys.platform == "darwin"
 
 # in function body
@@ -430,6 +437,7 @@ mixed separators correctly.
 def test_lr_not_running_when_no_match(monkeypatch):
     def fake_iter(attrs):
         return iter([])
+
     monkeypatch.setattr("psutil.process_iter", fake_iter)
     # assert no exception raised
 ```

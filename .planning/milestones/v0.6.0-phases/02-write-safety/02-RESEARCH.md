@@ -97,6 +97,7 @@ src/lrc_automation/
 # Source: psutil official docs https://psutil.readthedocs.io/en/latest/#processes
 import psutil
 
+
 def check_lightroom_not_running(self) -> None:
     lock_path = Path(str(self.catalog_path) + LOCK_FILE_SUFFIX)
     if lock_path.exists():
@@ -124,8 +125,8 @@ def check_lightroom_not_running(self) -> None:
 **Constants needed in `constants.py`:**
 
 ```python
-LR_PROCESS_NAME = "Adobe Lightroom Classic"     # macOS
-LR_PROCESS_NAME_WINDOWS = "Lightroom.exe"       # Windows
+LR_PROCESS_NAME = "Adobe Lightroom Classic"  # macOS
+LR_PROCESS_NAME_WINDOWS = "Lightroom.exe"  # Windows
 ```
 
 ### Pattern 2: pathFromRoot Forward-Slash Normalisation (PROC-02)
@@ -167,12 +168,14 @@ LR_PROCESS_NAME_WINDOWS = "Lightroom.exe"       # Windows
 ```python
 import sys
 
+
 def _is_effectively_empty(directory: Path) -> bool:
     for entry in directory.iterdir():
         if sys.platform == "darwin" and entry.name.startswith("._"):
             continue  # AppleDouble metadata — macOS only
         return False
     return True
+
 
 # In cleanup_empty_folders:
 # Replace unconditional _delete_apple_double_files(full_dir) with:
@@ -195,6 +198,7 @@ import time
 
 _MOVE_RETRIES = 3
 _MOVE_RETRY_SLEEP = 0.5  # seconds
+
 
 def _apply_file_op(self, src: Path, dst: Path, move: bool) -> None:
     if not src.exists():
@@ -308,7 +312,7 @@ for proc in psutil.process_iter(["name"]):
 # Source: Python stdlib pathlib docs
 # Before storing a relative Path as pathFromRoot in SQLite:
 rel = full_dir.relative_to(root_path)
-path_from_root = rel.as_posix() + "/"   # Always "2023/06/" — never "2023\\06\\"
+path_from_root = rel.as_posix() + "/"  # Always "2023/06/" — never "2023\\06\\"
 ```
 
 ### sys.platform AppleDouble Guard

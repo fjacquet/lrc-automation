@@ -58,6 +58,7 @@ import psutil
 
 LIGHTROOM_PROCESS_NAMES = {"Adobe Lightroom Classic", "Lightroom.exe"}
 
+
 def check_lightroom_not_running(catalog_path: Path) -> None:
     for proc in psutil.process_iter(["name"]):
         try:

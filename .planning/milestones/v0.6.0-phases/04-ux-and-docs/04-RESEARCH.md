@@ -75,8 +75,11 @@ from pathlib import Path
 
 _LR_DEFAULT_DIRS = {
     "darwin": Path.home() / "Pictures" / "Lightroom",
-    "win32":  Path(os.environ.get("USERPROFILE", Path.home())) / "Pictures" / "Lightroom",
+    "win32": Path(os.environ.get("USERPROFILE", Path.home()))
+    / "Pictures"
+    / "Lightroom",
 }
+
 
 def _discover_default_catalog() -> str | None:
     """Return the path of the first .lrcat file in the OS default LR directory."""
@@ -202,6 +205,7 @@ Standard ADR sections: Status, Context, Decision, Consequences.
 import os
 import sys
 
+
 def _discover_default_catalog() -> str | None:
     """Find the first .lrcat file in the OS default Lightroom Classic directory.
 
@@ -209,7 +213,11 @@ def _discover_default_catalog() -> str | None:
     Windows: %USERPROFILE%\Pictures\Lightroom\
     """
     if sys.platform == "win32":
-        default_dir = Path(os.environ.get("USERPROFILE", str(Path.home()))) / "Pictures" / "Lightroom"
+        default_dir = (
+            Path(os.environ.get("USERPROFILE", str(Path.home())))
+            / "Pictures"
+            / "Lightroom"
+        )
     else:
         default_dir = Path.home() / "Pictures" / "Lightroom"
 
@@ -266,22 +274,29 @@ def test_discover_default_catalog_finds_lrcat(tmp_path, monkeypatch):
     """Auto-discovery returns path to .lrcat in the default LR directory."""
     catalog = tmp_path / "Catalog.lrcat"
     catalog.touch()
-    monkeypatch.setattr("lrc_automation.cli._discover_default_catalog", lambda: str(catalog))
+    monkeypatch.setattr(
+        "lrc_automation.cli._discover_default_catalog", lambda: str(catalog)
+    )
     # invoke cli without --catalog; should not raise
     from click.testing import CliRunner
     from lrc_automation.cli import cli
+
     runner = CliRunner()
     result = runner.invoke(cli, ["scan"], catch_exceptions=False)
     # scan will fail on empty DB but not on missing catalog arg
     assert "No catalog specified" not in result.output
 
+
 def test_discover_default_catalog_returns_none_when_dir_missing(monkeypatch, tmp_path):
     """If default directory does not exist, discovery returns None."""
     import sys
+
     monkeypatch.setattr(sys, "platform", "darwin")
     from unittest.mock import patch
+
     with patch("lrc_automation.cli.Path.home", return_value=tmp_path):
         from lrc_automation.cli import _discover_default_catalog
+
         assert _discover_default_catalog() is None
 ```
 
@@ -289,7 +304,9 @@ Note: Avoid `unittest.mock` per project conventions. Use `monkeypatch.setattr` i
 
 ```python
 def test_discover_returns_none_no_dir(monkeypatch, tmp_path):
-    monkeypatch.setattr("lrc_automation.cli.Path", lambda *a, **kw: tmp_path / "nonexistent")
+    monkeypatch.setattr(
+        "lrc_automation.cli.Path", lambda *a, **kw: tmp_path / "nonexistent"
+    )
     # or more precisely, patch _discover_default_catalog at the call site
 ```
 
