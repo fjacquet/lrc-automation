@@ -6,6 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-09-13
+
+### Fixed
+
+- `pyproject.toml` version was still `0.6.5` while `v0.6.6`, `v0.7.0`, and
+  `v0.7.1` had already been tagged and released, so those releases shipped
+  wheels/sdists mis-versioned as `lrc_automation-0.6.5-*`. Bumped the
+  declared version to `0.7.2` (above the latest tag `v0.7.1`) and brought
+  `src/lrc_automation/__init__.py` `__version__` (stuck at `0.1.0`) and the
+  README version badge (stuck at `0.5.0`) back in sync.
+
 ## [0.6.5] - 2026-06-20
 
 ### Changed
