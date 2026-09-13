@@ -56,8 +56,8 @@ Lightroom UI entries showing empty folders.
 
 ```python
 date_portion_of_path("10/Switzerland/Saillon/", 2012, 10)  # → "10/"
-date_portion_of_path("2023/06/FR/Paris/",       2023, 6)   # → "2023/06/"
-date_portion_of_path("2023-06-15/CH/Saillon/",  2023, 6)   # → "2023-06-15/"
+date_portion_of_path("2023/06/FR/Paris/", 2023, 6)  # → "2023/06/"
+date_portion_of_path("2023-06-15/CH/Saillon/", 2023, 6)  # → "2023-06-15/"
 ```
 
 The function handles all three folder formats used in the real catalog:

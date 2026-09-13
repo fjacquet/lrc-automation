@@ -82,7 +82,7 @@ def build_plan(
     self,
     include_moves: bool = True,
     include_renames: bool = True,
-    include_root_migrations: bool = False,   # default OFF
+    include_root_migrations: bool = False,  # default OFF
 ) -> ChangePlan: ...
 ```
 

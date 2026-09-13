@@ -42,7 +42,8 @@ class MissingFile:
     extension: str
     root_folder_id: int
     file_id: int
-    found_at: list[Path]   # [] → gone; [p] → found elsewhere; [p, q] → ambiguous
+    found_at: list[Path]  # [] → gone; [p] → found elsewhere; [p, q] → ambiguous
+
 
 @dataclass
 class FileAuditResult:

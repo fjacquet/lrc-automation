@@ -26,7 +26,9 @@ The existing stack is solid. Only ONE new runtime dependency is required. Everyt
 # Lines 58-71 — macOS-only, silently skips on Windows (FileNotFoundError)
 result = subprocess.run(
     ["pgrep", "-f", LR_PROCESS_NAME],
-    capture_output=True, text=True, timeout=5,
+    capture_output=True,
+    text=True,
+    timeout=5,
 )
 ```
 
@@ -34,6 +36,7 @@ result = subprocess.run(
 
 ```python
 import psutil
+
 
 def _is_lightroom_running(process_names: tuple[str, ...]) -> bool:
     """Return True if any process matching the given names is running."""
@@ -97,6 +100,7 @@ Use `sys.platform` (stdlib) for platform branching. No new library.
 
 ```python
 import sys
+
 
 def _platform_lr_process_names() -> tuple[str, ...]:
     if sys.platform == "darwin":
