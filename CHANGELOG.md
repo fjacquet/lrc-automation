@@ -6,6 +6,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- Refreshed `uv.lock` (full dependency refresh).
+- CI: the Security workflow now also runs on a weekly schedule and can be
+  triggered manually.
+
 ## [0.7.2] - 2026-09-13
 
 ### Fixed
