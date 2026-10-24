@@ -6,6 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.3] - 2026-10-24
+
+### Security
+
+- **`make vuln` and the Security workflow now actually scan.** `uvx osv-scanner` never resolved
+  (osv-scanner is a Go binary, not on PyPI) and `|| true` hid the failure, so no CI run had ever
+  scanned `uv.lock`. `make vuln` now runs `osv-scanner scan source --recursive .` and fails on
+  findings; fjacquet/ci v1.6.0 installs a pinned, checksum-verified binary in CI.
+- `certifi` → 2026.10.23 for GHSA-6q48-6c7w-9gw2 and `setuptools` 84.0.0 → 84.2.1 for
+  GHSA-xmj3-9gf7-h52w (full `uv lock --upgrade` refresh).
+
 ### Changed
 
 - Refreshed `uv.lock` (full dependency refresh).
